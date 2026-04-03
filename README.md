@@ -3,5 +3,5 @@
 Developers:
 
 Dylan Manning<br>
-Janis Mikits
+Janis Mikits  
 Gray Dufilho
