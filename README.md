@@ -1,6 +1,6 @@
 # SiliconSandbox
 
 Developers:
-Dylan Manning
+
+Dylan Manning<br>
 Janis Mikits
-Gray Dufilho
