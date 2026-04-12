@@ -9,7 +9,7 @@ public class MenuTraversal : MonoBehaviour
     public GameObject CreatePanel;
 
     [Header("Scene")]
-    public string gameplaySceneName = "GameScene";
+    public string gameplaySceneName = "SampleScene";
 
     public void startGame()
     {
