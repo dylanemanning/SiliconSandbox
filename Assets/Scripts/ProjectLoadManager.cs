@@ -8,7 +8,7 @@ public class ProjectLoadManager : MonoBehaviour
 {
     public GameObject buttonPrefab;
     public Transform contentArea;
-    public string gameplaySceneName = "SampleScene"; // Match your teammate's scene name
+    public string gameplaySceneName = "Environment"; // Match your teammate's scene name
 
     void OnEnable()
     {
@@ -32,10 +32,28 @@ public class ProjectLoadManager : MonoBehaviour
                 string projectName = Path.GetFileNameWithoutExtension(file);
                 newButton.GetComponentInChildren<TMP_Text>().text = projectName;
 
-                // --- NEW CLICK LOGIC BELOW ---
                 Button btn = newButton.GetComponent<Button>();
                 btn.onClick.AddListener(() => LoadThisProject(projectName));
+
+                Transform deleteBtnTransform = newButton.transform.Find("DeleteButton");
+                if (deleteBtnTransform != null)
+                {
+                    Button deleteBtn = deleteBtnTransform.GetComponent<Button>();
+                    deleteBtn.onClick.AddListener(() => DeleteProject(projectName));
+                }
             }
+        }
+    }
+
+    public void DeleteProject(string projectName)
+    {
+        string path = Path.Combine(Application.persistentDataPath, "SavedProjects", projectName + ".json");
+        
+        if (File.Exists(path))
+        {
+            File.Delete(path);
+            Debug.Log("Deleted project: " + projectName);
+            RefreshList(); // Refresh the UI so the button disappears
         }
     }
 

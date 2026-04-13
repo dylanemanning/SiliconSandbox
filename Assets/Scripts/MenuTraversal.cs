@@ -9,10 +9,15 @@ public class MenuTraversal : MonoBehaviour
     public GameObject CreatePanel;
 
     [Header("Scene")]
-    public string gameplaySceneName = "SampleScene";
+    public string gameplaySceneName = "Environment";
 
     public void startGame()
     {
+        if (!PlayerPrefs.HasKey("CurrentProjectToLoad")) 
+        {
+            PlayerPrefs.SetString("CurrentProjectToLoad", "AutoSave");
+        }
+        
         SceneManager.LoadScene(gameplaySceneName);
     }
 
