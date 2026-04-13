@@ -3,7 +3,6 @@ using System.IO;
 using System.Collections.Generic;
 using TMPro;
 
-// Use the exact names his Gemini suggested so his code can read your files
 [System.Serializable]
 public class BlockData {
     public string blockName;
@@ -13,7 +12,7 @@ public class BlockData {
 
 [System.Serializable]
 public class SaveData {
-    public List<BlockData> blocks = new List<BlockData>();
+    public System.Collections.Generic.List<BlockData> blocks = new System.Collections.Generic.List<BlockData>();
 }
 
 public class ProjectSaveManager : MonoBehaviour {
@@ -23,18 +22,19 @@ public class ProjectSaveManager : MonoBehaviour {
         string projectName = nameInput.text;
         if (string.IsNullOrEmpty(projectName)) projectName = "NewProject";
         
-        // Use .json if that's what his loading logic expects
+        // Save to the hidden Mac Library folder we found earlier
         string directoryPath = Path.Combine(Application.persistentDataPath, "SavedProjects");
         string fullPath = Path.Combine(directoryPath, projectName + ".json");
 
         if (!Directory.Exists(directoryPath)) Directory.CreateDirectory(directoryPath);
 
         SaveData data = new SaveData();
-        // Use FindObjectsByType (the newer version of FindObjectsOfType)
+        // Use the 'Block' class from your teammate's Blocks.cs file
         Block[] allBlocks = GameObject.FindObjectsByType<Block>(FindObjectsSortMode.None);
 
         foreach (Block b in allBlocks) {
             data.blocks.Add(new BlockData {
+                // This cleans the name so 'Block(Clone)' becomes 'Block'
                 blockName = b.name.Replace("(Clone)", "").Trim(),
                 posX = b.transform.position.x,
                 posY = b.transform.position.y,
@@ -48,6 +48,6 @@ public class ProjectSaveManager : MonoBehaviour {
 
         string json = JsonUtility.ToJson(data, true);
         File.WriteAllText(fullPath, json);
-        Debug.Log("Saved to: " + fullPath);
+        Debug.Log("Local File API Success: Saved to " + fullPath);
     }
 }
