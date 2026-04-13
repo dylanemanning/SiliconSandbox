@@ -9,8 +9,6 @@ public class SaveManager : MonoBehaviour
     public void Save(string profileName) 
     {
         SaveData data = new SaveData();
-        
-        
         Block[] allBlocks = Object.FindObjectsByType<Block>(FindObjectsSortMode.None);
 
         foreach (Block b in allBlocks)
@@ -30,7 +28,12 @@ public class SaveManager : MonoBehaviour
         }
 
         string json = JsonUtility.ToJson(data, true);
-        string path = Path.Combine(Application.persistentDataPath, profileName + ".json");
+        
+        // Fix: Use the same subfolder as ProjectSaveManager
+        string dir = Path.Combine(Application.persistentDataPath, "SavedProjects");
+        if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
+        
+        string path = Path.Combine(dir, profileName + ".json");
         File.WriteAllText(path, json);
         
         Debug.Log("Saved to: " + path);
@@ -38,7 +41,7 @@ public class SaveManager : MonoBehaviour
 
     public void Load(string profileName) 
     {
-        string path = Path.Combine(Application.persistentDataPath, profileName + ".json");
+        string path = Path.Combine(Application.persistentDataPath, "SavedProjects", profileName + ".json");
         if (!File.Exists(path)) return;
 
         string json = File.ReadAllText(path);

@@ -25,7 +25,7 @@ public class ProjectLoadManager : MonoBehaviour
 
         if (Directory.Exists(path))
         {
-            string[] files = Directory.GetFiles(path, "*.ssbox");
+            string[] files = Directory.GetFiles(path, "*.json");
             foreach (string file in files)
             {
                 GameObject newButton = Instantiate(buttonPrefab, contentArea);
