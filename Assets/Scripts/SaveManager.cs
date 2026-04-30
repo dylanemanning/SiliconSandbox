@@ -6,6 +6,14 @@ public class SaveManager : MonoBehaviour
 {
     public Player player; 
 
+    void Start() {
+        // Check if we came from the menu with a specific project to load
+        if (PlayerPrefs.HasKey("CurrentProjectToLoad")) {
+            string projectToLoad = PlayerPrefs.GetString("CurrentProjectToLoad");
+            Load(projectToLoad);
+        }
+    }
+
     public void Save(string profileName) 
     {
         SaveData data = new SaveData();

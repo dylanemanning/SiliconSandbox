@@ -17,6 +17,9 @@ public class ProjectSaveManager : MonoBehaviour {
 
         if (!Directory.Exists(directoryPath)) Directory.CreateDirectory(directoryPath);
 
+        PlayerPrefs.SetString("CurrentProjectToLoad", projectName);
+        PlayerPrefs.Save();
+
         SaveData data = new SaveData();
         Block[] allBlocks = GameObject.FindObjectsByType<Block>(FindObjectsSortMode.None);
 

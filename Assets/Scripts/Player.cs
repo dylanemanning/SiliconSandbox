@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem; // Included for New Input System
+using UnityEngine.SceneManagement;
 
 // This script handles player movement, looking around, jumping, and block interaction (breaking and placing).
 // Comments have been added via VS Code's AI
@@ -12,6 +13,7 @@ public class Player : MonoBehaviour
     public float reachDistance = 5f; // How far the player can reach to interact with blocks
 
     public GameObject blockHighlighter; // Visual indicator for targeted block
+    public SaveManager saveManager;
     public Block[] blockPalette; // Array of different block prefabs (Grass, Wire, Voltage, etc.)
     private int selectedBlockIndex = 0; // The current slot selected
 
@@ -56,6 +58,33 @@ public class Player : MonoBehaviour
         if (Mouse.current.rightButton.wasPressedThisFrame) 
         { 
             TryPlaceBlock(); 
+        }
+
+        if (Keyboard.current.kKey.wasPressedThisFrame)
+        {   
+
+            // Use PlayerPrefs to get the name of the project we opened from the menu
+            string currentProject = PlayerPrefs.GetString("CurrentProjectToLoad", "AutoSave");
+
+            if (saveManager != null) 
+            {
+                saveManager.Save(currentProject);
+                Debug.Log("World Saved as: " + currentProject);
+            }
+            else 
+            {
+                Debug.LogError("SaveManager is missing from the Player script! Drag it in via the Inspector.");
+            }
+        }
+
+        if (Keyboard.current.escapeKey.wasPressedThisFrame)
+        {
+            // Unlock the cursor so you can click buttons in the menu
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+
+            // Load the Main Menu scene
+            SceneManager.LoadScene("MainMenu"); 
         }
     }
 
