@@ -14,15 +14,38 @@ public class MenuTraversal : MonoBehaviour
     public GameObject settingsAccessibilityPanel;
     public GameObject settingsTabButtons;
 
+    [Header("Styling")]
+    public MainMenuStyler menuStyler;
+
     [Header("Scene")]
     public string gameplaySceneName = "SampleScene";
 
     private void Start()
     {
+        EnsureStyler();
+
         mainMenuPanel.SetActive(true);
         LoadPanel.SetActive(false);
         CreatePanel.SetActive(false);
         settingsPanel.SetActive(false);
+
+        if (menuStyler != null)
+        {
+            menuStyler.Apply();
+        }
+    }
+
+    private void EnsureStyler()
+    {
+        if (menuStyler == null)
+        {
+            menuStyler = GetComponentInChildren<MainMenuStyler>(true);
+        }
+
+        if (menuStyler == null)
+        {
+            menuStyler = FindFirstObjectByType<MainMenuStyler>();
+        }
     }
 
     public void startGame()
@@ -32,40 +55,70 @@ public class MenuTraversal : MonoBehaviour
 
     public void openLoad()
     {
+        EnsureStyler();
         mainMenuPanel.SetActive(false);
         LoadPanel.SetActive(true);
+
+        if (menuStyler != null)
+        {
+            menuStyler.Apply();
+        }
     }
 
     public void closeLoad()
     {
         LoadPanel.SetActive(false);
         mainMenuPanel.SetActive(true);
+        if (menuStyler != null)
+        {
+            menuStyler.Apply();
+        }
         
     }
 
     public void openNew()
     {
+        EnsureStyler();
         LoadPanel.SetActive(false);
         CreatePanel.SetActive(true);
+
+        if (menuStyler != null)
+        {
+            menuStyler.Apply();
+        }
     }
 
     public void closeNew()
     {
         CreatePanel.SetActive(false);
         LoadPanel.SetActive(true);
+        if (menuStyler != null)
+        {
+            menuStyler.Apply();
+        }
     }
 
     public void openSettings()
     {
+        EnsureStyler();
         mainMenuPanel.SetActive(false);
         settingsPanel.SetActive(true);
         OpenSettingsTab("Controls");
+
+        if (menuStyler != null)
+        {
+            menuStyler.Apply();
+        }
     }
 
     public void closeSettings()
     {
         settingsPanel.SetActive(false);
         mainMenuPanel.SetActive(true);
+        if (menuStyler != null)
+        {
+            menuStyler.Apply();
+        }
     }
 
     public void OpenSettingsTab(string tabName)
@@ -74,6 +127,10 @@ public class MenuTraversal : MonoBehaviour
         settingsVideoPanel.SetActive(tabName == "Video");
         settingsAudioPanel.SetActive(tabName == "Audio");
         settingsAccessibilityPanel.SetActive(tabName == "Accessibility");
+        if (menuStyler != null)
+        {
+            menuStyler.Apply();
+        }
     }
 
     public void openControlsTab()
