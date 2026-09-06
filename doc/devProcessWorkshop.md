@@ -12,3 +12,9 @@ Feature branches will be named <developer inital>f_<featureName> (EX: gf_packagi
 
 
 We will be following a scrum model for development.
+
+## GH Project Management
+
+
+Individual developers will be responsible for tracking issues assigned to them. They will bear sole control of moving items through states, setting due dates, priority, and other such meta data. Every week the developer team will meet and address what issues have been closed, which ones are due upcoming, and any blockers they need assistance on. Every other meeting will have a longer dedicated section to addressing issues that are behind schedule, adjustments to priority, changing due dates, or any other major shifts to the workflow.  
+The two weeks view and roadmap should both auto update as issues are edited, so they will not be actively maintained but the changes to them will be addressed in the previously mentioned meetings to make sure they are on track and not representing incorrect information.
