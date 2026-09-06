@@ -7,9 +7,23 @@ public class MenuTraversal : MonoBehaviour
     public GameObject mainMenuPanel;
     public GameObject LoadPanel;
     public GameObject CreatePanel;
+    public GameObject settingsPanel;
+    public GameObject settingsControlsPanel;
+    public GameObject settingsVideoPanel;
+    public GameObject settingsAudioPanel;
+    public GameObject settingsAccessibilityPanel;
+    public GameObject settingsTabButtons;
 
     [Header("Scene")]
     public string gameplaySceneName = "SampleScene";
+
+    private void Start()
+    {
+        mainMenuPanel.SetActive(true);
+        LoadPanel.SetActive(false);
+        CreatePanel.SetActive(false);
+        settingsPanel.SetActive(false);
+    }
 
     public void startGame()
     {
@@ -43,14 +57,43 @@ public class MenuTraversal : MonoBehaviour
 
     public void openSettings()
     {
-        // mainMenuPanel.SetActive(false);
-        // settingsPanel.SetActive(true);
+        mainMenuPanel.SetActive(false);
+        settingsPanel.SetActive(true);
+        OpenSettingsTab("Controls");
     }
 
     public void closeSettings()
     {
-        // settingsPanel.SetActive(false);
-        // mainMenuPanel.SetActive(true);
+        settingsPanel.SetActive(false);
+        mainMenuPanel.SetActive(true);
+    }
+
+    public void OpenSettingsTab(string tabName)
+    {
+        settingsControlsPanel.SetActive(tabName == "Controls");
+        settingsVideoPanel.SetActive(tabName == "Video");
+        settingsAudioPanel.SetActive(tabName == "Audio");
+        settingsAccessibilityPanel.SetActive(tabName == "Accessibility");
+    }
+
+    public void openControlsTab()
+    {
+        OpenSettingsTab("Controls");
+    }
+
+    public void openVideoTab()
+    {
+        OpenSettingsTab("Video");
+    }
+
+    public void openAudioTab()
+    {
+        OpenSettingsTab("Audio");
+    }
+
+    public void openAccessibilityTab()
+    {
+        OpenSettingsTab("Accessibility");
     }
 
     public void quitGame()
