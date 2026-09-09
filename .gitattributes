@@ -1,0 +1,15 @@
+# Route Unity's YAML-based asset formats through UnityYAMLMerge on conflict.
+# This only takes effect for a dev who has configured the `unityyamlmerge`
+# mergetool in their own global .gitconfig — see doc/DevProcess.md.
+*.unity merge=unityyamlmerge
+*.prefab merge=unityyamlmerge
+*.asset merge=unityyamlmerge
+ 
+# Not currently in scope per DevProcess.md (only .unity/.prefab/.asset are
+# called out there), but these are also Unity YAML and conflict the same
+# way — uncomment if/when the team wants them covered too:
+# *.mat merge=unityyamlmerge
+# *.anim merge=unityyamlmerge
+# *.controller merge=unityyamlmerge
+# *.physicsMaterial2D merge=unityyamlmerge
+ 
