@@ -263,11 +263,16 @@ for the state of a given issue being accurate.
 
 Larger bodies of work are recorded as parent issues with sub-issues beneath them, using GitHub's
 parent/sub-issue feature, so that a broad deliverable is tracked as a set of independently
-completable units rather than one long-running item. Our current parent issues are #32 Gameplay,
-#35 Implement Circuit Logic, and #37 Save and Load Components.
+completable units rather than one long-running item. Our current parent issues are #33 Create all Blender Models, 
+#32 Gameplay, #34 UI, #35 Implement Circuit Logic, #37 Save and Load Components, and #38 Project Management.
 
-> **To be completed:** how a new issue enters the backlog — who may create one, what a new issue
-> must contain, and how it gets assigned and scheduled into a cycle.
+### Issue creation 
+
+Any individual developer may create a new issue and assign it to the relevant developer. Each issue must only 
+address one problem, bug fix, or feature. If it pertains to a larger sub-group of issues, assign it to that parent issue. 
+The description must also have a clear completion condition. Since each assignee has direct ownership over their 
+issues and when they are completed, they are responsible for setting a timeline for completion. The issue will then
+be automatically added to a two-week cycle when it comes within two weeks of its due date.
 
 ---
 
@@ -293,8 +298,14 @@ keyword closes its linked issue on merge. The assignee's judgment therefore oper
 review gate described in section 3, not around it. An issue is eligible to close only once the
 completion condition stated in its description is satisfied.
 
-> **To be completed:** what happens to issues that are still open at cycle close — whether they
-> carry into the next cycle as-is, return to the backlog, or are re-scoped.
+### Unfinished issues
+
+If an issue is still open at the close of a cycle, its due date will be extended by two weeks 
+so that it is automatically included in the next two-week cycle. If the assignee determines that the
+task is too difficult or long, they can split the issue into sub-issues and assign reasonable
+due dates according to their own judgement. If the completion of that issue is a prerequisite for 
+the completion of another individual's issue, they can work with the assignee to adjust priorities
+or complete the work.
 
 ---
 
@@ -307,8 +318,8 @@ Because they are generated rather than authored, keeping them accurate is a matt
 rather than upkeep. The team reviews both views against actual progress at the weekly meeting, and
 the biweekly cycle-close meeting is where discrepancies are corrected — dates adjusted, priorities
 changed, and items moved between cycles — so that neither view drifts from the real state of the
-project.
-
-> **To be completed:** who is responsible for making those corrections during the cycle-close
-> meeting, and how a slipped roadmap date is handled — whether downstream items shift with it or
-> the scope of the affected work is reduced.
+project. The team may discuss these changes as needed so that everyone is on the same page, but each 
+individual developer is responsible for making corrections on their own assigned issues. A slipped roadmap
+date will typically be handled by adding those open issues to the next sprint, in addition to the 
+already scheduled issues. However, if slippage continues and the work or scope becomes unmanageable,
+the team can discuss how to reduce the scope of the project and adjust the issue backlog accordingly.
