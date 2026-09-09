@@ -7,12 +7,16 @@ public class Player : MonoBehaviour
     public float speed = 10f;
     public float jumpForce = 5f;
     public float reachDistance = 5f;
+    public float fallThreshold = -10f;
+    public Transform respawnPoint;
     public Block activeBlockPrefab; // What you are currently "holding" to place
 
     float xRotation;
     float yRotation;
     bool isGrounded;
     float breakSeconds;
+    Vector3 spawnPosition;
+    Quaternion spawnRotation;
 
     Block targetBlock;
     Block breakingBlock;
@@ -23,12 +27,15 @@ public class Player : MonoBehaviour
     {
         rb = GetComponent<Rigidbody>();
         rb.freezeRotation = true; // Crucial for player controllers
+        spawnPosition = transform.position;
+        spawnRotation = transform.rotation;
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
     }
 
     void Update()
     {
+        CheckFall();
         CheckRotation();
         CheckMovement();
         CheckJump();
@@ -50,6 +57,23 @@ public class Player : MonoBehaviour
         { 
             TryPlaceBlock(); 
         }
+    }
+
+    void CheckFall()
+    {
+        if (transform.position.y >= fallThreshold) return;
+
+        Vector3 safePosition = respawnPoint ? respawnPoint.position : spawnPosition;
+        Quaternion safeRotation = respawnPoint ? respawnPoint.rotation : spawnRotation;
+
+        rb.position = safePosition;
+        rb.rotation = safeRotation;
+        rb.linearVelocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
+        isGrounded = false;
+        targetBlock = null;
+        breakingBlock = null;
+        breakSeconds = 0;
     }
 
     void CheckRotation()
