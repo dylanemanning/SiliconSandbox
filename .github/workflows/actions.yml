@@ -4,3 +4,40 @@ on:
     branches: ["main"]
   pull_request: 
     branches: ["main"]
+
+jobs:
+  build:
+    name: Build Windows Game
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Cache Unity Library
+        uses: actions/cache@v4
+        with:
+          path: Library
+          key: Unity-Library-${{ runner.os }}-${{ hashFiles('Packages/packages-lock.json', 'ProjectSettings/ProjectVersion.txt') }}
+          restore-keys: |
+            Unity-Library-${{ runner.os }}-
+
+      - name: Build Windows application
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          unityVersion: 6000.3.8f1
+          targetPlatform: StandaloneWindows64
+          buildName: Game
+          buildPath: build/Windows
+
+      - name: Upload Windows build
+        uses: actions/upload-artifact@v4
+        with:
+          name: Windows-Build
+          path: build/Windows
