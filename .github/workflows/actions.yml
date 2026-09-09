@@ -1,0 +1,6 @@
+name: BuildSystem
+on:
+  push: 
+    branches: ["main"]
+  pull_request: 
+    branches: ["main"]
