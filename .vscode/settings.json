@@ -11,8 +11,7 @@
         "**/*.user": true,
         "**/*.userprefs": true,
         "**/*.unityproj": true,
-        "**/*.dll": true,
-        "**/*.exe": true,
+        
         "**/*.pdf": true,
         "**/*.mid": true,
         "**/*.midi": true,
@@ -40,7 +39,6 @@
         "**/*.cubemap": true,
         "**/*.flare": true,
         "**/*.mat": true,
-        "**/*.meta": true,
         "**/*.prefab": true,
         "**/*.unity": true,
         "build/": true,
@@ -65,7 +63,8 @@
     "explorer.fileNesting.enabled": true,
     "explorer.fileNesting.patterns": {
         "*.sln": "*.csproj",
-        "*.slnx": "*.csproj"
+        "*.slnx": "*.csproj",
+        "*": "$(capture).meta"
     },
     "dotnet.defaultSolution": "SiliconSandbox.slnx"
 }
