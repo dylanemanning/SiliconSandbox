@@ -20,9 +20,12 @@ jobs:
         uses: actions/cache@v4
         with:
           path: Library
-          key: Unity-Library-${{ runner.os }}-${{ hashFiles('Packages/packages-lock.json', 'ProjectSettings/ProjectVersion.txt') }}
+          # key: Unity-Library-${{ runner.os }}-${{ hashFiles('Packages/packages-lock.json', 'ProjectSettings/ProjectVersion.txt') }}
+          key: Unity-Library-${{ runner.os }}-StandaloneWindows64-${{ hashFiles('Packages/packages-lock.json', 'ProjectSettings/ProjectVersion.txt') }}
           restore-keys: |
-            Unity-Library-${{ runner.os }}-
+            Unity-Library-${{ runner.os }}-StandaloneWindows64-
+          # restore-keys: |
+          #   Unity-Library-${{ runner.os }}-
 
       - name: Build Windows application
         uses: game-ci/unity-builder@v4
@@ -34,10 +37,10 @@ jobs:
           unityVersion: 6000.3.8f1
           targetPlatform: StandaloneWindows64
           buildName: Game
-          buildPath: build/Windows
+          buildPath: build
 
       - name: Upload Windows build
         uses: actions/upload-artifact@v4
         with:
           name: Windows-Build
-          path: build/Windows
+          path: build
