@@ -1,13 +1,85 @@
+# Name of the workflow, shown in the GitHub Actions tab
 name: BuildSystem
+
+# Defines when this workflow runs
 on:
   push: 
-    branches: ["main", "dev"]
+    branches: ["main", "dev"]       # Run on every push to main or dev
   pull_request: 
-    branches: ["main", "dev"]
+    branches: ["main", "dev"]       # Run on every PR targeting main or dev
 
 jobs:
+  # ---------------------------------------------------------------------
+  # JOB 1: Run automated Unity tests (EditMode + PlayMode)
+  # ---------------------------------------------------------------------
+  test:
+    name: Run Unity Tests
+    runs-on: ubuntu-latest            # Fresh isolated Ubuntu VM for this job
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4     # Pulls your repo code onto the runner
+        with:
+          lfs: true                  # Also pulls Git LFS files (large Unity assets)
+
+      - name: Cache Unity Library
+        uses: actions/cache@v4        # Reuses the Library folder between runs to speed up builds
+        with:
+          path: Library               # Folder being cached
+          # Cache key changes whenever packages or the Unity version change
+          key: Unity-Library-${{ runner.os }}-StandaloneWindows64-${{ hashFiles('Packages/packages-lock.json', 'ProjectSettings/ProjectVersion.txt') }}
+          restore-keys: |
+            Unity-Library-${{ runner.os }}-StandaloneWindows64-
+
+      - name: Run Unity Test Runner (EditMode + PlayMode)
+        uses: game-ci/unity-test-runner@v4   # Runs Unity's built-in test framework
+        env:
+          # Secrets stored in GitHub repo settings, needed to activate Unity
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          unityVersion: 6000.3.8f1    # Must match your project's Unity version
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()                  # Upload results even if tests failed
+        with:
+          name: Test-Results           # Name of the artifact in the Actions UI
+          path: artifacts              # Folder where test results are written
+
+  # ---------------------------------------------------------------------
+  # JOB 2: Lint / static-analyze the C# code
+  # ---------------------------------------------------------------------
+  lint:
+    name: Lint C# Code
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4   # Installs the .NET SDK on the runner
+        with:
+          dotnet-version: "8.0.x"       # .NET version used to build/analyze the project
+
+      - name: Check code formatting (dotnet format)
+        run: dotnet format --verify-no-changes --severity warn
+        # Fails the job if any file doesn't match your formatting rules
+
+      - name: Run StyleCop / Roslyn analyzers
+        run: dotnet build -warnaserror /p:EnforceCodeStyleInBuild=true
+        # Rebuilds the project but treats analyzer warnings as errors
+
+  # ---------------------------------------------------------------------
+  # JOB 3: Build the actual Windows game, only if tests + lint passed
+  # ---------------------------------------------------------------------
   build:
     name: Build Windows Game
+    needs: [test, lint]              # Waits for both jobs above to succeed first
     runs-on: ubuntu-latest
 
     steps:
@@ -20,24 +92,21 @@ jobs:
         uses: actions/cache@v4
         with:
           path: Library
-          # key: Unity-Library-${{ runner.os }}-${{ hashFiles('Packages/packages-lock.json', 'ProjectSettings/ProjectVersion.txt') }}
           key: Unity-Library-${{ runner.os }}-StandaloneWindows64-${{ hashFiles('Packages/packages-lock.json', 'ProjectSettings/ProjectVersion.txt') }}
           restore-keys: |
             Unity-Library-${{ runner.os }}-StandaloneWindows64-
-          # restore-keys: |
-          #   Unity-Library-${{ runner.os }}-
 
       - name: Build Windows application
-        uses: game-ci/unity-builder@v4
+        uses: game-ci/unity-builder@v4   # Actually compiles/builds the Unity project
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
           unityVersion: 6000.3.8f1
-          targetPlatform: StandaloneWindows64
-          buildName: Game
-          buildPath: build
+          targetPlatform: StandaloneWindows64   # Building for Windows
+          buildName: Game                        # Name of the output executable
+          buildPath: build                       # Where the build output goes
 
       - name: Upload Windows build
         uses: actions/upload-artifact@v4
