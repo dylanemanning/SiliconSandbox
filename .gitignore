@@ -104,3 +104,14 @@ InitTestScene*.unity*
 
 # Auto-generated cache in Assets folder
 /[Aa]ssets/[Ss]ceneDependencyCache*
+
+# Native plugin build artifacts.
+# Compiler output from native/SiliconPlugin/ is never committed: the shipped
+# library is the copy under Assets/Plugins/x86_64/, which these rules do not
+# touch because they are scoped to /native/. The C++ sources under
+# native/SiliconPlugin/src/ and tests/ are of course still tracked.
+/[Nn]ative/**/*.exe
+/[Nn]ative/**/*.dll
+/[Nn]ative/**/*.o
+/[Nn]ative/**/*.obj
+/[Nn]ative/**/*.a
