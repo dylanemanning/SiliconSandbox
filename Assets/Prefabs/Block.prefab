@@ -125,5 +125,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 07afa1191a3254144aa400bb82d4934a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Block
-  durabilitySeconds: 1
+  durabilitySeconds: 0.05
   breakingParticlesPrefab: {fileID: 0}
