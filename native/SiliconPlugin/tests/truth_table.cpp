@@ -1,4 +1,5 @@
-// truth_table.cpp — standalone verification for the gate evaluator (#7).
+// truth_table.cpp — standalone verification for the gate evaluator (#7, plus
+// the NAND/NOR/XOR/XNOR/BUFFER gates added alongside #9).
 //
 // Builds and runs without Unity, without the DLL, and without the Unity Test
 // Framework. This is deliberately the fast loop: the logic gets proven here
@@ -59,10 +60,10 @@ void Check(const char* label, int expected, int gateType,
     const int actual = EvaluateGate(gateType, inputs, inputCount);
 
     if (actual == expected) {
-        std::printf("  PASS  %-18s -> %3d%s\n",
+        std::printf("  PASS  %-24s -> %3d%s\n",
                     label, actual, ErrName(actual));
     } else {
-        std::printf("  FAIL  %-18s -> %3d%s   (expected %d%s)\n",
+        std::printf("  FAIL  %-24s -> %3d%s   (expected %d%s)\n",
                     label, actual, ErrName(actual), expected, ErrName(expected));
         failures++;
     }
@@ -73,7 +74,7 @@ void Check(const char* label, int expected, int gateType,
 int main() {
     std::printf("Gate evaluator verification — issue #7\n");
 
-    // ---- AND and OR: exhaustive over every two-input combination ----------
+    // ---- Two-input gates: exhaustive over every combination ---------------
     //
     // The expected values are written out as literal truth tables rather than
     // computed with && and ||. Deriving them from another expression risks
@@ -81,52 +82,94 @@ int main() {
     // encodes the specification instead.
     //
     // Index i runs 0..3 and enumerates (a, b) as i >> 1 and i & 1.
-    //
-    //                            (0,0) (0,1) (1,0) (1,1)
-    const int expectedAnd[4] = {      0,    0,    0,    1 };
-    const int expectedOr[4]  = {      0,    1,    1,    1 };
+    struct TwoInputTable {
+        const char* name;
+        int type;
+        int expected[4];  // (0,0) (0,1) (1,0) (1,1)
+    };
 
-    const char* andLabels[4] = { "AND(0,0)", "AND(0,1)", "AND(1,0)", "AND(1,1)" };
-    const char* orLabels[4]  = { "OR(0,0)",  "OR(0,1)",  "OR(1,0)",  "OR(1,1)"  };
+    const TwoInputTable twoInput[] = {
+        { "AND",  GATE_AND,  { 0, 0, 0, 1 } },
+        { "OR",   GATE_OR,   { 0, 1, 1, 1 } },
+        { "NAND", GATE_NAND, { 1, 1, 1, 0 } },
+        { "NOR",  GATE_NOR,  { 1, 0, 0, 0 } },
+        { "XOR",  GATE_XOR,  { 0, 1, 1, 0 } },
+        { "XNOR", GATE_XNOR, { 1, 0, 0, 1 } },
+    };
 
-    Section("AND — exhaustive, two inputs");
-    for (int i = 0; i < 4; i++) {
-        const int inputs[2] = { i >> 1, i & 1 };
-        Check(andLabels[i], expectedAnd[i], GATE_AND, inputs, 2);
+    for (const TwoInputTable& t : twoInput) {
+        char title[48];
+        std::snprintf(title, sizeof title, "%s — exhaustive, two inputs", t.name);
+        Section(title);
+        for (int i = 0; i < 4; i++) {
+            const int inputs[2] = { i >> 1, i & 1 };
+            char label[24];
+            std::snprintf(label, sizeof label, "%s(%d,%d)", t.name, inputs[0], inputs[1]);
+            Check(label, t.expected[i], t.type, inputs, 2);
+        }
     }
 
-    Section("OR — exhaustive, two inputs");
-    for (int i = 0; i < 4; i++) {
-        const int inputs[2] = { i >> 1, i & 1 };
-        Check(orLabels[i], expectedOr[i], GATE_OR, inputs, 2);
-    }
-
-    // ---- NOT: exhaustive over its single input ----------------------------
-    const int expectedNot[2] = { 1, 0 };
-    const char* notLabels[2] = { "NOT(0)", "NOT(1)" };
-
+    // ---- Single-input gates: exhaustive -----------------------------------
     Section("NOT — exhaustive, one input");
-    for (int i = 0; i < 2; i++) {
-        const int inputs[1] = { i };
-        Check(notLabels[i], expectedNot[i], GATE_NOT, inputs, 1);
+    {
+        const int zero[1] = { 0 };
+        const int one[1]  = { 1 };
+        Check("NOT(0)",    1, GATE_NOT,    zero, 1);
+        Check("NOT(1)",    0, GATE_NOT,    one,  1);
+
+        Section("BUFFER — exhaustive, one input");
+        Check("BUFFER(0)", 0, GATE_BUFFER, zero, 1);
+        Check("BUFFER(1)", 1, GATE_BUFFER, one,  1);
+    }
+
+    // ---- TC-3.2.9: basic gate + NOT = inverted basic gate ------------------
+    //
+    // Checks the composed result against the evaluator itself, so it proves
+    // NAND/NOR/XNOR agree with NOT applied to AND/OR/XOR on every input.
+    Section("TC-3.2.9 — NOT(gate) equals inverted gate, all two-input cases");
+    {
+        const int pairs[3][2] = {
+            { GATE_AND, GATE_NAND }, { GATE_OR, GATE_NOR }, { GATE_XOR, GATE_XNOR },
+        };
+        const char* names[3] = { "NOT(AND) == NAND", "NOT(OR) == NOR", "NOT(XOR) == XNOR" };
+        for (int p = 0; p < 3; p++) {
+            for (int i = 0; i < 4; i++) {
+                const int inputs[2] = { i >> 1, i & 1 };
+                const int basic[1] = { EvaluateGate(pairs[p][0], inputs, 2) };
+                char label[32];
+                std::snprintf(label, sizeof label, "%s (%d,%d)", names[p], inputs[0], inputs[1]);
+                Check(label, EvaluateGate(pairs[p][1], inputs, 2), GATE_NOT, basic, 1);
+            }
+        }
     }
 
     // ---- n-ary fold spot checks -------------------------------------------
     //
-    // Not exhaustive — the issue's completion condition is about the two-input
-    // truth tables — but enough to catch a fold that only ever reads the first
-    // two elements. In both mixed cases the deciding input is placed LAST on
-    // purpose, so a loop that stops early fails here.
-    const int and3AllHigh[3] = { 1, 1, 1 };
-    const int and3LastLow[3] = { 1, 1, 0 };
-    const int or3AllLow[3]   = { 0, 0, 0 };
-    const int or3LastHigh[3] = { 0, 0, 1 };
+    // Not exhaustive, but enough to catch a fold that only ever reads the first
+    // two elements. In the mixed cases the deciding input is placed LAST on
+    // purpose, so a loop that stops early fails here. XOR/XNOR use three highs:
+    // parity says XOR(1,1,1) = 1, which a gate chained pairwise from the left
+    // also gives, but "exactly one high" (a common wrong reading) gives 0.
+    const int all3High[3]  = { 1, 1, 1 };
+    const int last3Low[3]  = { 1, 1, 0 };
+    const int all3Low[3]   = { 0, 0, 0 };
+    const int last3High[3] = { 0, 0, 1 };
+    const int four1High[4] = { 0, 1, 1, 1 };
 
-    Section("n-ary fold — three inputs, deciding input last");
-    Check("AND(1,1,1)", 1, GATE_AND, and3AllHigh, 3);
-    Check("AND(1,1,0)", 0, GATE_AND, and3LastLow, 3);
-    Check("OR(0,0,0)",  0, GATE_OR,  or3AllLow,   3);
-    Check("OR(0,0,1)",  1, GATE_OR,  or3LastHigh, 3);
+    Section("n-ary fold — three and four inputs, deciding input last");
+    Check("AND(1,1,1)",    1, GATE_AND,  all3High,  3);
+    Check("AND(1,1,0)",    0, GATE_AND,  last3Low,  3);
+    Check("OR(0,0,0)",     0, GATE_OR,   all3Low,   3);
+    Check("OR(0,0,1)",     1, GATE_OR,   last3High, 3);
+    Check("NAND(1,1,1)",   0, GATE_NAND, all3High,  3);
+    Check("NAND(1,1,0)",   1, GATE_NAND, last3Low,  3);
+    Check("NOR(0,0,0)",    1, GATE_NOR,  all3Low,   3);
+    Check("NOR(0,0,1)",    0, GATE_NOR,  last3High, 3);
+    Check("XOR(1,1,1)",    1, GATE_XOR,  all3High,  3);
+    Check("XOR(1,1,0)",    0, GATE_XOR,  last3Low,  3);
+    Check("XOR(0,1,1,1)",  1, GATE_XOR,  four1High, 4);
+    Check("XNOR(1,1,1)",   0, GATE_XNOR, all3High,  3);
+    Check("XNOR(1,1,0)",   1, GATE_XNOR, last3Low,  3);
 
     // ---- Error contract ---------------------------------------------------
     //
@@ -140,6 +183,13 @@ int main() {
     Check("NOT arity 2",      GATE_ERR_INPUT_COUNT,  GATE_NOT,     pair, 2);
     Check("AND arity 1",      GATE_ERR_INPUT_COUNT,  GATE_AND,     pair, 1);
     Check("OR arity 0",       GATE_ERR_INPUT_COUNT,  GATE_OR,      pair, 0);
+    Check("BUFFER arity 2",   GATE_ERR_INPUT_COUNT,  GATE_BUFFER,  pair, 2);
+    Check("NAND arity 1",     GATE_ERR_INPUT_COUNT,  GATE_NAND,    pair, 1);
+    Check("NOR arity 1",      GATE_ERR_INPUT_COUNT,  GATE_NOR,     pair, 1);
+    Check("XOR arity 1",      GATE_ERR_INPUT_COUNT,  GATE_XOR,     pair, 1);
+    Check("XNOR arity 1",     GATE_ERR_INPUT_COUNT,  GATE_XNOR,    pair, 1);
+    Check("SOURCE not a gate", GATE_ERR_UNKNOWN_TYPE, GATE_SOURCE, pair, 1);
+    Check("OUTPUT not a gate", GATE_ERR_UNKNOWN_TYPE, GATE_OUTPUT, pair, 1);
     Check("AND null inputs",  GATE_ERR_NULL_INPUTS,  GATE_AND,     nullptr, 2);
 
     // The out-of-range value sits at index 1 while index 0 is low, so a

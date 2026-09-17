@@ -8,8 +8,11 @@ Unity through `Assets/Scripts/LogicEngine/LogicEngine.cs`.
 ```
 src/gates.h            Gate type and status enums, EvaluateGate declaration
 src/gates.cpp          The evaluator. Plain C++ — no Unity, no DLL awareness
+src/netlist.h          Netlist input structs, CircuitGraph, NetlistStatus, ParseNetlist declaration
+src/netlist.cpp        The netlist parser (#9). Plain C++, same rules as gates.cpp
 src/plugin.cpp         The extern "C" export surface. The only DLL-aware file
-tests/truth_table.cpp  Standalone verification. Builds and runs without Unity
+tests/truth_table.cpp  Gate evaluator verification. Builds and runs without Unity
+tests/graph_parser.cpp Netlist parser verification. Builds and runs without Unity
 ```
 
 The split is deliberate: `gates.cpp` stays portable and testable on its own, and everything that
@@ -19,9 +22,10 @@ boundary, no exceptions allowed to escape.
 
 ## Building
 
-Run both commands from this directory (`native/SiliconPlugin/`).
+Run these commands from this directory (`native/SiliconPlugin/`).
 
-**Tests** — 21 checks covering the full truth table for each gate plus the error contract. Exits
+**Gate tests** — the full truth table for every gate (AND, OR, NOT, NAND, NOR, XOR, XNOR, BUFFER),
+multi-input folds, TC-3.2.9 (NOT of a gate equals its inverted gate), and the error contract. Exits
 non-zero on any failure.
 
 ```sh
@@ -29,11 +33,28 @@ g++ -Wall -Wextra -o truth_table.exe tests/truth_table.cpp src/gates.cpp
 ./truth_table.exe
 ```
 
+**Parser tests** — graph construction for the sample netlists, unwired pins, every node type,
+cycle detection, and every `NetlistStatus` error code. Exits non-zero on any failure.
+
+```sh
+g++ -Wall -Wextra -o graph_parser.exe tests/graph_parser.cpp src/netlist.cpp src/gates.cpp
+./graph_parser.exe
+```
+
 **The plugin:**
 
 ```sh
-g++ -shared -O2 -o SiliconPlugin.dll src/plugin.cpp src/gates.cpp
+g++ -shared -O2 -static -o SiliconPlugin.dll src/plugin.cpp src/gates.cpp src/netlist.cpp
 ```
+
+`-static` is required now that `netlist.cpp` uses the C++ standard library. Without it, a MinGW build
+depends on `libstdc++-6.dll` and `libgcc_s_seh-1.dll`, which Unity cannot find, and the plugin fails
+to load with a `DllNotFoundException` even though `SiliconPlugin.dll` is sitting right there. Check
+with `objdump -p SiliconPlugin.dll | grep "DLL Name"` — only system DLLs (KERNEL32, msvcrt or
+api-ms-win-crt-*) should be listed.
+
+`netlist.cpp` has no exports until #12, so including it does not change the DLL's surface yet;
+it is listed so the command does not need to change again when #12 lands.
 
 Then copy `SiliconPlugin.dll` into `Assets/Plugins/x86_64/`. Build output left in this directory is
 gitignored; the committed binary is the copy under `Assets/`.
@@ -46,6 +67,8 @@ message.
 
 ### Gotchas
 
+- **Link statically.** See the `-static` note above — a missing runtime DLL looks exactly like a
+  missing plugin.
 - **Close the Unity editor before rebuilding.** Unity holds a lock on loaded native libraries, so
   copying over the DLL fails silently while it is open and you end up debugging stale code.
 - The DLL's platform settings live in `Assets/Plugins/x86_64/SiliconPlugin.dll.meta`, which is

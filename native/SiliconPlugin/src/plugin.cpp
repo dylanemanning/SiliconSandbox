@@ -16,7 +16,10 @@
 //     Unity's marshaler owns the inputs array).
 //
 // Build the DLL from native/SiliconPlugin/:
-//     g++ -shared -O2 -o SiliconPlugin.dll src/plugin.cpp src/gates.cpp
+//     g++ -shared -O2 -static -o SiliconPlugin.dll src/plugin.cpp src/gates.cpp src/netlist.cpp
+//
+// -static matters: netlist.cpp uses the C++ standard library, and without it
+// the DLL depends on libstdc++-6.dll, which Unity can't find.
 //
 // Then copy SiliconPlugin.dll into Assets/Plugins/x86_64/. Close the Unity
 // editor before rebuilding — it holds a lock on loaded native libraries, and
@@ -45,7 +48,8 @@ extern "C" {
 // is not. The C# side names it explicitly via EntryPoint, so the managed API
 // can still be called LogicEngine.Evaluate().
 //
-//   gateType    silicon::GateType — AND = 1, OR = 2, NOT = 3
+//   gateType    silicon::GateType — any gate (AND, OR, NOT, NAND, NOR, XOR,
+//               XNOR, BUFFER); SOURCE and OUTPUT are rejected as unknown
 //   inputs      caller-owned array of signals, each strictly 0 or 1
 //   inputCount  number of elements in inputs
 //
