@@ -9,6 +9,7 @@ public class Player : MonoBehaviour
     public float reachDistance = 5f;
     public float fallThreshold = -10f;
     public Transform respawnPoint;
+    public HotbarManager hotbar;
     public GameObject blockHighlighter; // Visual indicator for targeted block
     public Block[] blockPalette; // Array of different block prefabs (Grass, Wire, Voltage, etc.)
     private int selectedBlockIndex = 0; // The current slot selected
@@ -177,7 +178,8 @@ public class Player : MonoBehaviour
 
     void TryPlaceBlock() 
     {
-        if (targetBlock == null || blockPalette.Length == 0) return;
+        Block selectedBlock = hotbar ? hotbar.SelectedBlock : null;
+        if (targetBlock == null || selectedBlock == null) return;
 
         Block prefabToPlace = blockPalette[selectedBlockIndex];
         
