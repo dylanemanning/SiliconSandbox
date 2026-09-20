@@ -129,14 +129,18 @@ public class Player : MonoBehaviour
 
             if (targetBlock != null) // If we hit a block, show the highlighter at the block's position
             {
-                blockHighlighter.SetActive(true);
-                blockHighlighter.transform.position = targetBlock.transform.position;
+                if (blockHighlighter != null)
+                {
+                    blockHighlighter.SetActive(true);
+                    blockHighlighter.transform.position = targetBlock.transform.position;
+                }
             }
         }
         else // If we don't hit anything, clear the target block and hide the highlighter
         {
             targetBlock = null;
-            blockHighlighter.SetActive(false);
+            if (blockHighlighter != null)
+                blockHighlighter.SetActive(false);
         }
     }
 
@@ -155,7 +159,7 @@ public class Player : MonoBehaviour
         else if (Keyboard.current.digit9Key.wasPressedThisFrame) selectedBlockIndex = 8;
 
         // Clamp the index to ensure it doesn't exceed the number of blocks you've actually added to the palette
-        if (blockPalette.Length > 0)
+        if (blockPalette != null && blockPalette.Length > 0)
         {
             selectedBlockIndex = Mathf.Clamp(selectedBlockIndex, 0, blockPalette.Length - 1);
         }
