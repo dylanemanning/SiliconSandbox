@@ -27,6 +27,7 @@ public class Player : MonoBehaviour
 
     void Start()
     {
+        WorldSaveSystem.GetOrCreate(blockPalette, null);
         rb = GetComponent<Rigidbody>();
         rb.freezeRotation = true; // Crucial for player controllers
         spawnPosition = transform.position;
@@ -201,6 +202,7 @@ public class Player : MonoBehaviour
 
         // Single Instantiate call at the end using whichever rotation was calculated
         Instantiate(prefabToPlace, spawnPosition, spawnRotation);
+        WorldSaveSystem.Instance?.MarkDirty();
     }
 
     private void OnTriggerStay(Collider other) => isGrounded = true;

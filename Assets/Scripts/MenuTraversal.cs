@@ -1,5 +1,8 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using TMPro;
+using UnityEngine.UI;
+using System.Collections.Generic;
 
 public class MenuTraversal : MonoBehaviour
 {
@@ -19,6 +22,11 @@ public class MenuTraversal : MonoBehaviour
 
     [Header("Scene")]
     public string gameplaySceneName = "SampleScene";
+    public TMP_InputField worldNameInput;
+    public Transform savedWorldContainer;
+    public Button savedWorldButtonPrefab;
+    public GameObject noSavedWorldMessage;
+    private readonly List<Button> generatedWorldButtons = new List<Button>();
 
     private void Start()
     {
@@ -50,6 +58,21 @@ public class MenuTraversal : MonoBehaviour
 
     public void startGame()
     {
+        WorldSaveSystem.PendingWorldName = "World";
+        SceneManager.LoadScene(gameplaySceneName);
+    }
+
+    public void createWorld()
+    {
+        string worldName = worldNameInput == null ? "World" : worldNameInput.text.Trim();
+        WorldSaveSystem.PendingWorldName = string.IsNullOrWhiteSpace(worldName) ? "World" : worldName;
+        SceneManager.LoadScene(gameplaySceneName);
+    }
+
+    public void loadWorld(string worldName)
+    {
+        if (string.IsNullOrWhiteSpace(worldName)) return;
+        WorldSaveSystem.PendingWorldName = worldName;
         SceneManager.LoadScene(gameplaySceneName);
     }
 
@@ -58,10 +81,40 @@ public class MenuTraversal : MonoBehaviour
         EnsureStyler();
         mainMenuPanel.SetActive(false);
         LoadPanel.SetActive(true);
+        PopulateSavedWorlds();
 
         if (menuStyler != null)
         {
             menuStyler.Apply();
+        }
+    }
+
+    private void PopulateSavedWorlds()
+    {
+        foreach (Button button in generatedWorldButtons)
+        {
+            if (button != null) Destroy(button.gameObject);
+        }
+        generatedWorldButtons.Clear();
+
+        string[] savedWorldNames = WorldSaveSystem.GetSavedWorldNames();
+        GameObject emptyMessage = noSavedWorldMessage;
+        if (emptyMessage == null && LoadPanel != null)
+        {
+            Transform messageTransform = LoadPanel.transform.Find("NoProjectError");
+            if (messageTransform != null) emptyMessage = messageTransform.gameObject;
+        }
+
+        if (emptyMessage != null) emptyMessage.SetActive(savedWorldNames.Length == 0);
+        if (savedWorldContainer == null || savedWorldButtonPrefab == null) return;
+
+        foreach (string worldName in savedWorldNames)
+        {
+            Button button = Instantiate(savedWorldButtonPrefab, savedWorldContainer);
+            TMP_Text label = button.GetComponentInChildren<TMP_Text>();
+            if (label != null) label.text = worldName;
+            button.onClick.AddListener(() => loadWorld(worldName));
+            generatedWorldButtons.Add(button);
         }
     }
 
