@@ -9,6 +9,7 @@ public class Player : MonoBehaviour
     public float reachDistance = 5f;
     public float fallThreshold = -10f;
     public Transform respawnPoint;
+    public HotbarManager hotbar;
     public GameObject blockHighlighter; // Visual indicator for targeted block
     public Block[] blockPalette; // Array of different block prefabs (Grass, Wire, Voltage, etc.)
     private int selectedBlockIndex = 0; // The current slot selected
@@ -176,7 +177,8 @@ public class Player : MonoBehaviour
 
     void TryPlaceBlock() 
     {
-        if (targetBlock == null || blockPalette.Length == 0) return;
+        Block selectedBlock = hotbar ? hotbar.SelectedBlock : null;
+        if (targetBlock == null || selectedBlock == null) return;
 
         Block prefabToPlace = blockPalette[selectedBlockIndex];
         
@@ -199,8 +201,7 @@ public class Player : MonoBehaviour
                 spawnRotation = Quaternion.Euler(0, 90, 90);
         }
 
-        // Single Instantiate call at the end using whichever rotation was calculated
-        Instantiate(prefabToPlace, spawnPosition, spawnRotation);
+        Instantiate(selectedBlock, spawnPosition, Quaternion.identity);
     }
 
     private void OnTriggerStay(Collider other) => isGrounded = true;
