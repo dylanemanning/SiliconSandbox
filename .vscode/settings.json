@@ -11,7 +11,6 @@
         "**/*.user": true,
         "**/*.userprefs": true,
         "**/*.unityproj": true,
-        
         "**/*.pdf": true,
         "**/*.mid": true,
         "**/*.midi": true,
@@ -66,5 +65,5 @@
         "*.slnx": "*.csproj",
         "*": "$(capture).meta"
     },
-    "dotnet.defaultSolution": "SiliconSandbox.slnx"
+    "dotnet.defaultSolution": "Silicon Sandbox.slnx"
 }
