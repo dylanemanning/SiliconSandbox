@@ -47,7 +47,7 @@ public class Player : MonoBehaviour
         HandleHotbarInput();
 
         // New Input System check for Left Click (Breaking)
-        if (Mouse.current.leftButton.isPressed) 
+        if (Mouse.current.rightButton.isPressed) 
         { 
             TryBreakBlock(); 
         }
@@ -58,7 +58,7 @@ public class Player : MonoBehaviour
         }
 
         // New Input System check for Right Click (Placement)
-        if (Mouse.current.rightButton.wasPressedThisFrame) 
+        if (Mouse.current.leftButton.wasPressedThisFrame) 
         { 
             TryPlaceBlock(); 
         }
