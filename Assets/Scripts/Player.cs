@@ -9,7 +9,7 @@ public class Player : MonoBehaviour
     public float reachDistance = 5f;
     public float fallThreshold = -10f;
     public Transform respawnPoint;
-    public Block activeBlockPrefab; // What you are currently "holding" to place
+    public HotbarManager hotbar;
 
     float xRotation;
     float yRotation;
@@ -144,13 +144,14 @@ public class Player : MonoBehaviour
 
     void TryPlaceBlock() 
     {
-        if (targetBlock == null || activeBlockPrefab == null) return;
+        Block selectedBlock = hotbar ? hotbar.SelectedBlock : null;
+        if (targetBlock == null || selectedBlock == null) return;
 
         // Simplify placement using the Normal
         // The normal is the direction pointing out from the face we hit
         Vector3 spawnPosition = targetBlock.transform.position + targetRaycastHit.normal;
 
-        Instantiate(activeBlockPrefab, spawnPosition, Quaternion.identity);
+        Instantiate(selectedBlock, spawnPosition, Quaternion.identity);
     }
 
     private void OnTriggerStay(Collider other) => isGrounded = true;
