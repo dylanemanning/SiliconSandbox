@@ -24,7 +24,7 @@ Every RCA completed during the semester is recorded here. Severity follows the r
 
 | Date | Issue | Severity | Defect summary | Root cause | RCA | Author |
 | --- | --- | --- | --- | --- | --- | --- |
-| 2026-09-20 | [#55](https://github.com/dylanemanning/SiliconSandbox/issues/55) | High | Eight-gate logic engine appeared to fail tests; five gates absent from the committed plugin binary | Committed `SiliconPlugin.dll` built from three-gate source — source and artifact diverged silently | [RCA](PASTE_COMMENT_PERMALINK) | Gray |
+| 2026-09-20 | [#55](https://github.com/dylanemanning/SiliconSandbox/issues/55) | High | Eight-gate logic engine appeared to fail tests; five gates absent from the committed plugin binary | Committed `SiliconPlugin.dll` built from three-gate source — source and artifact diverged silently | [RCA](https://github.com/dylanemanning/SiliconSandbox/issues/55#issuecomment-5755197404) | Gray |
 
 Column notes:
 
