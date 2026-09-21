@@ -13,7 +13,8 @@ public class HotbarManager : MonoBehaviour
 
     private void Start()
     {
-        SelectSlot(0);
+        if (slots != null && slots.Length > 0)
+            SelectSlot(0);
     }
 
     private void Update()
@@ -56,7 +57,8 @@ public class HotbarManager : MonoBehaviour
         else if (Keyboard.current.digit9Key.wasPressedThisFrame)
         {
             SelectSlot(8);
-        }else
+        }
+        else if (Mouse.current != null && slots != null && slots.Length > 0)
         {
             float scroll = Mouse.current.scroll.ReadValue().y;
 
@@ -73,14 +75,15 @@ public class HotbarManager : MonoBehaviour
 
     private void SelectSlot(int index)
     {
-        if (index < 0 || index >= slots.Length)
+        if (slots == null || index < 0 || index >= slots.Length)
             return;
 
         selectedSlot = index;
 
         for (int i = 0; i < slots.Length; i++)
         {
-            slots[i].SetSelected(i == selectedSlot);
+            if (slots[i] != null)
+                slots[i].SetSelected(i == selectedSlot);
         }
     }
 }

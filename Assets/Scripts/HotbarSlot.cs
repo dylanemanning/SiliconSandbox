@@ -16,11 +16,13 @@ public class HotbarSlot : MonoBehaviour
     {
         if (selected)
         {
-            background.color = selectedColor;
+            if (background != null)
+                background.color = selectedColor;
         }
         else
         {
-            background.color = normalColor;
+            if (background != null)
+                background.color = normalColor;
         }
     }
 

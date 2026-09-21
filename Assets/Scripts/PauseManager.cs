@@ -6,10 +6,11 @@ public class PauseManager : MonoBehaviour
 {
     [SerializeField] private GameObject pausePanel;
 
-    private bool isPaused = false;
+    public static bool IsPaused { get; private set; }
 
     private void Start()
     {
+        IsPaused = false;
         pausePanel.SetActive(false);
 
         Time.timeScale = 1f;
@@ -29,7 +30,7 @@ public class PauseManager : MonoBehaviour
 
     public void TogglePause()
     {
-        if (isPaused)
+        if (IsPaused)
         {
             ResumeGame();
         }
@@ -41,7 +42,8 @@ public class PauseManager : MonoBehaviour
 
     public void PauseGame()
     {
-        isPaused = true;
+        Debug.Log("Pause");
+        IsPaused = true;
 
         pausePanel.SetActive(true);
 
@@ -54,7 +56,7 @@ public class PauseManager : MonoBehaviour
     public void ResumeGame()
     {
         Debug.Log("Resume");
-        isPaused = false;
+        IsPaused = false;
 
         pausePanel.SetActive(false);
 
@@ -66,7 +68,11 @@ public class PauseManager : MonoBehaviour
 
     public void ReturnToMainMenu()
     {
+        Debug.Log("Main Menu");
+        IsPaused = false;
         Time.timeScale = 1f;
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
 
         SceneManager.LoadScene("MainMenu");
     }
