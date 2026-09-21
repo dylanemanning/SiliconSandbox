@@ -39,6 +39,8 @@ public class Player : MonoBehaviour
 
     void Update()
     {
+        if (PauseManager.IsPaused) return;
+
         CheckFall();
         CheckRotation();
         CheckMovement();

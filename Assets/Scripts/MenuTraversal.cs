@@ -27,6 +27,8 @@ public class MenuTraversal : MonoBehaviour
     public Button savedWorldButtonPrefab;
     public GameObject noSavedWorldMessage;
     private readonly List<Button> generatedWorldButtons = new List<Button>();
+    private ScrollRect loadScrollRect;
+    private RectTransform loadViewport;
 
     private void Start()
     {
@@ -81,6 +83,7 @@ public class MenuTraversal : MonoBehaviour
         EnsureStyler();
         mainMenuPanel.SetActive(false);
         LoadPanel.SetActive(true);
+        ConfigureLoadScroll();
         PopulateSavedWorlds();
 
         if (menuStyler != null)
@@ -116,6 +119,109 @@ public class MenuTraversal : MonoBehaviour
             button.onClick.AddListener(() => loadWorld(worldName));
             generatedWorldButtons.Add(button);
         }
+
+        Canvas.ForceUpdateCanvases();
+        LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform)savedWorldContainer);
+        if (loadScrollRect != null) loadScrollRect.verticalNormalizedPosition = 1f;
+    }
+
+    private void ConfigureLoadScroll()
+    {
+        if (LoadPanel == null || savedWorldContainer == null) return;
+
+        RectTransform panelTransform = LoadPanel.GetComponent<RectTransform>();
+        RectTransform contentTransform = savedWorldContainer as RectTransform;
+        if (panelTransform == null || contentTransform == null) return;
+
+        loadScrollRect = LoadPanel.GetComponent<ScrollRect>();
+        if (loadScrollRect == null) loadScrollRect = LoadPanel.AddComponent<ScrollRect>();
+
+        loadScrollRect.horizontal = false;
+        loadScrollRect.vertical = true;
+        loadScrollRect.movementType = ScrollRect.MovementType.Clamped;
+        loadScrollRect.scrollSensitivity = 30f;
+        loadViewport = EnsureLoadViewport(panelTransform, contentTransform);
+        loadScrollRect.viewport = loadViewport;
+        loadScrollRect.content = contentTransform;
+
+        ContentSizeFitter fitter = savedWorldContainer.GetComponent<ContentSizeFitter>();
+        if (fitter == null) fitter = savedWorldContainer.gameObject.AddComponent<ContentSizeFitter>();
+        fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+        fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+        VerticalLayoutGroup layout = savedWorldContainer.GetComponent<VerticalLayoutGroup>();
+        if (layout != null)
+        {
+            layout.childForceExpandHeight = false;
+            layout.childControlHeight = false;
+        }
+
+        CreateLoadScrollbar(loadViewport);
+    }
+
+    private RectTransform EnsureLoadViewport(RectTransform panelTransform, RectTransform contentTransform)
+    {
+        if (loadViewport != null) return loadViewport;
+
+        GameObject viewportObject = new GameObject("LoadViewport", typeof(RectTransform), typeof(Image), typeof(RectMask2D));
+        viewportObject.transform.SetParent(panelTransform, false);
+        loadViewport = viewportObject.GetComponent<RectTransform>();
+
+        loadViewport.anchorMin = new Vector2(0.5f, 0.5f);
+        loadViewport.anchorMax = new Vector2(0.5f, 0.5f);
+        loadViewport.pivot = new Vector2(0.5f, 0.5f);
+        loadViewport.anchoredPosition = new Vector2(60f, 100f);
+        loadViewport.sizeDelta = new Vector2(500f, 300f);
+
+        Image viewportImage = viewportObject.GetComponent<Image>();
+        viewportImage.color = Color.clear;
+        viewportImage.raycastTarget = true;
+
+        contentTransform.SetParent(loadViewport, false);
+        contentTransform.anchorMin = new Vector2(0f, 1f);
+        contentTransform.anchorMax = new Vector2(1f, 1f);
+        contentTransform.pivot = new Vector2(0.5f, 1f);
+        contentTransform.anchoredPosition = Vector2.zero;
+        contentTransform.sizeDelta = new Vector2(0f, 0f);
+
+        return loadViewport;
+    }
+
+    private void CreateLoadScrollbar(RectTransform viewportTransform)
+    {
+        Scrollbar scrollbar = LoadPanel.GetComponentInChildren<Scrollbar>(true);
+        if (scrollbar == null)
+        {
+            GameObject scrollbarObject = new GameObject("LoadScrollbar", typeof(RectTransform), typeof(Image), typeof(Scrollbar));
+            scrollbarObject.transform.SetParent(viewportTransform, false);
+            RectTransform scrollbarTransform = (RectTransform)scrollbarObject.transform;
+            scrollbarTransform.anchorMin = new Vector2(1f, 0f);
+            scrollbarTransform.anchorMax = new Vector2(1f, 1f);
+            scrollbarTransform.pivot = new Vector2(1f, 0.5f);
+            scrollbarTransform.anchoredPosition = new Vector2(-12f, 0f);
+            scrollbarTransform.sizeDelta = new Vector2(18f, -180f);
+
+            Image track = scrollbarObject.GetComponent<Image>();
+            track.color = new Color(0f, 0f, 0f, 0.35f);
+
+            GameObject handleObject = new GameObject("Handle", typeof(RectTransform), typeof(Image));
+            handleObject.transform.SetParent(scrollbarObject.transform, false);
+            RectTransform handleTransform = (RectTransform)handleObject.transform;
+            handleTransform.anchorMin = Vector2.zero;
+            handleTransform.anchorMax = Vector2.one;
+            handleTransform.offsetMin = new Vector2(2f, 2f);
+            handleTransform.offsetMax = new Vector2(-2f, -2f);
+            handleObject.GetComponent<Image>().color = new Color(1f, 1f, 1f, 0.75f);
+
+            scrollbar = scrollbarObject.GetComponent<Scrollbar>();
+            scrollbar.targetGraphic = handleObject.GetComponent<Image>();
+            scrollbar.handleRect = handleTransform;
+            scrollbar.direction = Scrollbar.Direction.BottomToTop;
+        }
+
+        loadScrollRect.verticalScrollbar = scrollbar;
+        loadScrollRect.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHideAndExpandViewport;
+        loadScrollRect.verticalScrollbarSpacing = -3f;
     }
 
     public void closeLoad()
