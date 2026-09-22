@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    PluginCheck: loads the COMMITTED Assets/Plugins/x86_64/SiliconPlugin.dll and calls it
+    through the real LogicEngine.cs wrapper, outside Unity. Run by the "native-plugin" job in
+    .github/workflows/actions.yml on windows-latest, because the Unity test job runs on Linux
+    and cannot load a Windows DLL.
+
+    How to run it locally is at the top of Program.cs. Exits non-zero on any failure.
+
+    Lives outside Assets/ on purpose so Unity never tries to compile it.
+  -->
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <!-- The DLL is x86_64 only; a 32-bit or AnyCPU-preferring-32 host could not load it. -->
+    <PlatformTarget>x64</PlatformTarget>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- The same wrapper gameplay code uses, linked rather than copied. -->
+    <Compile Include="../../../../Assets/Scripts/LogicEngine/LogicEngine.cs" Link="LogicEngine.cs" />
+    <!-- The committed binary under test, copied next to the exe so DllImport finds it. -->
+    <None Include="../../../../Assets/Plugins/x86_64/SiliconPlugin.dll" Link="SiliconPlugin.dll" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

@@ -114,4 +114,9 @@ InitTestScene*.unity*
 /[Nn]ative/**/*.dll
 /[Nn]ative/**/*.o
 /[Nn]ative/**/*.obj
+/[Nn]ative/**/[Bb]in/
+/[Nn]ative/**/[Oo]bj/
+# Unity's *.csproj rule above targets its generated project files. The .NET
+# projects under native/ are hand-written and must be tracked (CI builds them).
+!/[Nn]ative/**/*.csproj
 /[Nn]ative/**/*.a

@@ -49,9 +49,28 @@ jobs:
           name: Test-Results
           path: artifacts
 
+  native-plugin:
+    permissions:
+      contents: read
+
+    name: Check Native Plugin (Windows)
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Check committed SiliconPlugin.dll
+        run: dotnet run -c Release --project native/SiliconPlugin/tests/PluginCheck
+
   build:
     name: Build Windows Game
-    needs: [test]
+    needs: [test, native-plugin]
     runs-on: ubuntu-latest
 
     steps:
