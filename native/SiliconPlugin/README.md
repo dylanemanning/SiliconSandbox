@@ -13,6 +13,7 @@ src/netlist.cpp        The netlist parser (#9). Plain C++, same rules as gates.c
 src/plugin.cpp         The extern "C" export surface. The only DLL-aware file
 tests/truth_table.cpp  Gate evaluator verification. Builds and runs without Unity
 tests/graph_parser.cpp Netlist parser verification. Builds and runs without Unity
+tests/PluginCheck/     Loads the committed DLL through LogicEngine.cs (.NET, Windows). Run in CI
 ```
 
 The split is deliberate: `gates.cpp` stays portable and testable on its own, and everything that
@@ -41,10 +42,19 @@ g++ -Wall -Wextra -o graph_parser.exe tests/graph_parser.cpp src/netlist.cpp src
 ./graph_parser.exe
 ```
 
+**PluginCheck** — loads the *committed* `Assets/Plugins/x86_64/SiliconPlugin.dll` through the real
+`LogicEngine.cs`, checks every `GateType` against its truth table, and fails if the DLL still has debug
+sections. This is what the `native-plugin` CI job runs on `windows-latest`, since the Unity test job
+runs on Linux and can't load the DLL. Needs the .NET 8 SDK; run from the repo root:
+
+```sh
+dotnet run -c Release --project native/SiliconPlugin/tests/PluginCheck
+```
+
 **The plugin:**
 
 ```sh
-g++ -shared -O2 -static -o SiliconPlugin.dll src/plugin.cpp src/gates.cpp src/netlist.cpp
+g++ -shared -O2 -static -s -o SiliconPlugin.dll src/plugin.cpp src/gates.cpp src/netlist.cpp
 ```
 
 `-static` is required now that `netlist.cpp` uses the C++ standard library. Without it, a MinGW build
@@ -52,6 +62,12 @@ depends on `libstdc++-6.dll` and `libgcc_s_seh-1.dll`, which Unity cannot find, 
 to load with a `DllNotFoundException` even though `SiliconPlugin.dll` is sitting right there. Check
 with `objdump -p SiliconPlugin.dll | grep "DLL Name"` — only system DLLs (KERNEL32, msvcrt or
 api-ms-win-crt-*) should be listed.
+
+`-s` strips debug sections and symbols. The committed DLL is a binary in git with no LFS, so every
+rebuild adds its full size to the repo history permanently. Unstripped, the static MinGW build is
+~700 KB; stripped it is ~230 KB. Check with `objdump -h SiliconPlugin.dll` — there should be no
+`.debug_*` sections. If you forget, `strip --strip-unneeded SiliconPlugin.dll` fixes an existing
+build without touching the code.
 
 `netlist.cpp` has no exports until #12, so including it does not change the DLL's surface yet;
 it is listed so the command does not need to change again when #12 lands.
@@ -69,6 +85,7 @@ message.
 
 - **Link statically.** See the `-static` note above — a missing runtime DLL looks exactly like a
   missing plugin.
+- **Strip before committing.** See the `-s` note above.
 - **Close the Unity editor before rebuilding.** Unity holds a lock on loaded native libraries, so
   copying over the DLL fails silently while it is open and you end up debugging stale code.
 - The DLL's platform settings live in `Assets/Plugins/x86_64/SiliconPlugin.dll.meta`, which is

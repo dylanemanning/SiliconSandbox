@@ -114,4 +114,6 @@ InitTestScene*.unity*
 /[Nn]ative/**/*.dll
 /[Nn]ative/**/*.o
 /[Nn]ative/**/*.obj
+/[Nn]ative/**/[Bb]in/
+/[Nn]ative/**/[Oo]bj/
 /[Nn]ative/**/*.a

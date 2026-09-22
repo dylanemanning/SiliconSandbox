@@ -16,10 +16,13 @@
 //     Unity's marshaler owns the inputs array).
 //
 // Build the DLL from native/SiliconPlugin/:
-//     g++ -shared -O2 -static -o SiliconPlugin.dll src/plugin.cpp src/gates.cpp src/netlist.cpp
+//     g++ -shared -O2 -static -s -o SiliconPlugin.dll src/plugin.cpp src/gates.cpp src/netlist.cpp
 //
 // -static matters: netlist.cpp uses the C++ standard library, and without it
 // the DLL depends on libstdc++-6.dll, which Unity can't find.
+//
+// -s strips debug info and symbols. Without it MinGW's static libstdc++ adds
+// roughly 460 KB of debug sections to a binary that is committed to git.
 //
 // Then copy SiliconPlugin.dll into Assets/Plugins/x86_64/. Close the Unity
 // editor before rebuilding — it holds a lock on loaded native libraries, and
