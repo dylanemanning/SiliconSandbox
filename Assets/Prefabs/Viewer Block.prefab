@@ -13,8 +13,9 @@ GameObject:
   - component: {fileID: 1641858442470815138}
   - component: {fileID: 9094735564857728606}
   - component: {fileID: 1955800274510326494}
+  - component: {fileID: -4489550708251031898}
   m_Layer: 0
-  m_Name: Block
+  m_Name: Viewer Block
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -68,7 +69,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: e6db98778331d0948bef158c927c69ae, type: 2}
+  - {fileID: 2100000, guid: 9fea48566ab72dc4487a0776d84eba54, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -127,3 +128,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Block
   durabilitySeconds: 0.05
   breakingParticlesPrefab: {fileID: 0}
+--- !u!114 &-4489550708251031898
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4383146860704513453}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef4b6b8f57f534d43b5b098f2ab40b0e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StateViewerBlock
+  targetRenderer: {fileID: 1641858442470815138}
+  lowColor: {r: 0, g: 0, b: 0, a: 1}
+  highColor: {r: 0, g: 1, b: 0, a: 1}

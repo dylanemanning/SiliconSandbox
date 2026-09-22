@@ -47,6 +47,7 @@ public class Block : MonoBehaviour
     public void Break() {
 
         if (breakingParticles) { Destroy(breakingParticles); }
+        WorldSaveSystem.Instance?.MarkDirty();
        
         Destroy(gameObject);
 
