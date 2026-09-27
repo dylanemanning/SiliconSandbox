@@ -25,10 +25,20 @@ public enum GateType
     // Zero is reserved as invalid on purpose. A default-initialised field, or one
     // that failed to deserialise, would otherwise read as a valid And and produce
     // plausible-but-wrong output instead of an error.
+    //
+    // Source and Output are netlist node kinds rather than gates (#9). Evaluate
+    // rejects them as UnknownType.
     Invalid = 0,
     And     = 1,
     Or      = 2,
-    Not     = 3
+    Not     = 3,
+    Source  = 4,
+    Output  = 5,
+    Nand    = 6,
+    Nor     = 7,
+    Xor     = 8,
+    Xnor    = 9,
+    Buffer  = 10
 }
 
 /// <summary>
@@ -74,8 +84,9 @@ public static class LogicEngine
     /// Evaluates one logic gate.
     /// </summary>
     /// <param name="gateType">The gate to evaluate.</param>
-    /// <param name="inputs">Input signals, each strictly 0 or 1. Not takes exactly
-    /// one; And and Or take two or more and fold across all of them.</param>
+    /// <param name="inputs">Input signals, each strictly 0 or 1. Not and Buffer
+    /// take exactly one; And, Or, Nand, Nor, Xor and Xnor take two or more and fold
+    /// across all of them (Xor is odd parity, Xnor even parity).</param>
     /// <returns>0 or 1.</returns>
     /// <exception cref="LogicEngineException">
     /// The gate could not be evaluated, or the native plugin is unavailable.
@@ -128,11 +139,11 @@ public static class LogicEngine
         switch (status)
         {
             case GateStatus.UnknownType:
-                return $"Unknown gate type {(int)gateType}. Valid types are And, Or and Not.";
+                return $"Unknown gate type {(int)gateType}. Valid gates are And, Or, Not, Nand, Nor, Xor, Xnor and Buffer.";
 
             case GateStatus.InputCount:
                 return $"{gateType} received {inputs.Length} input(s). " +
-                       "Not requires exactly 1; And and Or require 2 or more.";
+                       "Not and Buffer require exactly 1; the other gates require 2 or more.";
 
             case GateStatus.NullInputs:
                 return $"{gateType} received a null input array.";
