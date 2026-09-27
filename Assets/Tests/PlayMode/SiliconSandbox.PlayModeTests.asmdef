@@ -1,0 +1,22 @@
+{
+    "name": "SiliconSandbox.PlayModeTests",
+    "rootNamespace": "",
+    "references": [
+        "SiliconSandbox.Game",
+        "Unity.InputSystem",
+        "Unity.InputSystem.TestFramework",
+        "Unity.TextMeshPro"
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
