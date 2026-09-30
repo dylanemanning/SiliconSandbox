@@ -107,8 +107,11 @@ public class Player : MonoBehaviour
     void CheckRotation()
     {
         if (cameraSettings.camera == null) return;
-        
-        Vector2 mouseDelta = Mouse.current.delta.ReadValue();
+
+        Mouse mouse = Mouse.current;
+        if (mouse == null) return;
+
+        Vector2 mouseDelta = mouse.delta.ReadValue();
         float mouseX = mouseDelta.x * Time.deltaTime * cameraSettings.sensitivityX;
         float mouseY = mouseDelta.y * Time.deltaTime * cameraSettings.sensitivityY;
 
@@ -162,6 +165,15 @@ public class Player : MonoBehaviour
 
     void CheckTargetBlock() 
     {
+        if (cameraSettings.camera == null)
+        {
+            targetBlock = null;
+
+            if (blockHighlighter != null)
+                blockHighlighter.SetActive(false);
+
+            return;
+        }
         // Shoot ray from center of camera
         Ray ray = cameraSettings.camera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
         
