@@ -120,3 +120,6 @@ InitTestScene*.unity*
 # projects under native/ are hand-written and must be tracked (CI builds them).
 !/[Nn]ative/**/*.csproj
 /[Nn]ative/**/*.a
+
+# macOS folder metadata
+.DS_Store
