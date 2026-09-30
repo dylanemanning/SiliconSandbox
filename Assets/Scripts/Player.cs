@@ -106,6 +106,8 @@ public class Player : MonoBehaviour
 
     void CheckRotation()
     {
+        if (cameraSettings.camera == null) return;
+        
         Vector2 mouseDelta = Mouse.current.delta.ReadValue();
         float mouseX = mouseDelta.x * Time.deltaTime * cameraSettings.sensitivityX;
         float mouseY = mouseDelta.y * Time.deltaTime * cameraSettings.sensitivityY;
