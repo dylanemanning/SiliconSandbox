@@ -29,6 +29,10 @@ public class UserControlTests : InputTestFixture
 
     public override void TearDown()
     {
+        if (keyboard != null) InputSystem.ResetDevice(keyboard);
+
+        if (mouse != null) InputSystem.ResetDevice(mouse);
+
         Time.timeScale = 1f;
 
         base.TearDown();

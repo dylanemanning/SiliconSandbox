@@ -12,18 +12,24 @@ public class MenuTests : InputTestFixture
     private const string GameplayScene = "SampleScene";
 
     private Keyboard keyboard;
+    private Mouse mouse;
 
     public override void Setup()
     {
         base.Setup();
 
         keyboard = InputSystem.AddDevice<Keyboard>();
+        mouse = InputSystem.AddDevice<Mouse>();
 
         PlayerPrefs.DeleteKey("Keybind.Pause");
     }
 
     public override void TearDown()
     {
+        if (keyboard != null) InputSystem.ResetDevice(keyboard);
+
+        if (mouse != null) InputSystem.ResetDevice(mouse);
+        
         Time.timeScale = 1f;
         base.TearDown();
     }
