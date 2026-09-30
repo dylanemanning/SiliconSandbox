@@ -31,7 +31,7 @@ jobs:
             Unity-Library-${{ runner.os }}-StandaloneWindows64-
 
       - name: Run Unity PlayMode tests
-        uses: game-ci/unity-test-runner@v4
+        uses: game-ci/unity-test-runner@c609e5c8e6d256ee6f61b8cebaaa3fe8b0b9469f
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
@@ -43,7 +43,7 @@ jobs:
           artifactsPath: artifacts/playmode
 
       - name: Run Unity EditMode tests
-        uses: game-ci/unity-test-runner@v4
+        uses: game-ci/unity-test-runner@c609e5c8e6d256ee6f61b8cebaaa3fe8b0b9469f
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
