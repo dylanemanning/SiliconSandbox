@@ -1450,6 +1450,7 @@ MonoBehaviour:
     sensitivityY: 40
   speed: 5
   jumpForce: 5
+  flightStep: 1
   reachDistance: 5
   fallThreshold: -4
   respawnPoint: {fileID: 832575519}
@@ -1465,6 +1466,7 @@ MonoBehaviour:
   - {fileID: 1955800274510326494, guid: c229e5dc942464245a58c793fa64e54a, type: 3}
   - {fileID: 1955800274510326494, guid: c229e5dc942464245a58c793fa64e54a, type: 3}
   - {fileID: 1955800274510326494, guid: c229e5dc942464245a58c793fa64e54a, type: 3}
+  doublePressTime: 0.3
 --- !u!4 &519699314
 Transform:
   m_ObjectHideFlags: 0
