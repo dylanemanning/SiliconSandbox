@@ -195,7 +195,7 @@ GameObject:
   - component: {fileID: 337998522910240698}
   - component: {fileID: 2647034416989911691}
   m_Layer: 0
-  m_Name: AND Gate 1
+  m_Name: NAND Gate
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -302,7 +302,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5bb7a519f2664db44be42a78f0313f26, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GateBlock
-  gateType: 1
+  gateType: 6
   outputIndicator: {fileID: 1968744031952342737}
   lowColor: {r: 0, g: 0, b: 0, a: 1}
   highColor: {r: 0, g: 1, b: 0, a: 1}

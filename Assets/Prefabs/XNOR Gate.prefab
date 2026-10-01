@@ -302,7 +302,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5bb7a519f2664db44be42a78f0313f26, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GateBlock
-  gateType: 2
+  gateType: 9
   outputIndicator: {fileID: 1968744031952342737}
   lowColor: {r: 0, g: 0, b: 0, a: 1}
   highColor: {r: 0, g: 1, b: 0, a: 1}
