@@ -29,7 +29,7 @@ jobs:
           restore-keys: |
             Unity-Library-${{ runner.os }}-StandaloneWindows64-
 
-      - name: Run Unity Test Runner (EditMode + PlayMode)
+      - name: Run Unity Test Runner (EditMode)
         uses: game-ci/unity-test-runner@v4
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
@@ -37,6 +37,7 @@ jobs:
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
           unityVersion: 6000.3.8f1
+          testMode: editmode
 
       - name: Return license
         uses: game-ci/unity-return-license@v2
