@@ -72,7 +72,6 @@ public class UserControlTests : InputTestFixture
         Press(keyboard.wKey);
 
         yield return null;
-        yield return new WaitForFixedUpdate();
 
         Vector3 forwardVelocity =
             rb.linearVelocity;
@@ -88,7 +87,6 @@ public class UserControlTests : InputTestFixture
         Press(keyboard.sKey);
 
         yield return null;
-        yield return new WaitForFixedUpdate();
 
         Vector3 backwardVelocity =
             rb.linearVelocity;
@@ -104,7 +102,6 @@ public class UserControlTests : InputTestFixture
         Press(keyboard.aKey);
 
         yield return null;
-        yield return new WaitForFixedUpdate();
 
         Vector3 leftVelocity =
             rb.linearVelocity;
@@ -120,7 +117,6 @@ public class UserControlTests : InputTestFixture
         Press(keyboard.dKey);
 
         yield return null;
-        yield return new WaitForFixedUpdate();
 
         Vector3 rightVelocity =
             rb.linearVelocity;
@@ -164,8 +160,6 @@ public class UserControlTests : InputTestFixture
                 delta = new Vector2(100, 50)
             }
         );
-
-        InputSystem.Update();
 
         yield return null;
 
