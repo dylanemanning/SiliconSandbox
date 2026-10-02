@@ -21,8 +21,7 @@ public class PauseManager : MonoBehaviour
 
     private void Update()
     {
-        if (Keyboard.current != null &&
-            (Keyboard.current.escapeKey.wasPressedThisFrame /*|| Keyboard.current.backspaceKey.wasPressedThisFrame*/))
+        if (KeybindSettings.WasPressedThisFrame(KeybindSettings.Pause))
         {
             TogglePause();
         }

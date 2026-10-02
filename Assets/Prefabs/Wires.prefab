@@ -141,6 +141,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ecc70f6703b6cde4e85b13870d8e3e23, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LogicWireBlock
+  targetRenderer: {fileID: 1641858442470815138}
+  unpoweredMaterial: {fileID: 2100000, guid: 9fea48566ab72dc4487a0776d84eba54, type: 2}
+  poweredMaterial: {fileID: 2100000, guid: a3a30617deec1c4498045628bae7bf43, type: 2}
   directionVisuals:
   - {fileID: 0}
   - {fileID: 0}

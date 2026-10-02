@@ -5,10 +5,18 @@ public class Block : MonoBehaviour
 
     public float durabilitySeconds;
     public ParticleSystem breakingParticlesPrefab;
+    public bool breakable = true;
+    public float placementGridSize = 1f;
+    public bool isGround;
 
     ParticleSystem breakingParticles;
 
     float lastBreakProgress;
+
+    private void Awake()
+    {
+        if (isGround) breakable = false;
+    }
 
     private void Update() {
         
@@ -21,6 +29,8 @@ public class Block : MonoBehaviour
     }
 
     public bool TryBreak(float breakSeconds) {
+
+        if (!breakable) return false;
 
         lastBreakProgress = Time.time;
 
@@ -45,6 +55,8 @@ public class Block : MonoBehaviour
     }
 
     public void Break() {
+
+        if (!breakable) return;
 
         if (breakingParticles) { Destroy(breakingParticles); }
         WorldSaveSystem.Instance?.MarkDirty();

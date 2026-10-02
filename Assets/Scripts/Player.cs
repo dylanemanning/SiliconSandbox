@@ -1,11 +1,14 @@
+using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 public class Player : MonoBehaviour
 {
     public CameraSettings cameraSettings;
     public float speed = 10f;
     public float jumpForce = 5f;
+    public float flightStep = 1f;
     public float reachDistance = 5f;
     public float fallThreshold = -10f;
     public Transform respawnPoint;
@@ -20,6 +23,10 @@ public class Player : MonoBehaviour
     float breakSeconds;
     Vector3 spawnPosition;
     Quaternion spawnRotation;
+    public float doublePressTime = 0.3f; 
+    private float lastSpacePressTime = 0f;
+    private bool waitingForSecondSpacePress = false;
+    private bool isFlying = false;
 
     Block targetBlock;
     Block breakingBlock;
@@ -49,7 +56,7 @@ public class Player : MonoBehaviour
         HandleHotbarInput();
 
         // New Input System check for Left Click (Breaking)
-        if (Mouse.current.rightButton.isPressed) 
+        if (KeybindSettings.IsMouseButtonPressed(KeybindSettings.BreakMouseButton)) 
         { 
             TryBreakBlock(); 
         }
@@ -60,9 +67,23 @@ public class Player : MonoBehaviour
         }
 
         // New Input System check for Right Click (Placement)
-        if (Mouse.current.leftButton.wasPressedThisFrame) 
+        if (KeybindSettings.WasMouseButtonPressedThisFrame(KeybindSettings.PlaceMouseButton)) 
         { 
             TryPlaceBlock(); 
+        }
+
+        if (KeybindSettings.WasPressedThisFrame(KeybindSettings.Jump))
+        {
+            if (waitingForSecondSpacePress && Time.time - lastSpacePressTime <= doublePressTime)
+            {
+                ToggleFlight();
+                waitingForSecondSpacePress = false;
+            }
+            else
+            {
+                lastSpacePressTime = Time.time;
+                waitingForSecondSpacePress = true;
+            }
         }
     }
 
@@ -85,7 +106,12 @@ public class Player : MonoBehaviour
 
     void CheckRotation()
     {
-        Vector2 mouseDelta = Mouse.current.delta.ReadValue();
+        if (cameraSettings.camera == null) return;
+
+        Mouse mouse = Mouse.current;
+        if (mouse == null) return;
+
+        Vector2 mouseDelta = mouse.delta.ReadValue();
         float mouseX = mouseDelta.x * Time.deltaTime * cameraSettings.sensitivityX;
         float mouseY = mouseDelta.y * Time.deltaTime * cameraSettings.sensitivityY;
 
@@ -102,10 +128,10 @@ public class Player : MonoBehaviour
         float moveX = 0;
         float moveZ = 0;
 
-        if (Keyboard.current.wKey.isPressed) moveZ = 1;
-        if (Keyboard.current.sKey.isPressed) moveZ = -1;
-        if (Keyboard.current.aKey.isPressed) moveX = -1;
-        if (Keyboard.current.dKey.isPressed) moveX = 1;
+        if (KeybindSettings.IsPressed(KeybindSettings.MoveForward)) moveZ = 1;
+        if (KeybindSettings.IsPressed(KeybindSettings.MoveBackward)) moveZ = -1;
+        if (KeybindSettings.IsPressed(KeybindSettings.MoveLeft)) moveX = -1;
+        if (KeybindSettings.IsPressed(KeybindSettings.MoveRight)) moveX = 1;
 
         Vector3 move = (transform.forward * moveZ + transform.right * moveX).normalized * speed;
         rb.linearVelocity = new Vector3(move.x, rb.linearVelocity.y, move.z);
@@ -113,14 +139,41 @@ public class Player : MonoBehaviour
 
     void CheckJump()
     {
-        if (isGrounded && Keyboard.current.spaceKey.wasPressedThisFrame)
+        if(!isFlying) {
+            if (isGrounded && KeybindSettings.WasPressedThisFrame(KeybindSettings.Jump))
+            {
+                rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+            }
+        } else
         {
-            rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+            if (KeybindSettings.WasPressedThisFrame(KeybindSettings.Jump))
+            {
+                MoveWhileFlying(Vector3.up);
+            }
+            if (KeybindSettings.WasPressedThisFrame(KeybindSettings.FlyDown))
+            {
+                MoveWhileFlying(Vector3.down);
+            }
         }
+    }
+
+    void MoveWhileFlying(Vector3 direction)
+    {
+        rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
+        rb.MovePosition(rb.position + direction * flightStep);
     }
 
     void CheckTargetBlock() 
     {
+        if (cameraSettings.camera == null)
+        {
+            targetBlock = null;
+
+            if (blockHighlighter != null)
+                blockHighlighter.SetActive(false);
+
+            return;
+        }
         // Shoot ray from center of camera
         Ray ray = cameraSettings.camera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
         
@@ -148,6 +201,8 @@ public class Player : MonoBehaviour
 
     void HandleHotbarInput()
     {
+        Keyboard keyboard = Keyboard.current;
+        if (keyboard == null) return;
         // Directly check each number key. 
         // This is the most reliable way with the New Input System's current API.
         if (Keyboard.current.digit1Key.wasPressedThisFrame) selectedBlockIndex = 0;
@@ -169,7 +224,7 @@ public class Player : MonoBehaviour
 
     void TryBreakBlock() 
     {
-        if (!targetBlock) { breakSeconds = 0; return; }
+        if (!targetBlock || !targetBlock.breakable) { breakSeconds = 0; return; }
         if (breakingBlock != targetBlock) { breakSeconds = 0; }
 
         breakingBlock = targetBlock;
@@ -191,6 +246,13 @@ public class Player : MonoBehaviour
         
         // Round to Int ensures the grid is perfect (1.0, 2.0, etc.)
         Vector3 spawnPosition = targetBlock.transform.position + targetRaycastHit.normal;
+        if (!targetBlock.breakable)
+        {
+            float gridSize = Mathf.Max(targetBlock.placementGridSize, 0.001f);
+            spawnPosition.x = Mathf.Round(targetRaycastHit.point.x / gridSize) * gridSize;
+            spawnPosition.z = Mathf.Round(targetRaycastHit.point.z / gridSize) * gridSize;
+            spawnPosition.y = targetBlock.transform.position.y + targetRaycastHit.normal.y;
+        }
         
         float playerYaw = transform.eulerAngles.y;
         Quaternion spawnRotation = Quaternion.identity;
@@ -211,6 +273,20 @@ public class Player : MonoBehaviour
         // Single Instantiate call at the end using whichever rotation was calculated
         Instantiate(prefabToPlace, spawnPosition, spawnRotation);
         WorldSaveSystem.Instance?.MarkDirty();
+    }
+
+    void ToggleFlight()
+    {
+        rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
+        if(!isFlying)
+        {
+            Physics.gravity = new Vector3(0f, 0f, 0f);
+            isFlying = true;
+        } else
+        {
+            Physics.gravity = new Vector3(0f, -9.81f, 0f);
+            isFlying = false;
+        }
     }
 
     private void OnTriggerStay(Collider other) => isGrounded = true;
