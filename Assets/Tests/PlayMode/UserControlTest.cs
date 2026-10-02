@@ -17,6 +17,9 @@ public class UserControlTests : InputTestFixture
     {
         base.Setup();
 
+        keyboard = InputSystem.AddDevice<Keyboard>();
+        mouse = InputSystem.AddDevice<Mouse>();
+
         PlayerPrefs.DeleteKey("Keybind.MoveForward");
         PlayerPrefs.DeleteKey("Keybind.MoveBackward");
         PlayerPrefs.DeleteKey("Keybind.MoveLeft");
@@ -59,12 +62,12 @@ public class UserControlTests : InputTestFixture
         Assert.IsNotNull(rb);
 
         Press(keyboard.wKey);
-        yield return new WaitForFixedUpdate();
+        yield return null;
 
         Vector3 forwardVelocity = rb.linearVelocity;
 
         Release(keyboard.wKey);
-        yield return new WaitForFixedUpdate();
+        yield return null;
 
         Assert.Greater(
             forwardVelocity.magnitude,
@@ -73,12 +76,12 @@ public class UserControlTests : InputTestFixture
         );
 
         Press(keyboard.sKey);
-        yield return new WaitForFixedUpdate();
+        yield return null;
 
         Vector3 backwardVelocity = rb.linearVelocity;
 
         Release(keyboard.sKey);
-        yield return new WaitForFixedUpdate();
+        yield return null;
 
         Assert.Greater(
             backwardVelocity.magnitude,
@@ -87,12 +90,12 @@ public class UserControlTests : InputTestFixture
         );
 
         Press(keyboard.aKey);
-        yield return new WaitForFixedUpdate();
+        yield return null;
 
         Vector3 leftVelocity = rb.linearVelocity;
 
         Release(keyboard.aKey);
-        yield return new WaitForFixedUpdate();
+        yield return null;
 
         Assert.Greater(
             leftVelocity.magnitude,
@@ -101,12 +104,12 @@ public class UserControlTests : InputTestFixture
         );
 
         Press(keyboard.dKey);
-        yield return new WaitForFixedUpdate();
+        yield return null;
 
         Vector3 rightVelocity = rb.linearVelocity;
 
         Release(keyboard.dKey);
-        yield return new WaitForFixedUpdate();
+        yield return null;
 
         Assert.Greater(
             rightVelocity.magnitude,
@@ -123,7 +126,6 @@ public class UserControlTests : InputTestFixture
     [UnityTest]
     public IEnumerator TC_8_3_1_MouseMovesCamera()
     {
-        mouse = InputSystem.AddDevice<Mouse>();
         yield return LoadGame();
 
         Player player =

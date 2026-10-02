@@ -201,6 +201,8 @@ public class Player : MonoBehaviour
 
     void HandleHotbarInput()
     {
+        Keyboard keyboard = Keyboard.current;
+        if (keyboard == null) return;
         // Directly check each number key. 
         // This is the most reliable way with the New Input System's current API.
         if (Keyboard.current.digit1Key.wasPressedThisFrame) selectedBlockIndex = 0;

@@ -28,12 +28,16 @@ public class ProjectSelectionTests
         WorldSaveSystem.PendingWorldName = null;
     }
 
-    [TearDown]
-    public void TearDown()
+    [UnityTearDown]
+    public IEnumerator TearDown()
     {
         DeleteTestWorlds();
 
         WorldSaveSystem.PendingWorldName = null;
+
+        SceneManager.LoadScene("EmptyScene");
+        yield return null;
+        yield return null;
     }
 
     private void DeleteTestWorlds()
