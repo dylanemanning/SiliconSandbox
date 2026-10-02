@@ -29,10 +29,6 @@ public class UserControlTests : InputTestFixture
 
     public override void TearDown()
     {
-        if (keyboard != null) InputSystem.ResetDevice(keyboard);
-
-        if (mouse != null) InputSystem.ResetDevice(mouse);
-
         Time.timeScale = 1f;
 
         base.TearDown();
@@ -77,6 +73,7 @@ public class UserControlTests : InputTestFixture
             rb.linearVelocity;
 
         Release(keyboard.wKey);
+        yield return null;
 
         Assert.Greater(
             forwardVelocity.magnitude,
@@ -92,6 +89,7 @@ public class UserControlTests : InputTestFixture
             rb.linearVelocity;
 
         Release(keyboard.sKey);
+        yield return null;
 
         Assert.Greater(
             backwardVelocity.magnitude,
@@ -107,6 +105,7 @@ public class UserControlTests : InputTestFixture
             rb.linearVelocity;
 
         Release(keyboard.aKey);
+        yield return null;
 
         Assert.Greater(
             leftVelocity.magnitude,
@@ -122,6 +121,7 @@ public class UserControlTests : InputTestFixture
             rb.linearVelocity;
 
         Release(keyboard.dKey);
+        yield return null;
 
         Assert.Greater(
             rightVelocity.magnitude,
