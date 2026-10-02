@@ -17,9 +17,6 @@ public class UserControlTests : InputTestFixture
     {
         base.Setup();
 
-        keyboard = InputSystem.AddDevice<Keyboard>();
-        mouse = InputSystem.AddDevice<Mouse>();
-
         PlayerPrefs.DeleteKey("Keybind.MoveForward");
         PlayerPrefs.DeleteKey("Keybind.MoveBackward");
         PlayerPrefs.DeleteKey("Keybind.MoveLeft");
@@ -30,7 +27,6 @@ public class UserControlTests : InputTestFixture
     public override void TearDown()
     {
         Time.timeScale = 1f;
-
         base.TearDown();
     }
 
@@ -53,27 +49,22 @@ public class UserControlTests : InputTestFixture
     [UnityTest]
     public IEnumerator TC_8_1_2_PlayerMovesWithWASD()
     {
+        keyboard = InputSystem.AddDevice<Keyboard>();
         yield return LoadGame();
 
-        Player player =
-            Object.FindFirstObjectByType<Player>();
-
+        Player player = Object.FindFirstObjectByType<Player>();
         Assert.IsNotNull(player);
 
-        Rigidbody rb =
-            player.GetComponent<Rigidbody>();
-
+        Rigidbody rb = player.GetComponent<Rigidbody>();
         Assert.IsNotNull(rb);
 
         Press(keyboard.wKey);
+        yield return new WaitForFixedUpdate();
 
-        yield return null;
-
-        Vector3 forwardVelocity =
-            rb.linearVelocity;
+        Vector3 forwardVelocity = rb.linearVelocity;
 
         Release(keyboard.wKey);
-        yield return null;
+        yield return new WaitForFixedUpdate();
 
         Assert.Greater(
             forwardVelocity.magnitude,
@@ -82,14 +73,12 @@ public class UserControlTests : InputTestFixture
         );
 
         Press(keyboard.sKey);
+        yield return new WaitForFixedUpdate();
 
-        yield return null;
-
-        Vector3 backwardVelocity =
-            rb.linearVelocity;
+        Vector3 backwardVelocity = rb.linearVelocity;
 
         Release(keyboard.sKey);
-        yield return null;
+        yield return new WaitForFixedUpdate();
 
         Assert.Greater(
             backwardVelocity.magnitude,
@@ -98,14 +87,12 @@ public class UserControlTests : InputTestFixture
         );
 
         Press(keyboard.aKey);
+        yield return new WaitForFixedUpdate();
 
-        yield return null;
-
-        Vector3 leftVelocity =
-            rb.linearVelocity;
+        Vector3 leftVelocity = rb.linearVelocity;
 
         Release(keyboard.aKey);
-        yield return null;
+        yield return new WaitForFixedUpdate();
 
         Assert.Greater(
             leftVelocity.magnitude,
@@ -114,14 +101,12 @@ public class UserControlTests : InputTestFixture
         );
 
         Press(keyboard.dKey);
+        yield return new WaitForFixedUpdate();
 
-        yield return null;
-
-        Vector3 rightVelocity =
-            rb.linearVelocity;
+        Vector3 rightVelocity = rb.linearVelocity;
 
         Release(keyboard.dKey);
-        yield return null;
+        yield return new WaitForFixedUpdate();
 
         Assert.Greater(
             rightVelocity.magnitude,
@@ -138,6 +123,7 @@ public class UserControlTests : InputTestFixture
     [UnityTest]
     public IEnumerator TC_8_3_1_MouseMovesCamera()
     {
+        mouse = InputSystem.AddDevice<Mouse>();
         yield return LoadGame();
 
         Player player =
