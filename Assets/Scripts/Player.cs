@@ -9,6 +9,7 @@ public class Player : MonoBehaviour
     public float reachDistance = 5f;
     public float fallThreshold = -10f;
     public Transform respawnPoint;
+    public HotbarManager hotbar;
     public GameObject blockHighlighter; // Visual indicator for targeted block
     public Block[] blockPalette; // Array of different block prefabs (Grass, Wire, Voltage, etc.)
     private int selectedBlockIndex = 0; // The current slot selected
@@ -27,6 +28,7 @@ public class Player : MonoBehaviour
 
     void Start()
     {
+        WorldSaveSystem.GetOrCreate(blockPalette, null);
         rb = GetComponent<Rigidbody>();
         rb.freezeRotation = true; // Crucial for player controllers
         spawnPosition = transform.position;
@@ -37,6 +39,8 @@ public class Player : MonoBehaviour
 
     void Update()
     {
+        if (PauseManager.IsPaused) return;
+
         CheckFall();
         CheckRotation();
         CheckMovement();
@@ -45,7 +49,7 @@ public class Player : MonoBehaviour
         HandleHotbarInput();
 
         // New Input System check for Left Click (Breaking)
-        if (Mouse.current.leftButton.isPressed) 
+        if (Mouse.current.rightButton.isPressed) 
         { 
             TryBreakBlock(); 
         }
@@ -56,7 +60,7 @@ public class Player : MonoBehaviour
         }
 
         // New Input System check for Right Click (Placement)
-        if (Mouse.current.rightButton.wasPressedThisFrame) 
+        if (Mouse.current.leftButton.wasPressedThisFrame) 
         { 
             TryPlaceBlock(); 
         }
@@ -127,14 +131,18 @@ public class Player : MonoBehaviour
 
             if (targetBlock != null) // If we hit a block, show the highlighter at the block's position
             {
-                blockHighlighter.SetActive(true);
-                blockHighlighter.transform.position = targetBlock.transform.position;
+                if (blockHighlighter != null)
+                {
+                    blockHighlighter.SetActive(true);
+                    blockHighlighter.transform.position = targetBlock.transform.position;
+                }
             }
         }
         else // If we don't hit anything, clear the target block and hide the highlighter
         {
             targetBlock = null;
-            blockHighlighter.SetActive(false);
+            if (blockHighlighter != null)
+                blockHighlighter.SetActive(false);
         }
     }
 
@@ -153,7 +161,7 @@ public class Player : MonoBehaviour
         else if (Keyboard.current.digit9Key.wasPressedThisFrame) selectedBlockIndex = 8;
 
         // Clamp the index to ensure it doesn't exceed the number of blocks you've actually added to the palette
-        if (blockPalette.Length > 0)
+        if (blockPalette != null && blockPalette.Length > 0)
         {
             selectedBlockIndex = Mathf.Clamp(selectedBlockIndex, 0, blockPalette.Length - 1);
         }
@@ -176,7 +184,8 @@ public class Player : MonoBehaviour
 
     void TryPlaceBlock() 
     {
-        if (targetBlock == null || blockPalette.Length == 0) return;
+        Block selectedBlock = hotbar ? hotbar.SelectedBlock : null;
+        if (targetBlock == null || selectedBlock == null) return;
 
         Block prefabToPlace = blockPalette[selectedBlockIndex];
         
@@ -201,6 +210,7 @@ public class Player : MonoBehaviour
 
         // Single Instantiate call at the end using whichever rotation was calculated
         Instantiate(prefabToPlace, spawnPosition, spawnRotation);
+        WorldSaveSystem.Instance?.MarkDirty();
     }
 
     private void OnTriggerStay(Collider other) => isGrounded = true;

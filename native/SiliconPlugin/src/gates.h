@@ -19,11 +19,23 @@ namespace silicon {
 // Zero is reserved as invalid on purpose. A zero-initialized struct, or a field
 // that failed to deserialize, would otherwise read as a valid AND gate and
 // produce plausible-but-wrong output instead of an error.
+//
+// SOURCE and OUTPUT are not gates, but they are nodes in a netlist (#9) and
+// share this code space so a saved netlist needs only one type field per node.
+// EvaluateGate rejects them with GATE_ERR_UNKNOWN_TYPE: a source's value comes
+// from the player, and an output just displays whatever drives it.
 enum GateType {
     GATE_INVALID = 0,
     GATE_AND     = 1,
     GATE_OR      = 2,
-    GATE_NOT     = 3
+    GATE_NOT     = 3,
+    GATE_SOURCE  = 4,  // no inputs; drives a player-set 0 or 1 (switch, voltage source)
+    GATE_OUTPUT  = 5,  // exactly one input, no outputs (LED)
+    GATE_NAND    = 6,
+    GATE_NOR     = 7,
+    GATE_XOR     = 8,
+    GATE_XNOR    = 9,
+    GATE_BUFFER  = 10
 };
 
 // Failure codes returned by EvaluateGate.
@@ -44,8 +56,12 @@ enum GateStatus {
 //   inputs      array of input signals, each strictly 0 or 1
 //   inputCount  number of elements in inputs
 //
-// Arity: NOT takes exactly one input. AND and OR take two or more and fold
-// across all of them (AND = every input high, OR = any input high).
+// Arity: NOT and BUFFER take exactly one input. AND, OR, NAND, NOR, XOR and
+// XNOR take two or more and fold across all of them:
+//   AND  every input high        NAND  not every input high
+//   OR   any input high          NOR   no input high
+//   XOR  odd number of inputs high (parity — the standard n-input XOR)
+//   XNOR even number of inputs high
 //
 // Returns 0 or 1 on success, or a negative GateStatus on failure.
 int EvaluateGate(int gateType, const int* inputs, int inputCount);

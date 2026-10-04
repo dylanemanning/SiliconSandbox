@@ -9,6 +9,7 @@ public class FlatWorldGenerator : MonoBehaviour
 
     void Start()
     {
+        WorldSaveSystem.GetOrCreate(new[] { cubePrefab }, transform);
         GenerateWorld();
     }
 
