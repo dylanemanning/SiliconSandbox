@@ -49,7 +49,7 @@ public class Player : MonoBehaviour
         HandleHotbarInput();
 
         // New Input System check for Left Click (Breaking)
-        if (Mouse.current.rightButton.isPressed) 
+        if (Mouse.current.leftButton.isPressed) 
         { 
             TryBreakBlock(); 
         }
@@ -60,7 +60,7 @@ public class Player : MonoBehaviour
         }
 
         // New Input System check for Right Click (Placement)
-        if (Mouse.current.leftButton.wasPressedThisFrame) 
+        if (Mouse.current.rightButton.wasPressedThisFrame) 
         { 
             TryPlaceBlock(); 
         }
@@ -206,6 +206,13 @@ public class Player : MonoBehaviour
                 spawnRotation = Quaternion.Euler(0, 00, 90);
             else
                 spawnRotation = Quaternion.Euler(0, 90, 90);
+        }
+        // Gates face the way the player is looking: output on the far side,
+        // inputs left and right. Yaw is snapped to 90 degrees so the gate's
+        // ports (GateBlock.WorldPorts) point along whole grid directions.
+        else if (prefabToPlace.GetComponent<GateBlock>() != null)
+        {
+            spawnRotation = Quaternion.Euler(0, Mathf.Round(playerYaw / 90f) * 90f, 0);
         }
 
         // Single Instantiate call at the end using whichever rotation was calculated
