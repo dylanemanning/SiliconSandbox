@@ -19,4 +19,22 @@ public class LogicSignalRulesTests
     {
         Assert.AreEqual(0, LogicSignalRules.ResolveSources(new[] { 0, 0, 0 }));
     }
+
+    [Test]
+    public void ConflictingHighAndLowSourcesResolveErrored()
+    {
+        Assert.AreEqual(-1, LogicSignalRules.ResolveSources(new[] { 1, 0 }));
+    }
+
+    [Test]
+    public void ErroredSourceStatePropagates()
+    {
+        Assert.AreEqual(-1, LogicSignalRules.ResolveSources(new[] { 1, -1, 0 }));
+    }
+
+    [Test]
+    public void NonBinarySourceStateResolvesErrored()
+    {
+        Assert.AreEqual(-1, LogicSignalRules.ResolveSources(new[] { 2 }));
+    }
 }

@@ -68,7 +68,9 @@ public class LogicWireBlock : LogicSignalBlock
     {
         if (targetRenderer == null) return;
 
-        Material nextMaterial = signalState == 1 ? poweredMaterial : unpoweredMaterial;
+        Material nextMaterial = signalState == 1
+            ? poweredMaterial
+            : signalState == -1 ? erroredMaterial : unpoweredMaterial;
         if (nextMaterial != null)
         {
             targetRenderer.sharedMaterial = nextMaterial;
