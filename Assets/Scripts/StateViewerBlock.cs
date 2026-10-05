@@ -52,7 +52,12 @@ public class StateViewerBlock : LogicSignalBlock
         foreach (Vector3Int neighborPosition in Neighbors(GridPosition))
         {
             LogicSignalBlock neighbor = At(neighborPosition);
-            if (neighbor is LogicWireBlock || neighbor is LogicSignalSource)
+            if (neighbor is LogicWireBlock wire && wire.HasEndpointTowards(GridPosition))
+            {
+                return wire.SignalState;
+            }
+
+            if (neighbor is LogicSignalSource)
             {
                 return neighbor.SignalState;
             }

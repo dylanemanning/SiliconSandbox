@@ -107,6 +107,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Block
   durabilitySeconds: 0.05
   breakingParticlesPrefab: {fileID: 0}
+  breakable: 1
+  placementGridSize: 1
+  isGround: 0
 --- !u!64 &491053845916856356
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -144,6 +147,7 @@ MonoBehaviour:
   targetRenderer: {fileID: 1641858442470815138}
   unpoweredMaterial: {fileID: 2100000, guid: 9fea48566ab72dc4487a0776d84eba54, type: 2}
   poweredMaterial: {fileID: 2100000, guid: a3a30617deec1c4498045628bae7bf43, type: 2}
+  erroredMaterial: {fileID: 2100000, guid: 7f211796a0624aa46b7492a28c1dfc45, type: 2}
   directionVisuals:
   - {fileID: 0}
   - {fileID: 0}

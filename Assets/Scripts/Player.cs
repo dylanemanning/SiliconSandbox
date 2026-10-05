@@ -253,6 +253,13 @@ public class Player : MonoBehaviour
             spawnPosition.z = Mathf.Round(targetRaycastHit.point.z / gridSize) * gridSize;
             spawnPosition.y = targetBlock.transform.position.y + targetRaycastHit.normal.y;
         }
+        else
+        {
+            float gridSize = Mathf.Max(targetBlock.placementGridSize, 0.001f);
+            spawnPosition.x = Mathf.Round(spawnPosition.x / gridSize) * gridSize;
+            spawnPosition.y = Mathf.Round(spawnPosition.y / gridSize) * gridSize;
+            spawnPosition.z = Mathf.Round(spawnPosition.z / gridSize) * gridSize;
+        }
         
         float playerYaw = transform.eulerAngles.y;
         Quaternion spawnRotation = Quaternion.identity;

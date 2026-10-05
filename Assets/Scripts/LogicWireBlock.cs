@@ -7,6 +7,7 @@ public class LogicWireBlock : LogicSignalBlock
     [SerializeField] private Renderer targetRenderer;
     [SerializeField] private Material unpoweredMaterial;
     [SerializeField] private Material poweredMaterial;
+    [SerializeField] private Material erroredMaterial;
 
     [Header("Optional junction visuals")]
     [Tooltip("Child objects for +X, -X, +Y, -Y, +Z, -Z branches.")]
@@ -19,6 +20,26 @@ public class LogicWireBlock : LogicSignalBlock
     public int ConnectionMask => connectionMask;
     public int ConnectionCount => CountBits(connectionMask);
     public bool IsJunction => ConnectionCount >= 3;
+
+    public bool HasEndpointTowards(Vector3Int neighborPosition)
+    {
+        Vector3Int direction = neighborPosition - GridPosition;
+        Vector3Int axis = Vector3Int.RoundToInt(transform.up);
+        return direction == axis || direction == -axis;
+    }
+
+    public bool ConnectsTo(LogicSignalBlock neighbor)
+    {
+        if (neighbor == null) return false;
+
+        if (neighbor is LogicWireBlock neighborWire)
+        {
+            return HasEndpointTowards(neighbor.GridPosition) ||
+                   neighborWire.HasEndpointTowards(GridPosition);
+        }
+
+        return neighbor is LogicSignalSource && HasEndpointTowards(neighbor.GridPosition);
+    }
 
     protected override void OnEnable()
     {
@@ -63,7 +84,7 @@ public class LogicWireBlock : LogicSignalBlock
         foreach (Vector3Int neighborPosition in Neighbors(position))
         {
             LogicSignalBlock neighbor = At(neighborPosition);
-            if (neighbor is LogicWireBlock || neighbor is LogicSignalSource)
+            if (ConnectsTo(neighbor))
             {
                 connectionMask |= 1 << index;
             }
@@ -92,6 +113,8 @@ public class LogicWireBlock : LogicSignalBlock
             foreach (Vector3Int neighborPosition in Neighbors(wire.GridPosition))
             {
                 LogicSignalBlock neighbor = At(neighborPosition);
+                if (!wire.ConnectsTo(neighbor)) continue;
+
                 if (neighbor is LogicWireBlock neighborWire)
                 {
                     pending.Enqueue(neighborWire);
