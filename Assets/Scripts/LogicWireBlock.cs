@@ -13,6 +13,7 @@ public class LogicWireBlock : LogicSignalBlock
     [Tooltip("Child objects for +X, -X, +Y, -Y, +Z, -Z branches.")]
     [SerializeField] private GameObject[] directionVisuals = new GameObject[6];
 
+    private readonly LineRenderer[] connectionLines = new LineRenderer[6];
     private int signalState;
     private int connectionMask;
 
@@ -45,6 +46,7 @@ public class LogicWireBlock : LogicSignalBlock
     {
         base.OnEnable();
         ResolveRenderer();
+        EnsureConnectionLines();
         ApplyVisualState();
     }
 
@@ -66,14 +68,46 @@ public class LogicWireBlock : LogicSignalBlock
 
     private void ApplyVisualState()
     {
-        if (targetRenderer == null) return;
-
         Material nextMaterial = signalState == 1
             ? poweredMaterial
             : signalState == -1 ? erroredMaterial : unpoweredMaterial;
         if (nextMaterial != null)
         {
-            targetRenderer.sharedMaterial = nextMaterial;
+            if (targetRenderer != null)
+            {
+                targetRenderer.sharedMaterial = nextMaterial;
+            }
+
+            foreach (LineRenderer line in connectionLines)
+            {
+                if (line != null) line.sharedMaterial = nextMaterial;
+            }
+        }
+    }
+
+    private void EnsureConnectionLines()
+    {
+        for (int index = 0; index < connectionLines.Length; index++)
+        {
+            Transform existing = transform.Find($"Wire Connection {index}");
+            GameObject lineObject = existing != null
+                ? existing.gameObject
+                : new GameObject($"Wire Connection {index}");
+
+            if (existing == null)
+            {
+                lineObject.transform.SetParent(transform, false);
+            }
+
+            LineRenderer line = lineObject.GetComponent<LineRenderer>();
+            if (line == null) line = lineObject.AddComponent<LineRenderer>();
+
+            line.useWorldSpace = true;
+            line.positionCount = 2;
+            line.startWidth = 0.18f;
+            line.endWidth = 0.18f;
+            line.enabled = false;
+            connectionLines[index] = line;
         }
     }
 
@@ -86,7 +120,8 @@ public class LogicWireBlock : LogicSignalBlock
         foreach (Vector3Int neighborPosition in Neighbors(position))
         {
             LogicSignalBlock neighbor = At(neighborPosition);
-            if (ConnectsTo(neighbor))
+            bool connected = ConnectsTo(neighbor);
+            if (connected)
             {
                 connectionMask |= 1 << index;
             }
@@ -96,8 +131,44 @@ public class LogicWireBlock : LogicSignalBlock
                 directionVisuals[index].SetActive((connectionMask & (1 << index)) != 0);
             }
 
+            UpdateConnectionLine(index, position, neighborPosition, neighbor, connected);
             index++;
         }
+    }
+
+    private void UpdateConnectionLine(
+        int index,
+        Vector3Int position,
+        Vector3Int neighborPosition,
+        LogicSignalBlock neighbor,
+        bool connected)
+    {
+        LineRenderer line = connectionLines[index];
+        if (line == null) return;
+
+        LogicWireBlock neighborWire = neighbor as LogicWireBlock;
+        bool wireConnected = connected && neighborWire != null;
+        int oppositeIndex = index ^ 1;
+        bool hasAuthoredVisual = directionVisuals != null && index < directionVisuals.Length && directionVisuals[index] != null;
+        if (neighborWire != null && neighborWire.directionVisuals != null &&
+            oppositeIndex < neighborWire.directionVisuals.Length && neighborWire.directionVisuals[oppositeIndex] != null)
+        {
+            hasAuthoredVisual = true;
+        }
+
+        bool drawLine = wireConnected && !hasAuthoredVisual && IsBefore(position, neighborPosition);
+        line.enabled = drawLine;
+        if (!drawLine) return;
+
+        line.SetPosition(0, transform.position);
+        line.SetPosition(1, neighborWire.transform.position);
+    }
+
+    private static bool IsBefore(Vector3Int first, Vector3Int second)
+    {
+        if (first.x != second.x) return first.x < second.x;
+        if (first.y != second.y) return first.y < second.y;
+        return first.z < second.z;
     }
 
     private int ResolveNetworkState()
