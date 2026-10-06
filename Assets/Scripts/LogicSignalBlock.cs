@@ -45,6 +45,12 @@ public abstract class LogicSignalBlock : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Every registered block, one per grid cell. The netlist builder (#18)
+    /// builds the circuit from this.
+    /// </summary>
+    public static IEnumerable<LogicSignalBlock> All => blocks.Values;
+
     public static LogicSignalBlock At(Vector3Int position)
     {
         blocks.TryGetValue(position, out LogicSignalBlock block);
@@ -65,4 +71,4 @@ public abstract class LogicSignalBlock : MonoBehaviour
     {
         return neighbor - from;
     }
-}
+}

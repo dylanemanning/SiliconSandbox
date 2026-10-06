@@ -78,7 +78,7 @@ api-ms-win-crt-*) should be listed.
 
 `-s` strips debug sections and symbols. The committed DLL is a binary in git with no LFS, so every
 rebuild adds its full size to the repo history permanently. Unstripped, the static MinGW build is
-~700 KB; stripped it is ~230 KB. Check with `objdump -h SiliconPlugin.dll` — there should be no
+~700 KB; stripped it is ~200–230 KB depending on the MinGW version. Check with `objdump -h SiliconPlugin.dll` — there should be no
 `.debug_*` sections. If you forget, `strip --strip-unneeded SiliconPlugin.dll` fixes an existing
 build without touching the code.
 
