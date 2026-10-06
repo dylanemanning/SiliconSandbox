@@ -10,9 +10,12 @@ src/gates.h            Gate type and status enums, EvaluateGate declaration
 src/gates.cpp          The evaluator. Plain C++ — no Unity, no DLL awareness
 src/netlist.h          Netlist input structs, CircuitGraph, NetlistStatus, ParseNetlist declaration
 src/netlist.cpp        The netlist parser (#9). Plain C++, same rules as gates.cpp
+src/simulator.h        SimulateStatus, EvaluateCircuit declaration
+src/simulator.cpp      One-pass whole-circuit evaluator (#12). Plain C++, same rules as gates.cpp
 src/plugin.cpp         The extern "C" export surface. The only DLL-aware file
 tests/truth_table.cpp  Gate evaluator verification. Builds and runs without Unity
 tests/graph_parser.cpp Netlist parser verification. Builds and runs without Unity
+tests/circuit_eval.cpp Silicon_EvaluateCircuit verification. Builds and runs without Unity
 tests/PluginCheck/     Loads the committed DLL through LogicEngine.cs (.NET, Windows). Run in CI
 ```
 
@@ -42,8 +45,18 @@ g++ -Wall -Wextra -o graph_parser.exe tests/graph_parser.cpp src/netlist.cpp src
 ./graph_parser.exe
 ```
 
+**Circuit tests** — `Silicon_EvaluateCircuit` itself (parse + evaluate, the call Unity makes): every
+gate between sources and an LED, a multi-level circuit listed out of order, fan-out, unwired pins,
+the states-array contract, feedback loops, and error pass-through. Exits non-zero on any failure.
+
+```sh
+g++ -Wall -Wextra -o circuit_eval.exe tests/circuit_eval.cpp src/plugin.cpp src/netlist.cpp src/simulator.cpp src/gates.cpp
+./circuit_eval.exe
+```
+
 **PluginCheck** — loads the *committed* `Assets/Plugins/x86_64/SiliconPlugin.dll` through the real
-`LogicEngine.cs`, checks every `GateType` against its truth table, and fails if the DLL still has debug
+`LogicEngine.cs`, checks every `GateType` against its truth table, runs a few whole circuits through
+`LogicEngine.EvaluateCircuit`, and fails if the DLL still has debug
 sections. This is what the `native-plugin` CI job runs on `windows-latest`, since the Unity test job
 runs on Linux and can't load the DLL. Needs the .NET 8 SDK; run from the repo root:
 
@@ -54,7 +67,7 @@ dotnet run -c Release --project native/SiliconPlugin/tests/PluginCheck
 **The plugin:**
 
 ```sh
-g++ -shared -O2 -static -s -o SiliconPlugin.dll src/plugin.cpp src/gates.cpp src/netlist.cpp
+g++ -shared -O2 -static -s -o SiliconPlugin.dll src/plugin.cpp src/gates.cpp src/netlist.cpp src/simulator.cpp
 ```
 
 `-static` is required now that `netlist.cpp` uses the C++ standard library. Without it, a MinGW build
@@ -69,8 +82,8 @@ rebuild adds its full size to the repo history permanently. Unstripped, the stat
 `.debug_*` sections. If you forget, `strip --strip-unneeded SiliconPlugin.dll` fixes an existing
 build without touching the code.
 
-`netlist.cpp` has no exports until #12, so including it does not change the DLL's surface yet;
-it is listed so the command does not need to change again when #12 lands.
+Check the exports with `objdump -p SiliconPlugin.dll | grep Silicon_` — there should be two,
+`Silicon_EvaluateGate` and `Silicon_EvaluateCircuit`.
 
 Then copy `SiliconPlugin.dll` into `Assets/Plugins/x86_64/`. Build output left in this directory is
 gitignored; the committed binary is the copy under `Assets/`.
@@ -100,7 +113,8 @@ separately compiled library committed alongside the DLL with its own platform se
 
 ## Adding to the exported surface
 
-`gates.h` and `LogicEngine.cs` hold mirrored copies of the gate type and status enums. Nothing
-verifies the correspondence at compile time, so change both in the same commit. Gate type values
+`LogicEngine.cs` holds mirrored copies of `GateType` and `GateStatus` (`gates.h`), `NetlistStatus`,
+`NetlistNode` and `NetlistConnection` (`netlist.h`), and `SimulationStatus` (`simulator.h`). Nothing
+verifies the correspondence at compile time, so change both sides in the same commit. Gate type values
 are written into saved netlists, which makes them part of the on-disk format: append new types,
 never renumber existing ones.
