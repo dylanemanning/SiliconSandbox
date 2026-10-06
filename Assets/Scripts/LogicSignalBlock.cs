@@ -6,43 +6,74 @@ public abstract class LogicSignalBlock : MonoBehaviour
     private static readonly Dictionary<Vector3Int, LogicSignalBlock> blocks =
         new Dictionary<Vector3Int, LogicSignalBlock>();
 
+    private static int circuitVersion;
+
     public Vector3Int GridPosition => Vector3Int.RoundToInt(transform.position);
 
     public virtual int SignalState => 0;
 
+    /// <summary>
+    /// Goes up by one every time the circuit changes: a block joins or leaves
+    /// the grid, or a source changes value. The simulation driver (#82)
+    /// compares it once a frame and re-evaluates only when it has moved, so
+    /// nothing is recomputed while the world sits still.
+    /// </summary>
+    public static int CircuitVersion => circuitVersion;
+
+    /// <summary>
+    /// Tells the simulation driver the circuit needs re-evaluating. Blocks call
+    /// this themselves when they register or unregister; call it for any other
+    /// change that affects signals (LogicSignalSource does, when its value changes).
+    /// </summary>
+    public static void MarkCircuitChanged()
+    {
+        circuitVersion++;
+    }
+
     protected virtual void OnEnable()
     {
-        Register();
+        if (Register()) MarkCircuitChanged();
     }
 
     protected virtual void OnDisable()
     {
-        Unregister();
+        if (Unregister()) MarkCircuitChanged();
     }
 
     protected virtual void Update()
     {
-        Register();
+        // Picks up a cell freed by another block since this one was enabled.
+        if (Register()) MarkCircuitChanged();
     }
 
-    protected void Register()
+    /// <summary>
+    /// Adds this block to the grid registry. Returns true only if it was not
+    /// already there, so the per-frame call in Update does not count as a change.
+    /// </summary>
+    protected bool Register()
     {
         Vector3Int position = GridPosition;
-        if (blocks.TryGetValue(position, out LogicSignalBlock existing) && existing != this)
+        if (blocks.ContainsKey(position))
         {
-            return;
+            // Either this block is already registered, or another block holds
+            // the cell. Both are "no change".
+            return false;
         }
 
         blocks[position] = this;
+        return true;
     }
 
-    private void Unregister()
+    private bool Unregister()
     {
         Vector3Int position = GridPosition;
         if (blocks.TryGetValue(position, out LogicSignalBlock existing) && existing == this)
         {
             blocks.Remove(position);
+            return true;
         }
+
+        return false;
     }
 
     /// <summary>
@@ -71,4 +102,4 @@ public abstract class LogicSignalBlock : MonoBehaviour
     {
         return neighbor - from;
     }
-}
+}
