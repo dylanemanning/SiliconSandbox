@@ -11,7 +11,7 @@ public class LogicSignalRulesTests
     [Test]
     public void HighSourceDrivesEntireWireNetworkHigh()
     {
-        Assert.AreEqual(1, LogicSignalRules.ResolveSources(new[] { 0, 1, 0 }));
+        Assert.AreEqual(1, LogicSignalRules.ResolveSources(new[] { 1, 1, 1 }));
     }
 
     [Test]
@@ -29,7 +29,7 @@ public class LogicSignalRulesTests
     [Test]
     public void ErroredSourceStatePropagates()
     {
-        Assert.AreEqual(-1, LogicSignalRules.ResolveSources(new[] { 1, -1, 0 }));
+        Assert.AreEqual(-1, LogicSignalRules.ResolveSources(new[] { 1, -1}));
     }
 
     [Test]

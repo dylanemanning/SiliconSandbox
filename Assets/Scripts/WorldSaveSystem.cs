@@ -156,6 +156,29 @@ public class WorldSaveSystem : MonoBehaviour
         return names.ToArray();
     }
 
+    public static bool DeleteSavedWorld(string worldName)
+    {
+        if (string.IsNullOrWhiteSpace(worldName)) return false;
+
+        string filePath = Path.Combine(
+            Application.persistentDataPath,
+            "Worlds",
+            SanitizeFileName(worldName) + ".json"
+        );
+
+        try
+        {
+            if (!File.Exists(filePath)) return false;
+            File.Delete(filePath);
+            return true;
+        }
+        catch (Exception exception)
+        {
+            Debug.LogError($"Could not delete world '{worldName}': {exception.Message}");
+            return false;
+        }
+    }
+
     private IEnumerator LoadAfterWorldGeneration(string filePath)
     {
         yield return null;
