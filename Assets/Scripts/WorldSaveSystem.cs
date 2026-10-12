@@ -13,6 +13,7 @@ public class WorldSaveSystem : MonoBehaviour
         public Vector3 position;
         public Quaternion rotation;
         public Vector3 scale = Vector3.one;
+        public Vector3Int footprintSize = Vector3Int.one;
         public bool isGround;
     }
 
@@ -124,6 +125,7 @@ public class WorldSaveSystem : MonoBehaviour
                 position = block.transform.position,
                 rotation = block.transform.rotation,
                 scale = block.transform.localScale,
+                footprintSize = block.GetFootprintSize(),
                 isGround = block.isGround
             });
         }
@@ -215,6 +217,8 @@ public class WorldSaveSystem : MonoBehaviour
             Block savedBlockComponent = block.GetComponent<Block>();
             if (savedBlockComponent != null)
             {
+                savedBlockComponent.footprintSize = savedBlock.footprintSize != Vector3Int.zero ? savedBlock.footprintSize : Vector3Int.one;
+
                 bool isGround = savedBlock.isGround
                     || savedBlock.scale.x > 1.001f
                     || savedBlock.scale.z > 1.001f;

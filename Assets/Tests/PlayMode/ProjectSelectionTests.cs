@@ -350,6 +350,41 @@ public class ProjectSelectionTests
         );
     }
 
+    [UnityTest]
+    public IEnumerator SavedWorldRowShowsAndLoadsWorldNameButton()
+    {
+        const string worldName = "TC_LoadButtonVisible";
+        string savePath = Path.Combine(worldsDirectory, worldName + ".json");
+        File.WriteAllText(savePath, "{\"worldName\":\"" + worldName + "\",\"blocks\":[]}");
+
+        yield return LoadMainMenu();
+
+        MenuTraversal menu = GetMenu();
+        menu.openLoad();
+
+        Transform row = menu.savedWorldContainer.Find("SavedWorldRow_" + worldName);
+        Assert.IsNotNull(row);
+
+        Button loadButton = row.Find("LoadWorldButton").GetComponent<Button>();
+        Assert.IsNotNull(loadButton);
+        Assert.AreEqual(worldName, loadButton.GetComponentInChildren<TMPro.TMP_Text>(true).text);
+        Assert.IsTrue(loadButton.interactable);
+        Canvas.ForceUpdateCanvases();
+        Assert.Greater(
+            loadButton.GetComponent<RectTransform>().rect.width,
+            300f,
+            "The world-name load button should remain visible beside the delete button."
+        );
+
+        loadButton.onClick.Invoke();
+        yield return null;
+
+        Assert.AreEqual(GameplayScene, SceneManager.GetActiveScene().name);
+        WorldSaveSystem saveSystem = Object.FindFirstObjectByType<WorldSaveSystem>();
+        Assert.IsNotNull(saveSystem);
+        Assert.AreEqual(worldName, saveSystem.WorldName);
+    }
+
     // ---------------------------------------------------------
     // TC-1.2.4
     // Saved project exists in filesystem

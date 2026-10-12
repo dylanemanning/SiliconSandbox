@@ -8,7 +8,7 @@ public class Player : MonoBehaviour
     public CameraSettings cameraSettings;
     public float speed = 10f;
     public float jumpForce = 5f;
-    public float flightStep = 1f;
+    public float flightStep = 10f;
     public float reachDistance = 5f;
     public float fallThreshold = -10f;
     public Transform respawnPoint;
@@ -146,21 +146,15 @@ public class Player : MonoBehaviour
             }
         } else
         {
-            if (KeybindSettings.WasPressedThisFrame(KeybindSettings.Jump))
-            {
-                MoveWhileFlying(Vector3.up);
-            }
-            if (KeybindSettings.WasPressedThisFrame(KeybindSettings.FlyDown))
-            {
-                MoveWhileFlying(Vector3.down);
-            }
+                float verticalInput = (KeybindSettings.IsPressed(KeybindSettings.Jump) ? 1f : 0f)
+                    - (KeybindSettings.IsPressed(KeybindSettings.FlyDown) ? 1f : 0f);
+                MoveWhileFlying(verticalInput);
         }
     }
 
-    void MoveWhileFlying(Vector3 direction)
+        void MoveWhileFlying(float verticalInput)
     {
-        rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
-        rb.MovePosition(rb.position + direction * flightStep);
+            rb.linearVelocity = new Vector3(rb.linearVelocity.x, verticalInput * flightStep, rb.linearVelocity.z);
     }
 
     void CheckTargetBlock() 
@@ -243,7 +237,8 @@ public class Player : MonoBehaviour
         if (targetBlock == null || selectedBlock == null) return;
 
         Block prefabToPlace = blockPalette[selectedBlockIndex];
-        
+        if (prefabToPlace == null) return;
+
         // Round to Int ensures the grid is perfect (1.0, 2.0, etc.)
         Vector3 spawnPosition = targetBlock.transform.position + targetRaycastHit.normal;
         if (!targetBlock.breakable)
@@ -260,21 +255,38 @@ public class Player : MonoBehaviour
             spawnPosition.y = Mathf.Round(spawnPosition.y / gridSize) * gridSize;
             spawnPosition.z = Mathf.Round(spawnPosition.z / gridSize) * gridSize;
         }
+
+        Block prototypeBlock = prefabToPlace.GetComponent<Block>();
+        Vector3Int footprint = prototypeBlock != null ? prototypeBlock.GetFootprintSize() : Vector3Int.one;
+        if (footprint != Vector3Int.one)
+        {
+            Vector3 halfExtent = new Vector3(
+                (footprint.x - 1) * 0.5f,
+                (footprint.y - 1) * 0.5f,
+                (footprint.z - 1) * 0.5f);
+            spawnPosition = new Vector3(
+                Mathf.Round(spawnPosition.x / 1f) * 1f,
+                Mathf.Round(spawnPosition.y / 1f) * 1f,
+                Mathf.Round(spawnPosition.z / 1f) * 1f);
+            spawnPosition += Vector3.Scale(targetRaycastHit.normal, halfExtent);
+        }
+
+        if (!Block.CanPlaceAt(spawnPosition, prefabToPlace.GetComponent<Block>()))
+        {
+            return;
+        }
         
         float playerYaw = transform.eulerAngles.y;
         Quaternion spawnRotation = Quaternion.identity;
 
-        // Check if the prefab is a wire. 
-        if (prefabToPlace.name.Contains("Wire")) 
+        // Wires must always sit on a cardinal axis and remain centered inside the
+        // target grid cell. Use the dominant face normal, snapped to a single axis,
+        // so the wire is straight and the model never drifts off-grid.
+        if (prefabToPlace.GetComponent<LogicWireBlock>() != null)
         {
-            if (playerYaw > 45 && playerYaw <= 135)
-                spawnRotation = Quaternion.Euler(0,0, 90);
-            else if (playerYaw > 135 && playerYaw <= 225)
-                spawnRotation = Quaternion.Euler(0, 90, 90);
-            else if (playerYaw > 225 && playerYaw <= 315)
-                spawnRotation = Quaternion.Euler(0, 00, 90);
-            else
-                spawnRotation = Quaternion.Euler(0, 90, 90);
+            Vector3 placementAxis = SnapToCardinalAxis(targetRaycastHit.normal);
+            spawnPosition = targetBlock.transform.position + placementAxis;
+            spawnRotation = Quaternion.FromToRotation(Vector3.up, placementAxis);
         }
         // Gates face the way the player is looking: output on the far side,
         // inputs left and right. Yaw is snapped to 90 degrees so the gate's
@@ -284,9 +296,33 @@ public class Player : MonoBehaviour
             spawnRotation = Quaternion.Euler(0, Mathf.Round(playerYaw / 90f) * 90f, 0);
         }
 
-        // Single Instantiate call at the end using whichever rotation was calculated
-        Instantiate(prefabToPlace, spawnPosition, spawnRotation);
+        GameObject placedBlockObject = Instantiate(prefabToPlace.gameObject, spawnPosition, spawnRotation);
+        Block placedBlock = placedBlockObject.GetComponent<Block>();
+        if (placedBlock != null)
+        {
+            Vector3 currentScale = placedBlockObject.transform.localScale;
+            placedBlockObject.transform.localScale = new Vector3(
+                currentScale.x * Mathf.Max(1, placedBlock.GetFootprintSize().x),
+                currentScale.y * Mathf.Max(1, placedBlock.GetFootprintSize().y),
+                currentScale.z * Mathf.Max(1, placedBlock.GetFootprintSize().z));
+        }
         WorldSaveSystem.Instance?.MarkDirty();
+    }
+
+    private static Vector3 SnapToCardinalAxis(Vector3 direction)
+    {
+        Vector3 absolute = new Vector3(
+            Mathf.Abs(direction.x),
+            Mathf.Abs(direction.y),
+            Mathf.Abs(direction.z));
+
+        int axis = 0;
+        if (absolute.y > absolute.x) axis = 1;
+        if (absolute.z > absolute[axis]) axis = 2;
+
+        Vector3 snapped = Vector3.zero;
+        snapped[axis] = direction[axis] >= 0f ? 1f : -1f;
+        return snapped;
     }
 
     void ToggleFlight()

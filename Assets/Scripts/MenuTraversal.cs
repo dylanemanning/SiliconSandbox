@@ -191,6 +191,9 @@ public class MenuTraversal : MonoBehaviour
             ColorBlock deleteColors = deleteButton.colors;
             deleteButton.name = "DeleteWorldButton";
             deleteColors.normalColor = Color.red;
+            deleteColors.highlightedColor = new Color(1f, 0.45f, 0.4f, 1f);
+            deleteColors.selectedColor = deleteColors.highlightedColor;
+            deleteButton.colors = deleteColors;
             LayoutElement deleteLayout = deleteButton.GetComponent<LayoutElement>();
             if (deleteLayout == null) deleteLayout = deleteButton.gameObject.AddComponent<LayoutElement>();
             deleteLayout.minHeight = rowHeight;
@@ -368,8 +371,8 @@ public class MenuTraversal : MonoBehaviour
         loadViewport.anchorMin = new Vector2(0.5f, 0.5f);
         loadViewport.anchorMax = new Vector2(0.5f, 0.5f);
         loadViewport.pivot = new Vector2(0.5f, 0.5f);
-        loadViewport.anchoredPosition = new Vector2(60f, 100f);
-        loadViewport.sizeDelta = new Vector2(500f, 300f);
+        loadViewport.anchoredPosition = new Vector2(0f, 70f);
+        loadViewport.sizeDelta = new Vector2(640f, 340f);
 
         Image viewportImage = viewportObject.GetComponent<Image>();
         viewportImage.color = Color.clear;

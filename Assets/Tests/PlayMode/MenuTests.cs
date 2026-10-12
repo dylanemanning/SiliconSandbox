@@ -1,5 +1,6 @@
 using System.Collections;
 using NUnit.Framework;
+using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
@@ -62,6 +63,95 @@ public class MenuTests : InputTestFixture
         Assert.IsTrue(
             menu.mainMenuPanel.activeSelf
         );
+    }
+
+    [UnityTest]
+    public IEnumerator MenuStylerUsesConsistentCenteredLayoutAndPageColors()
+    {
+        yield return LoadScene(MainMenuScene);
+
+        MenuTraversal menu = Object.FindFirstObjectByType<MenuTraversal>();
+        Assert.IsNotNull(menu);
+        Assert.IsNotNull(menu.menuStyler);
+
+        menu.menuStyler.Apply();
+
+        TMP_Text title = null;
+        foreach (TMP_Text text in menu.mainMenuPanel.GetComponentsInChildren<TMP_Text>(true))
+        {
+            if (text.gameObject.name == "Title")
+            {
+                title = text;
+                break;
+            }
+        }
+
+        Assert.IsNotNull(title);
+        Assert.AreEqual(TextAlignmentOptions.Center, title.alignment);
+        Assert.AreEqual(0.5f, title.rectTransform.anchorMin.x);
+        Assert.AreEqual(0.5f, title.rectTransform.anchorMax.x);
+        Assert.AreEqual(0f, title.rectTransform.anchoredPosition.x);
+
+        Button playButton = null;
+        foreach (Button button in menu.mainMenuPanel.GetComponentsInChildren<Button>(true))
+        {
+            if (button.name == "PlayButton")
+            {
+                playButton = button;
+                break;
+            }
+        }
+
+        Assert.IsNotNull(playButton);
+        Assert.IsNotNull(playButton.transform.parent.GetComponent<VerticalLayoutGroup>());
+        Assert.AreEqual(
+            menu.menuStyler.buttonFontSize,
+            playButton.GetComponentInChildren<TMP_Text>(true).fontSize
+        );
+
+        Assert.AreNotEqual(
+            menu.mainMenuPanel.GetComponent<Image>().color,
+            menu.LoadPanel.GetComponent<Image>().color
+        );
+        Assert.AreNotEqual(
+            menu.LoadPanel.GetComponent<Image>().color,
+            menu.CreatePanel.GetComponent<Image>().color
+        );
+
+        Transform backdrop = menu.mainMenuPanel.transform.Find("LogicGateBackdrop");
+        Assert.IsNotNull(backdrop);
+        Assert.AreEqual(0, backdrop.GetSiblingIndex());
+
+        int gateCount = 0;
+        foreach (Transform item in backdrop)
+        {
+            if (!item.name.StartsWith("Gate_")) continue;
+
+            gateCount++;
+            RectTransform gateRect = item.GetComponent<RectTransform>();
+            Assert.IsTrue(gateRect.anchorMin.x == 0f || gateRect.anchorMin.x == 1f);
+            Assert.Greater(Mathf.Abs(gateRect.anchoredPosition.x), 170f);
+            Assert.Less(Mathf.Abs(gateRect.anchoredPosition.x), 200f);
+            Image symbolImage = item.GetComponent<Image>();
+            Assert.IsFalse(symbolImage.raycastTarget);
+            Assert.IsNotNull(symbolImage.sprite);
+            Assert.IsNull(item.GetComponentInChildren<TMP_Text>(true));
+        }
+
+        Assert.AreEqual(menu.menuStyler.gatesPerSide * 2, gateCount);
+
+        Canvas canvas = Object.FindFirstObjectByType<Canvas>();
+        Assert.IsNotNull(canvas);
+        foreach (VerticalLayoutGroup buttonContainer in canvas.GetComponentsInChildren<VerticalLayoutGroup>(true))
+        {
+            if (buttonContainer.gameObject.name != "Button Container") continue;
+
+            RectTransform containerRect = buttonContainer.GetComponent<RectTransform>();
+            Assert.AreEqual(0.5f, containerRect.anchorMin.x);
+            Assert.AreEqual(0.5f, containerRect.anchorMax.x);
+            Assert.AreEqual(0f, containerRect.anchoredPosition.x);
+            Assert.AreEqual(520f, containerRect.rect.width);
+        }
     }
 
     // ---------------------------------------------------------
@@ -130,6 +220,7 @@ public class MenuTests : InputTestFixture
     [UnityTest]
     public IEnumerator TC_9_2_1_EscapeOpensPauseMenu()
     {
+        WorldSaveSystem.PendingWorldName = "TC_PauseWorldLabel";
         yield return LoadScene(GameplayScene);
 
         PauseManager pause =
@@ -162,6 +253,32 @@ public class MenuTests : InputTestFixture
             Cursor.visible,
             "Cursor should become visible while paused."
         );
+
+        MainMenuStyler styler = Object.FindFirstObjectByType<MainMenuStyler>();
+        Assert.IsNotNull(styler, "Gameplay scene should initialize the shared menu styler.");
+
+        GameObject pausePanel = GameObject.Find("PausePanel");
+        Assert.IsNotNull(pausePanel);
+        Assert.AreEqual(styler.pauseBackground, pausePanel.GetComponent<Image>().color);
+        Assert.IsTrue(pausePanel.GetComponent<Image>().raycastTarget);
+
+        TMP_Text pauseTitle = null;
+        foreach (TMP_Text text in pausePanel.GetComponentsInChildren<TMP_Text>(true))
+        {
+            if (text.gameObject.name == "Title")
+            {
+                pauseTitle = text;
+                break;
+            }
+        }
+
+        Assert.IsNotNull(pauseTitle);
+        Assert.AreEqual(TextAlignmentOptions.Center, pauseTitle.alignment);
+
+        TMP_Text worldNameLabel = pausePanel.transform
+            .Find("currentWorldName")
+            .GetComponent<TMP_Text>();
+        Assert.AreEqual("TC_PauseWorldLabel", worldNameLabel.text);
     }
 
     // ---------------------------------------------------------

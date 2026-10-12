@@ -8450,15 +8450,29 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MainMenuStyler
   fontAsset: {fileID: 11400000, guid: dc36b3fdc14f47ebb36fd484a67e268a, type: 2}
-  panelBackground: {r: 1, g: 1, b: 1, a: 1}
-  buttonBackground: {r: 0.19283243, g: 0.61674356, b: 0.81761, a: 1}
-  textColor: {r: 0, g: 0, b: 0, a: 1}
-  darkTextColor: {r: 1, g: 1, b: 1, a: 1}
-  titleFontSize: 100
-  sectionFontSize: 36
-  bodyFontSize: 28
+  panelBackground: {r: 0.12, g: 0.18, b: 0.21, a: 1}
+  mainMenuBackground: {r: 0.055, g: 0.12, b: 0.15, a: 1}
+  loadBackground: {r: 0.07, g: 0.19, b: 0.24, a: 1}
+  createBackground: {r: 0.12, g: 0.21, b: 0.17, a: 1}
+  settingsBackground: {r: 0.12, g: 0.14, b: 0.19, a: 1}
+  controlsBackground: {r: 0.12, g: 0.18, b: 0.21, a: 1}
+  videoBackground: {r: 0.18, g: 0.17, b: 0.13, a: 1}
+  audioBackground: {r: 0.1, g: 0.2, b: 0.19, a: 1}
+  accessibilityBackground: {r: 0.2, g: 0.16, b: 0.12, a: 1}
+  buttonBackground: {r: 0.82, g: 0.88, b: 0.83, a: 1}
+  buttonHighlight: {r: 0.96, g: 0.75, b: 0.34, a: 1}
+  buttonPressed: {r: 0.35, g: 0.69, b: 0.63, a: 1}
+  textColor: {r: 1, g: 1, b: 1, a: 1}
+  darkTextColor: {r: 0.196, g: 0.196, b: 0.196, a: 1}
+  titleFontSize: 64
+  sectionFontSize: 30
+  bodyFontSize: 22
   buttonFontSize: 28
-  listItemFontSize: 26
+  listItemFontSize: 22
+  menuButtonHeight: 75
+  animateGateBackdrop: 1
+  gatesPerSide: 7
+  gateFlowSpeed: 24
   applyOnStart: 1
 --- !u!4 &1514723313
 Transform:
