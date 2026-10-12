@@ -23,7 +23,10 @@ public class ModelArtReviewTests
             {
                 Assert.That(material,Is.Not.Null);
                 Assert.That(material.shader.name,Is.EqualTo("Universal Render Pipeline/Lit"));
-                Assert.That(material.shader.isSupported,Is.True);
+                // Headless CI can use Unity's Null graphics device. Check shader
+                // support on a real renderer; asset/material checks still run there.
+                if (SystemInfo.graphicsDeviceType != UnityEngine.Rendering.GraphicsDeviceType.Null)
+                    Assert.That(material.shader.isSupported,Is.True);
             }
         LogAssert.NoUnexpectedReceived();
 #else

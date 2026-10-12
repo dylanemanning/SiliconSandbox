@@ -7,7 +7,7 @@ Verified on macOS with Unity **6000.3.8f1** on 12 October 2026. Blender sources 
 - All model materials are remapped to shared native URP Lit assets. Yellow LED emission is enabled with HDR intensity; off lens uses a rough transparent material. The review scene includes an HDR camera, post-processing, and Bloom.
 - Unity-generated metadata accompanies every runtime asset and folder. Removed legacy Blender GUIDs had no references in scenes, prefabs, materials, scripts, or asset records.
 - EditMode: **31 passed, 20 skipped, 0 failed**. The skips are the existing Windows-native-plugin fixture on macOS.
-- PlayMode: **19 passed, 2 skipped, 0 failed**, including the art scene's material/console smoke test. The two skips are existing tests; see the test runner's reported platform/test conditions.
+- PlayMode: **19 passed, 2 skipped, 0 failed**, including the art scene's material/console smoke test. The two existing pause-menu settings tests are skipped because that feature is not implemented. Shader support is checked on a real graphics device; headless CI still checks asset/material identities and console errors.
 - Actual Unity captures are `unity-model-gallery.png` and `unity-led-materials.png`; the other numbered images are the approved Blender review renders.
 - The local test run does not validate Windows-native logic; the repository's Windows native-plugin CI job covers its existing binary check.
 
