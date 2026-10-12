@@ -33,11 +33,17 @@ public class MenuTraversal : MonoBehaviour
     private void Start()
     {
         EnsureStyler();
+        ResolveSettingsControlsPanel();
 
         mainMenuPanel.SetActive(true);
         LoadPanel.SetActive(false);
         CreatePanel.SetActive(false);
         settingsPanel.SetActive(false);
+
+        if (settingsControlsPanel != null && settingsControlsPanel.GetComponent<ControlsKeybindsMenu>() == null)
+        {
+            settingsControlsPanel.AddComponent<ControlsKeybindsMenu>();
+        }
 
         if (menuStyler != null)
         {
@@ -55,6 +61,17 @@ public class MenuTraversal : MonoBehaviour
         if (menuStyler == null)
         {
             menuStyler = FindFirstObjectByType<MainMenuStyler>();
+        }
+    }
+
+    private void ResolveSettingsControlsPanel()
+    {
+        if (settingsControlsPanel != null) return;
+
+        GameObject controlsPage = GameObject.Find("ControlsPage");
+        if (controlsPage != null)
+        {
+            settingsControlsPanel = controlsPage;
         }
     }
 
@@ -262,6 +279,15 @@ public class MenuTraversal : MonoBehaviour
         EnsureStyler();
         mainMenuPanel.SetActive(false);
         settingsPanel.SetActive(true);
+
+        ResolveSettingsControlsPanel();
+        if (settingsControlsPanel != null)
+        {
+            ControlsKeybindsMenu controlsMenu = settingsControlsPanel.GetComponent<ControlsKeybindsMenu>();
+            if (controlsMenu == null) controlsMenu = settingsControlsPanel.AddComponent<ControlsKeybindsMenu>();
+            controlsMenu.Initialize();
+        }
+
         OpenSettingsTab("Controls");
 
         if (menuStyler != null)

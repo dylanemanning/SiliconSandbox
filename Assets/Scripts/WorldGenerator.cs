@@ -15,13 +15,19 @@ public class FlatWorldGenerator : MonoBehaviour
 
     void GenerateWorld()
     {
-        for (int x = (width*-1); x < width; x++)
+        GameObject ground = Instantiate(cubePrefab, Vector3.zero, Quaternion.identity, transform);
+
+        Vector3 scale = ground.transform.localScale;
+        scale.x *= width * 2 * cubeSize;
+        scale.z *= depth * 2 * cubeSize;
+        ground.transform.localScale = scale;
+
+        Block groundBlock = ground.GetComponent<Block>();
+        if (groundBlock != null)
         {
-            for (int z = (width*-1); z < depth; z++)
-            {
-                Vector3 position = new Vector3(x * cubeSize, 0, z * cubeSize);
-                Instantiate(cubePrefab, position, Quaternion.identity, transform);
-            }
+            groundBlock.isGround = true;
+            groundBlock.breakable = false;
+            groundBlock.placementGridSize = cubeSize;
         }
     }
 }

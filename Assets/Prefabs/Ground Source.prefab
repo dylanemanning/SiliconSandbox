@@ -107,6 +107,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Block
   durabilitySeconds: 0.05
   breakingParticlesPrefab: {fileID: 0}
+  breakable: 1
+  placementGridSize: 1
+  isGround: 0
 --- !u!64 &8424198421251782468
 MeshCollider:
   m_ObjectHideFlags: 0

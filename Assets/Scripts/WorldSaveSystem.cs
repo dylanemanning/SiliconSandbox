@@ -12,6 +12,8 @@ public class WorldSaveSystem : MonoBehaviour
         public string prefabName;
         public Vector3 position;
         public Quaternion rotation;
+        public Vector3 scale = Vector3.one;
+        public bool isGround;
     }
 
     [Serializable]
@@ -120,7 +122,9 @@ public class WorldSaveSystem : MonoBehaviour
             {
                 prefabName = GetPrefabName(block.gameObject),
                 position = block.transform.position,
-                rotation = block.transform.rotation
+                rotation = block.transform.rotation,
+                scale = block.transform.localScale,
+                isGround = block.isGround
             });
         }
 
@@ -182,7 +186,18 @@ public class WorldSaveSystem : MonoBehaviour
                 continue;
             }
 
-            Instantiate(prefab, savedBlock.position, savedBlock.rotation, worldRoot);
+            GameObject block = Instantiate(prefab, savedBlock.position, savedBlock.rotation, worldRoot);
+            block.transform.localScale = savedBlock.scale == Vector3.zero ? Vector3.one : savedBlock.scale;
+
+            Block savedBlockComponent = block.GetComponent<Block>();
+            if (savedBlockComponent != null)
+            {
+                bool isGround = savedBlock.isGround
+                    || savedBlock.scale.x > 1.001f
+                    || savedBlock.scale.z > 1.001f;
+                savedBlockComponent.isGround = isGround;
+                if (isGround) savedBlockComponent.breakable = false;
+            }
         }
     }
 

@@ -3,6 +3,11 @@ using UnityEngine;
 
 public class LogicWireBlock : LogicSignalBlock
 {
+    [Header("Signal visuals")]
+    [SerializeField] private Renderer targetRenderer;
+    [SerializeField] private Material unpoweredMaterial;
+    [SerializeField] private Material poweredMaterial;
+
     [Header("Optional junction visuals")]
     [Tooltip("Child objects for +X, -X, +Y, -Y, +Z, -Z branches.")]
     [SerializeField] private GameObject[] directionVisuals = new GameObject[6];
@@ -15,11 +20,38 @@ public class LogicWireBlock : LogicSignalBlock
     public int ConnectionCount => CountBits(connectionMask);
     public bool IsJunction => ConnectionCount >= 3;
 
+    protected override void OnEnable()
+    {
+        base.OnEnable();
+        ResolveRenderer();
+        ApplyVisualState();
+    }
+
     protected override void Update()
     {
         base.Update();
         RefreshConnections();
         signalState = ResolveNetworkState();
+        ApplyVisualState();
+    }
+
+    private void ResolveRenderer()
+    {
+        if (targetRenderer == null)
+        {
+            targetRenderer = GetComponentInChildren<Renderer>(true);
+        }
+    }
+
+    private void ApplyVisualState()
+    {
+        if (targetRenderer == null) return;
+
+        Material nextMaterial = signalState == 1 ? poweredMaterial : unpoweredMaterial;
+        if (nextMaterial != null)
+        {
+            targetRenderer.sharedMaterial = nextMaterial;
+        }
     }
 
     private void RefreshConnections()

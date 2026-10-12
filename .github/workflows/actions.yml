@@ -5,6 +5,7 @@ on:
     branches: ["main", "dev"]
   pull_request:
     branches: ["main", "dev"]
+  workflow_dispatch:
 
 jobs:
   test:
@@ -29,14 +30,29 @@ jobs:
           restore-keys: |
             Unity-Library-${{ runner.os }}-StandaloneWindows64-
 
-      - name: Run Unity Test Runner (EditMode + PlayMode)
-        uses: game-ci/unity-test-runner@v4
+      - name: Run Unity PlayMode tests
+        uses: game-ci/unity-test-runner@c609e5c8e6d256ee6f61b8cebaaa3fe8b0b9469f
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
           unityVersion: 6000.3.8f1
+          testMode: playmode
+          coverageEnabled: false
+          artifactsPath: artifacts/playmode
+
+      - name: Run Unity EditMode tests
+        uses: game-ci/unity-test-runner@c609e5c8e6d256ee6f61b8cebaaa3fe8b0b9469f
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          unityVersion: 6000.3.8f1
+          testMode: editmode
+          coverageEnabled: false
+          artifactsPath: artifacts/editmode
 
       - name: Return license
         uses: game-ci/unity-return-license@v2
