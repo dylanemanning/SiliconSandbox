@@ -1,0 +1,14 @@
+# Model import verification
+
+Verified on macOS with Unity **6000.3.8f1** on 12 October 2026. Blender sources were exported with Blender **5.0.1**. These checks concern model assets and their review scene; gameplay prefab integration is separate.
+
+- All 18 FBXs imported successfully without Blender assets under `Assets`.
+- Imported body dimensions, +Y up/+Z output axes, pin counts, exact face centers, 0.33 pin diameter, 0.3 straight-wire diameter, and the larger gates' left output-face position passed the independent Unity checks in `ModelArtBuilder.VerifyAll`.
+- All model materials are remapped to shared native URP Lit assets. Yellow LED emission is enabled with HDR intensity; off lens uses a rough transparent material. The review scene includes an HDR camera, post-processing, and Bloom.
+- Unity-generated metadata accompanies every runtime asset and folder. Removed legacy Blender GUIDs had no references in scenes, prefabs, materials, scripts, or asset records.
+- EditMode: **31 passed, 20 skipped, 0 failed**. The skips are the existing Windows-native-plugin fixture on macOS.
+- PlayMode: **19 passed, 2 skipped, 0 failed**, including the art scene's material/console smoke test. The two skips are existing tests; see the test runner's reported platform/test conditions.
+- Actual Unity captures are `unity-model-gallery.png` and `unity-led-materials.png`; the other numbered images are the approved Blender review renders.
+- The local test run does not validate Windows-native logic; the repository's Windows native-plugin CI job covers its existing binary check.
+
+CI status is recorded on PR #87 for the pushed commit; this file records local verification rather than asserting future CI results.
