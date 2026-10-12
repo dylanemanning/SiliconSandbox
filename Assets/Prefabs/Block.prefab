@@ -68,7 +68,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: e6db98778331d0948bef158c927c69ae, type: 2}
+  - {fileID: 2100000, guid: fc3b1278c2f433e4c95790c289231b42, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -127,3 +127,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Block
   durabilitySeconds: 0.05
   breakingParticlesPrefab: {fileID: 0}
+  breakable: 1
+  placementGridSize: 1
+  footprintSize: {x: 1, y: 1, z: 1}
+  isGround: 0
