@@ -73,11 +73,11 @@ public static class ModelArtBuilder
         switch (name)
         {
             case "SS_edge": color = new Color(.29f,.34f,.38f); break;
-            case "SS_panel": color = new Color(.065f,.09f,.12f); break;
+            case "SS_panel": color = new Color(.025f,.027f,.03f); break;
             case "SS_rim": color = new Color(.19f,.25f,.29f); break;
             case "SS_ink": color = new Color(.9f,.94f,.92f); break;
-            case "SS_zero": color = new Color(.2f,.4f,.7f); break;
-            case "SS_one": color = new Color(.1f,.95f,.2f); break;
+            case "SS_zero": color = new Color(.15f,.3f,.525f); break;
+            case "SS_one": color = new Color(.075f,.7125f,.15f); break;
             case "SS_PinMetal": color = new Color(.65f,.69f,.71f); break;
             case "SS_FrostedLED": color = new Color(.65f,.71f,.72f,.4f); break;
             case "SS_YellowLED": color = new Color(.95f,.65f,.035f); break;
@@ -85,7 +85,7 @@ public static class ModelArtBuilder
         // Blender shader colors are linear; Unity color properties take sRGB values.
         Color unityColor = color.gamma; unityColor.a = color.a;
         material.SetColor("_BaseColor", unityColor);
-        material.SetFloat("_Smoothness", .28f);
+        ApplySurfaceFinish(material);
         material.SetFloat("_Metallic", 0);
         string textureName = null;
         if (name.StartsWith("SS_ConstantSignal_")) textureName = "source-symbol-atlas";
@@ -111,6 +111,38 @@ public static class ModelArtBuilder
         }
         if (fresh) AssetDatabase.CreateAsset(material, path);
         EditorUtility.SetDirty(material); return material;
+    }
+
+    static void ApplySurfaceFinish(Material material)
+    {
+        bool ledLens = material.name == "SS_FrostedLED" || material.name == "SS_YellowLED";
+        material.SetFloat("_Smoothness", ledLens ? .28f : 0f);
+        material.SetFloat("_SpecularHighlights", ledLens ? 1f : 0f);
+        material.SetFloat("_EnvironmentReflections", ledLens ? 1f : 0f);
+        if (ledLens)
+        {
+            material.DisableKeyword("_SPECULARHIGHLIGHTS_OFF");
+            material.DisableKeyword("_ENVIRONMENTREFLECTIONS_OFF");
+        }
+        else
+        {
+            material.EnableKeyword("_SPECULARHIGHLIGHTS_OFF");
+            material.EnableKeyword("_ENVIRONMENTREFLECTIONS_OFF");
+        }
+    }
+
+    [MenuItem("SiliconSandbox/Art/Refresh matte model surfaces")]
+    public static void RefreshSurfaceFinish()
+    {
+        foreach (string guid in AssetDatabase.FindAssets("t:Material", new[]{Root + "Materials"}))
+        {
+            var material = AssetDatabase.LoadAssetAtPath<Material>(AssetDatabase.GUIDToAssetPath(guid));
+            if (!material.name.StartsWith("SS_")) continue;
+            ApplySurfaceFinish(material);
+            EditorUtility.SetDirty(material);
+        }
+        AssetDatabase.SaveAssets();
+        Debug.Log("MODEL_ART_MATTE_FINISH: non-LED surfaces are diffuse; LED lenses retain their existing finish.");
     }
 
     [MenuItem("SiliconSandbox/Art/Verify model geometry")]
@@ -178,8 +210,8 @@ public static class ModelArtBuilder
     static void BuildGallery()
     {
         var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
-        RenderSettings.ambientMode=AmbientMode.Flat;RenderSettings.ambientLight=new Color(.6f,.6f,.6f);
-        var ambient = new SphericalHarmonicsL2();ambient.AddAmbientLight(new Color(.3f,.3f,.3f));
+        RenderSettings.ambientMode=AmbientMode.Flat;RenderSettings.ambientLight=new Color(.48f,.48f,.48f);
+        var ambient = new SphericalHarmonicsL2();ambient.AddAmbientLight(new Color(.24f,.24f,.24f));
         RenderSettings.ambientProbe=ambient;
         for (int i=0;i<Names.Length;i++)
         {
@@ -198,7 +230,7 @@ public static class ModelArtBuilder
         light.shadows=LightShadows.Soft;light.shadowStrength=.65f;
         light.shadowBias=.025f;light.shadowNormalBias=.08f;
         var fill=new GameObject("Review fill").AddComponent<Light>();fill.type=LightType.Directional;
-        fill.intensity=.75f;fill.transform.rotation=Quaternion.Euler(30,145,0);
+        fill.intensity=.6f;fill.transform.rotation=Quaternion.Euler(30,145,0);
         var camera=new GameObject("Review camera").AddComponent<Camera>();camera.tag="MainCamera";
         camera.transform.position=new Vector3(18,22,-17);camera.transform.LookAt(new Vector3(5,.5f,7));
         camera.orthographic=true;camera.orthographicSize=10;camera.allowHDR=true;
@@ -212,7 +244,7 @@ public static class ModelArtBuilder
         if (!profile.TryGet<Tonemapping>(out var tone)) { tone=profile.Add<Tonemapping>(true);AssetDatabase.AddObjectToAsset(tone,profile); }
         tone.mode.Override(TonemappingMode.ACES);
         if (!profile.TryGet<ColorAdjustments>(out var grade)) { grade=profile.Add<ColorAdjustments>(true);AssetDatabase.AddObjectToAsset(grade,profile); }
-        grade.postExposure.Override(.65f);grade.saturation.Override(-25);grade.contrast.Override(-8);
+        grade.postExposure.Override(.4155f);grade.saturation.Override(-25);grade.contrast.Override(-8);
         bloom.threshold.Override(1);bloom.intensity.Override(.35f);volume.sharedProfile=profile;
         EditorUtility.SetDirty(profile);
         EditorSceneManager.SaveScene(scene,"Assets/Scenes/ModelArtReview.unity");
