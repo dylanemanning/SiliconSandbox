@@ -20,7 +20,9 @@ These are visual assets. `Assets/Models/Prefabs/` contains ready material-mapped
 
 ## Materials and LED glow
 
-The FBX importer remaps model material slots to shared native URP Lit materials in `Assets/Models/Materials/`. Gate and source textures use point filtering, no mipmaps, and uncompressed sRGB color. Wires and source pins use muted blue for off and green for on. Constant Signal has separate 0/1 variants; Clock has a square-wave symbol and enabled-state dot.
+The FBX importer remaps model material slots to shared native URP Lit materials in `Assets/Models/Materials/`. Solid Blender palette values are converted from linear to sRGB for Unity color properties. The procedural PNGs store raw linear palette values, so their importer disables sRGB decoding; they use point filtering, no mipmaps, and no compression. Wires and source pins use muted blue for off and green for on. Constant Signal has separate 0/1 variants; Clock has a square-wave symbol and enabled-state dot.
+
+The review profile uses ACES tone mapping, exposure +0.65, saturation -25, and contrast -8, together with ambient lighting and soft key-light shadows. This gives the blue/green wires and gray blocks the softer, pastel presentation requested after the first Unity review. These settings approximate the approved Blender AgX studio render; they are not a pixel-identical reproduction of Cycles. Gameplay cameras need a compatible lighting/volume setup to reproduce this presentation.
 
 `SS_YellowLED.mat` enables HDR emission. `SS_FrostedLED.mat` uses a rough transparent surface with opacity 0.4; it approximates the Blender frost without a screen-space refraction shader. Emission makes the LED surface bright; a surrounding glow requires an HDR camera with post-processing enabled and a Volume containing Bloom. Emission alone does not create a realtime local light.
 

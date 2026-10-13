@@ -30,7 +30,9 @@ public static class ModelArtBuilder
             var ti = (TextureImporter)AssetImporter.GetAtPath(path);
             ti.filterMode = FilterMode.Point; ti.mipmapEnabled = false;
             ti.textureCompression = TextureImporterCompression.Uncompressed;
-            ti.wrapMode = TextureWrapMode.Clamp; ti.sRGBTexture = true; ti.SaveAndReimport();
+            // Procedural PNG texels store the generator's linear palette numbers.
+            // Decode them as linear data, rather than applying sRGB a second time.
+            ti.wrapMode = TextureWrapMode.Clamp; ti.sRGBTexture = false; ti.SaveAndReimport();
         }
         foreach (string name in Names)
         {
@@ -80,7 +82,9 @@ public static class ModelArtBuilder
             case "SS_FrostedLED": color = new Color(.65f,.71f,.72f,.4f); break;
             case "SS_YellowLED": color = new Color(.95f,.65f,.035f); break;
         }
-        material.SetColor("_BaseColor", color);
+        // Blender shader colors are linear; Unity color properties take sRGB values.
+        Color unityColor = color.gamma; unityColor.a = color.a;
+        material.SetColor("_BaseColor", unityColor);
         material.SetFloat("_Smoothness", .28f);
         material.SetFloat("_Metallic", 0);
         string textureName = null;
@@ -174,7 +178,9 @@ public static class ModelArtBuilder
     static void BuildGallery()
     {
         var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
-        RenderSettings.ambientMode=AmbientMode.Flat;RenderSettings.ambientLight=new Color(.45f,.45f,.45f);
+        RenderSettings.ambientMode=AmbientMode.Flat;RenderSettings.ambientLight=new Color(.6f,.6f,.6f);
+        var ambient = new SphericalHarmonicsL2();ambient.AddAmbientLight(new Color(.3f,.3f,.3f));
+        RenderSettings.ambientProbe=ambient;
         for (int i=0;i<Names.Length;i++)
         {
             var go=(GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(Root+"Prefabs/"+Names[i]+".prefab"));
@@ -182,13 +188,15 @@ public static class ModelArtBuilder
         }
         var floor=GameObject.CreatePrimitive(PrimitiveType.Plane);floor.name="Review floor";
         floor.transform.position=new Vector3(5,-.08f,7);floor.transform.localScale=new Vector3(3,1,3);
-        var ground=new Material(Shader.Find("Universal Render Pipeline/Lit"));ground.SetColor("_BaseColor",new Color(.065f,.09f,.12f));
         string groundPath=Root+"Materials/ReviewFloor.mat";
-        if (AssetDatabase.LoadAssetAtPath<Material>(groundPath)==null) AssetDatabase.CreateAsset(ground,groundPath);
-        else UnityEngine.Object.DestroyImmediate(ground);
-        floor.GetComponent<Renderer>().sharedMaterial=AssetDatabase.LoadAssetAtPath<Material>(groundPath);
+        var ground=AssetDatabase.LoadAssetAtPath<Material>(groundPath);
+        if(ground==null) { ground=new Material(Shader.Find("Universal Render Pipeline/Lit"));AssetDatabase.CreateAsset(ground,groundPath); }
+        ground.SetColor("_BaseColor",new Color(.065f,.09f,.12f).gamma);ground.SetFloat("_Smoothness",.28f);
+        EditorUtility.SetDirty(ground);floor.GetComponent<Renderer>().sharedMaterial=ground;
         var light=new GameObject("Review light").AddComponent<Light>();light.type=LightType.Directional;
         light.intensity=2;light.transform.rotation=Quaternion.Euler(45,-35,0);
+        light.shadows=LightShadows.Soft;light.shadowStrength=.65f;
+        light.shadowBias=.025f;light.shadowNormalBias=.08f;
         var fill=new GameObject("Review fill").AddComponent<Light>();fill.type=LightType.Directional;
         fill.intensity=.75f;fill.transform.rotation=Quaternion.Euler(30,145,0);
         var camera=new GameObject("Review camera").AddComponent<Camera>();camera.tag="MainCamera";
@@ -201,12 +209,18 @@ public static class ModelArtBuilder
         var profile=AssetDatabase.LoadAssetAtPath<VolumeProfile>(profilePath);
         if (profile==null) { profile=ScriptableObject.CreateInstance<VolumeProfile>();AssetDatabase.CreateAsset(profile,profilePath); }
         if (!profile.TryGet<Bloom>(out var bloom)) { bloom=profile.Add<Bloom>(true);AssetDatabase.AddObjectToAsset(bloom,profile); }
+        if (!profile.TryGet<Tonemapping>(out var tone)) { tone=profile.Add<Tonemapping>(true);AssetDatabase.AddObjectToAsset(tone,profile); }
+        tone.mode.Override(TonemappingMode.ACES);
+        if (!profile.TryGet<ColorAdjustments>(out var grade)) { grade=profile.Add<ColorAdjustments>(true);AssetDatabase.AddObjectToAsset(grade,profile); }
+        grade.postExposure.Override(.65f);grade.saturation.Override(-25);grade.contrast.Override(-8);
         bloom.threshold.Override(1);bloom.intensity.Override(.35f);volume.sharedProfile=profile;
         EditorUtility.SetDirty(profile);
         EditorSceneManager.SaveScene(scene,"Assets/Scenes/ModelArtReview.unity");
         Render(camera,"art/review/unity-model-gallery.png",1800,1200);
         camera.transform.position=new Vector3(10,4,7.8f);camera.transform.LookAt(new Vector3(1.65f,.5f,14.4f));
         camera.orthographicSize=2.6f;Render(camera,"art/review/unity-led-materials.png",1400,900);
+        camera.transform.position=new Vector3(14,10,5);camera.transform.LookAt(new Vector3(6,.5f,10));
+        camera.orthographicSize=4.5f;Render(camera,"art/review/unity-wires-materials.png",1600,1100);
     }
     static void Render(Camera camera,string path,int width,int height)
     {
