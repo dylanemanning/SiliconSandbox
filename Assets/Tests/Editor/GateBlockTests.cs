@@ -52,9 +52,9 @@ public class GateBlockTests
         GateBlock gate = MakeGate(GateType.And, new Vector3(2f, 0f, 3f), 90f);
         var cell = new Vector3Int(2, 0, 3);
 
-        Assert.AreEqual((cell, new Vector3Int(1, 0, 0)), Port(gate, PortRole.Output), "output");
-        Assert.AreEqual((cell, new Vector3Int(0, 0, 1)), Port(gate, PortRole.Input, 0), "input A");
-        Assert.AreEqual((cell, new Vector3Int(0, 0, -1)), Port(gate, PortRole.Input, 1), "input B");
+        Assert.AreEqual((cell+Vector3Int.right, new Vector3Int(1, 0, 0)), Port(gate, PortRole.Output), "output");
+        Assert.AreEqual((cell, new Vector3Int(-1, 0, 0)), Port(gate, PortRole.Input, 0), "input A");
+        Assert.AreEqual((cell+Vector3Int.back, new Vector3Int(-1, 0, 0)), Port(gate, PortRole.Input, 1), "input B");
     }
 
     [Test]

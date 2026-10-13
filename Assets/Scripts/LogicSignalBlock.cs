@@ -6,6 +6,13 @@ public abstract class LogicSignalBlock : MonoBehaviour
     private static readonly Dictionary<Vector3Int, LogicSignalBlock> blocks =
         new Dictionary<Vector3Int, LogicSignalBlock>();
 
+    private readonly List<Vector3Int> registeredCells = new List<Vector3Int>();
+    private Vector3Int lastAnchor, lastFootprint;
+    private Quaternion lastRotation;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetRegistry() => blocks.Clear();
+
     public Vector3Int GridPosition => Vector3Int.RoundToInt(transform.position);
 
     public virtual int SignalState => 0;
@@ -27,23 +34,30 @@ public abstract class LogicSignalBlock : MonoBehaviour
 
     protected void Register()
     {
-        Vector3Int position = GridPosition;
-        if (blocks.TryGetValue(position, out LogicSignalBlock existing) && existing != this)
-        {
-            return;
-        }
-
-        blocks[position] = this;
+        var block = GetComponent<Block>();
+        var footprint = block != null ? block.footprint : Vector3Int.one;
+        if (registeredCells.Count > 0 && lastAnchor == GridPosition && lastFootprint == footprint
+            && lastRotation == transform.rotation
+            && blocks.TryGetValue(GridPosition,out var registered) && registered == this) return;
+        var cells = block != null
+            ? new List<Vector3Int>(block.OccupiedCells(GridPosition, transform.rotation))
+            : new List<Vector3Int>{GridPosition};
+        Unregister();
+        foreach (var cell in cells)
+            if (blocks.TryGetValue(cell, out var other) && other != this) return;
+        foreach (var cell in cells) { blocks[cell] = this; registeredCells.Add(cell); }
+        lastAnchor=GridPosition;lastFootprint=footprint;lastRotation=transform.rotation;
     }
 
     private void Unregister()
     {
-        Vector3Int position = GridPosition;
-        if (blocks.TryGetValue(position, out LogicSignalBlock existing) && existing == this)
-        {
-            blocks.Remove(position);
-        }
+        foreach (var cell in registeredCells)
+            if (blocks.TryGetValue(cell, out var other) && other == this) blocks.Remove(cell);
+        registeredCells.Clear();
     }
+
+    public virtual bool HasConnection(Vector3Int cell, Vector3Int face) => cell == GridPosition;
+    public virtual bool CanDrive(Vector3Int cell, Vector3Int face) => HasConnection(cell, face);
 
     public static LogicSignalBlock At(Vector3Int position)
     {
