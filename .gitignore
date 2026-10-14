@@ -5,6 +5,17 @@
 # Recommended: add any editor/OS/tool-specific ignore rules from the Global/ templates as needed.
 # See: https://github.com/github/gitignore/tree/main/Global
 #
+# Local development previews, references and review notes (not game assets).
+/art/review/
+/art/*-review/
+/art/references/
+/art/reference/
+/art/renders/
+/art/previews/
+/ModelReview/
+/Assets/LocalArtPreview/
+/Assets/LocalArtPreview.meta
+
 .vscode/
 .utmp/
 /[Ll]ibrary/
