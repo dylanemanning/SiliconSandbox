@@ -187,14 +187,15 @@ public class WorldSaveSystem : MonoBehaviour
             }
 
             GameObject block = Instantiate(prefab, savedBlock.position, savedBlock.rotation, worldRoot);
-            block.transform.localScale = savedBlock.scale == Vector3.zero ? Vector3.one : savedBlock.scale;
+            bool nativeArt = prefab.GetComponent<BlockModelVisual>() != null || prefab.GetComponent<WireModelVisual>() != null;
+            block.transform.localScale = nativeArt ? Vector3.one
+                : savedBlock.scale == Vector3.zero ? Vector3.one : savedBlock.scale;
 
             Block savedBlockComponent = block.GetComponent<Block>();
             if (savedBlockComponent != null)
             {
                 bool isGround = savedBlock.isGround
-                    || savedBlock.scale.x > 1.001f
-                    || savedBlock.scale.z > 1.001f;
+                    || (!nativeArt && (savedBlock.scale.x > 1.001f || savedBlock.scale.z > 1.001f));
                 savedBlockComponent.isGround = isGround;
                 if (isGround) savedBlockComponent.breakable = false;
             }
