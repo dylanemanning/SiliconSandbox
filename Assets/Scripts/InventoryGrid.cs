@@ -1,11 +1,12 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-// Empty inventory display for #31. Item storage and hotbar contents are separate work.
+// Inventory display and catalog binding. Selection and hotbar transfers are separate work.
 [DefaultExecutionOrder(-100)]
 public class InventoryGrid : MonoBehaviour
 {
     [SerializeField] private GameObject panel;
+    [SerializeField] private InventoryCatalog catalog;
     private static InventoryGrid instance;
     private static int closedFrame = -1;
     private bool open;
@@ -13,6 +14,7 @@ public class InventoryGrid : MonoBehaviour
     public static bool IsOpen => instance != null && instance.open;
     public static bool ClosedThisFrame => closedFrame == Time.frameCount;
     public GameObject Panel => panel;
+    public InventoryCatalog Catalog => catalog;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     private static void ResetState() { instance = null; closedFrame = -1; }
@@ -22,6 +24,14 @@ public class InventoryGrid : MonoBehaviour
         instance = this;
         open = false;
         if (panel != null) panel.SetActive(false);
+        RefreshImages();
+    }
+
+    public void RefreshImages()
+    {
+        var slots=GetComponentsInChildren<InventorySlotImage>(true);
+        for(int i=0;i<slots.Length;i++)
+            slots[i].SetItem(catalog!=null && i<catalog.Items.Count ? catalog.Items[i] : null);
     }
 
     private void Update()

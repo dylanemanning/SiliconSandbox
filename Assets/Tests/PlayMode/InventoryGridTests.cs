@@ -29,7 +29,7 @@ public class InventoryGridTests : InputTestFixture
     }
 
     [UnityTest]
-    public IEnumerator EShows36EmptySquareSlotsWithTenPercentGapsAndClosesAgain()
+    public IEnumerator EShows36SquareSlotsWithTenPercentGapsAndClosesAgain()
     {
         yield return LoadGameplay();
         Assert.That(InventoryGrid.IsOpen,Is.False);

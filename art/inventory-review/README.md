@@ -1,6 +1,8 @@
 # Empty inventory grid — issue #31 / PR #94
 
-The inventory is an empty 4-row, 9-column display, separate from the existing hotbar. It is instantiated from `Assets/Prefabs/InventoryGrid.prefab` in `SampleScene`, the gameplay scene loaded by MainMenu and included in build settings.
+This document records the base grid in #94. PR #95 adds catalog images; see `art/inventory-images-review/README.md`.
+
+The base inventory is an empty 4-row, 9-column display, separate from the existing hotbar. It is instantiated from `Assets/Prefabs/InventoryGrid.prefab` in `SampleScene`, the gameplay scene loaded by MainMenu and included in build settings.
 
 - Press E to open or close it. Escape (or the configured pause key) closes the inventory first; a subsequent pause-key press opens the pause menu.
 - Opening releases the cursor, stops horizontal player movement, hides the targeting highlight and blocks movement/look/build/break/hotbar input. Closing returns control to gameplay. Simulation time continues normally.
