@@ -7,6 +7,18 @@ public class HotbarManager : MonoBehaviour
 
     private int selectedSlot = 0;
 
+    public int SelectedSlotIndex => selectedSlot;
+    public int SlotCount => slots != null ? slots.Length : 0;
+    public HotbarSlot GetSlot(int index) => slots != null && index >= 0 && index < slots.Length ? slots[index] : null;
+
+    public bool AssignItem(int index, InventoryItem item)
+    {
+        var slot = GetSlot(index);
+        if (slot == null || item == null || item.Prefab == null) return false;
+        slot.SetItem(item);
+        return true;
+    }
+
     public Block SelectedBlock => slots != null && slots.Length > 0
         ? slots[selectedSlot].BlockPrefab
         : null;

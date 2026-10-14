@@ -11,6 +11,14 @@ public class HotbarSlot : MonoBehaviour
     [SerializeField] private Color selectedColor = Color.yellow;
 
     public Block BlockPrefab => blockPrefab;
+    public InventoryItem Item { get; private set; }
+
+    public void SetItem(InventoryItem item)
+    {
+        if (item == null || item.Prefab == null) return;
+        Item = item;
+        blockPrefab = item.Prefab;
+    }
 
     public void SetSelected(bool selected)
     {
