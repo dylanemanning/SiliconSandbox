@@ -15,6 +15,8 @@ public class WorldSaveSystem : MonoBehaviour
         public Vector3 scale = Vector3.one;
         public Vector3Int footprintSize = Vector3Int.one;
         public bool isGround;
+        public bool hasWireEndpointMask;
+        public int wireEndpointMask;
     }
 
     [Serializable]
@@ -126,7 +128,11 @@ public class WorldSaveSystem : MonoBehaviour
                 rotation = block.transform.rotation,
                 scale = block.transform.localScale,
                 footprintSize = block.GetFootprintSize(),
-                isGround = block.isGround
+                isGround = block.isGround,
+                hasWireEndpointMask = block.GetComponent<LogicWireBlock>() != null,
+                wireEndpointMask = block.GetComponent<LogicWireBlock>() != null
+                    ? block.GetComponent<LogicWireBlock>().EndpointMask
+                    : 0
             });
         }
 
@@ -224,6 +230,12 @@ public class WorldSaveSystem : MonoBehaviour
                     || savedBlock.scale.z > 1.001f;
                 savedBlockComponent.isGround = isGround;
                 if (isGround) savedBlockComponent.breakable = false;
+            }
+
+            LogicWireBlock savedWire = block.GetComponent<LogicWireBlock>();
+            if (savedWire != null && savedBlock.hasWireEndpointMask)
+            {
+                savedWire.SetEndpointMask(savedBlock.wireEndpointMask);
             }
         }
     }

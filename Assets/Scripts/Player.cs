@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
@@ -15,6 +16,7 @@ public class Player : MonoBehaviour
     public HotbarManager hotbar;
     public GameObject blockHighlighter; // Visual indicator for targeted block
     public Block[] blockPalette; // Array of different block prefabs (Grass, Wire, Voltage, etc.)
+    [SerializeField] private Material wirePreviewMaterial;
     private int selectedBlockIndex = 0; // The current slot selected
 
     float xRotation;
@@ -32,6 +34,12 @@ public class Player : MonoBehaviour
     Block breakingBlock;
     RaycastHit targetRaycastHit;
     Rigidbody rb;
+    private LogicWireBlock wireRouteAnchor;
+    private readonly List<Vector3Int> wireRoutePath = new List<Vector3Int>();
+    private readonly List<GameObject> wirePreviewObjects = new List<GameObject>();
+    private readonly List<Material> generatedPreviewMaterials = new List<Material>();
+    private Vector3Int wireRouteTargetNeighbor;
+    private bool suppressBreakUntilReleased;
 
     void Start()
     {
@@ -42,6 +50,11 @@ public class Player : MonoBehaviour
         spawnRotation = transform.rotation;
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+    }
+
+    private void OnDisable()
+    {
+        CancelWireRoute();
     }
 
     void Update()
@@ -55,21 +68,50 @@ public class Player : MonoBehaviour
         CheckTargetBlock();
         HandleHotbarInput();
 
-        // New Input System check for Left Click (Breaking)
-        if (KeybindSettings.IsMouseButtonPressed(KeybindSettings.BreakMouseButton)) 
-        { 
-            TryBreakBlock(); 
+        bool routeWasActive = wireRouteAnchor != null;
+        if (routeWasActive && !IsWireSelected())
+        {
+            CancelWireRoute();
         }
-        else 
-        { 
+
+        if (wireRouteAnchor != null)
+        {
+            UpdateWireRoutePreview();
+        }
+
+        bool breakHeld = KeybindSettings.IsMouseButtonPressed(KeybindSettings.BreakMouseButton);
+        bool cancelRoutePressed = routeWasActive &&
+            KeybindSettings.WasMouseButtonPressedThisFrame(KeybindSettings.BreakMouseButton);
+        if (cancelRoutePressed)
+        {
+            CancelWireRoute();
+            suppressBreakUntilReleased = true;
+        }
+
+        if (routeWasActive)
+        {
             breakSeconds = 0; 
             breakingBlock = null;
         }
+        else if (suppressBreakUntilReleased)
+        {
+            if (!breakHeld) suppressBreakUntilReleased = false;
+            breakSeconds = 0;
+            breakingBlock = null;
+        }
+        else if (breakHeld)
+        {
+            TryBreakBlock();
+        }
+        else
+        {
+            breakSeconds = 0;
+            breakingBlock = null;
+        }
 
-        // New Input System check for Right Click (Placement)
-        if (KeybindSettings.WasMouseButtonPressedThisFrame(KeybindSettings.PlaceMouseButton)) 
-        { 
-            TryPlaceBlock(); 
+        if (!cancelRoutePressed && KeybindSettings.WasMouseButtonPressedThisFrame(KeybindSettings.PlaceMouseButton))
+        {
+            TryPlaceBlock();
         }
 
         if (KeybindSettings.WasPressedThisFrame(KeybindSettings.Jump))
@@ -239,6 +281,20 @@ public class Player : MonoBehaviour
         Block prefabToPlace = blockPalette[selectedBlockIndex];
         if (prefabToPlace == null) return;
 
+        if (prefabToPlace.GetComponent<LogicWireBlock>() != null)
+        {
+            if (wireRouteAnchor != null)
+            {
+                CommitWireRoute(prefabToPlace);
+            }
+            else
+            {
+                BeginWireRoute(prefabToPlace);
+            }
+
+            return;
+        }
+
         // Round to Int ensures the grid is perfect (1.0, 2.0, etc.)
         Vector3 spawnPosition = targetBlock.transform.position + targetRaycastHit.normal;
         if (!targetBlock.breakable)
@@ -307,6 +363,297 @@ public class Player : MonoBehaviour
                 currentScale.z * Mathf.Max(1, placedBlock.GetFootprintSize().z));
         }
         WorldSaveSystem.Instance?.MarkDirty();
+    }
+
+    private bool IsWireSelected()
+    {
+        return blockPalette != null && selectedBlockIndex >= 0 && selectedBlockIndex < blockPalette.Length &&
+               blockPalette[selectedBlockIndex] != null &&
+               blockPalette[selectedBlockIndex].GetComponent<LogicWireBlock>() != null;
+    }
+
+    private bool TryGetWireTarget(
+        Block wirePrefab,
+        out Vector3Int targetCell,
+        out Vector3Int targetNeighbor,
+        out Quaternion rotation)
+    {
+        targetCell = default;
+        targetNeighbor = default;
+        rotation = Quaternion.identity;
+        if (targetBlock == null || wirePrefab == null) return false;
+
+        Vector3 axis = SnapToCardinalAxis(targetRaycastHit.normal);
+        targetCell = LogicWirePathfinder.GetCellBeyondSurfaceHit(targetRaycastHit.point, axis);
+        targetNeighbor = targetCell - Vector3Int.RoundToInt(axis);
+        rotation = Quaternion.FromToRotation(Vector3.up, axis);
+        return true;
+    }
+
+    private void BeginWireRoute(Block wirePrefab)
+    {
+        if (!TryGetWireTarget(wirePrefab, out Vector3Int targetCell, out _, out Quaternion rotation)) return;
+        Vector3 position = targetCell;
+        if (!Block.CanPlaceAt(position, wirePrefab.GetComponent<Block>())) return;
+
+        GameObject placedObject = Instantiate(wirePrefab.gameObject, position, rotation);
+        Block placedBlock = placedObject.GetComponent<Block>();
+        if (placedBlock != null)
+        {
+            Vector3Int footprint = placedBlock.GetFootprintSize();
+            placedObject.transform.localScale = Vector3.Scale(
+                placedObject.transform.localScale,
+                new Vector3(Mathf.Max(1, footprint.x), Mathf.Max(1, footprint.y), Mathf.Max(1, footprint.z)));
+        }
+
+        wireRouteAnchor = placedObject.GetComponent<LogicWireBlock>();
+        wireRoutePath.Clear();
+        WorldSaveSystem.Instance?.MarkDirty();
+    }
+
+    private void UpdateWireRoutePreview()
+    {
+        Block wirePrefab = blockPalette[selectedBlockIndex];
+        if (!TryGetWireTarget(wirePrefab, out Vector3Int targetCell, out Vector3Int targetNeighbor, out _))
+        {
+            wireRoutePath.Clear();
+            ClearWirePreview();
+            return;
+        }
+
+        Block anchorBlock = wireRouteAnchor.GetComponent<Block>();
+        Vector3Int startCell = wireRouteAnchor.GridPosition;
+        if (!LogicWirePathfinder.TryFindPath(
+                startCell,
+                targetCell,
+                cell => cell == startCell || !Block.IsCellOccupied(cell, anchorBlock),
+                out List<Vector3Int> path))
+        {
+            wireRoutePath.Clear();
+            ClearWirePreview();
+            return;
+        }
+
+        bool pathChanged = !PathsMatch(wireRoutePath, path) || wireRouteTargetNeighbor != targetNeighbor;
+        if (!pathChanged) return;
+
+        wireRoutePath.Clear();
+        wireRoutePath.AddRange(path);
+        wireRouteTargetNeighbor = targetNeighbor;
+        RebuildWirePreview(wirePrefab, path, targetNeighbor);
+    }
+
+    private void RebuildWirePreview(Block wirePrefab, List<Vector3Int> path, Vector3Int targetNeighbor)
+    {
+        ClearWirePreview();
+        if (path.Count < 2) return;
+
+        for (int index = 1; index < path.Count; index++)
+        {
+            int endpointMask = GetRouteEndpointMask(path, index, targetNeighbor);
+            Vector3Int previous = path[index - 1];
+            Vector3Int next = index < path.Count - 1 ? path[index + 1] : targetNeighbor;
+            Vector3Int primaryDirection = index < path.Count - 1 ? next - path[index] : previous - path[index];
+            Quaternion rotation = Quaternion.FromToRotation(Vector3.up, (Vector3)primaryDirection);
+            GameObject preview = Instantiate(wirePrefab.gameObject, path[index], rotation);
+            LogicWireBlock previewWire = preview.GetComponent<LogicWireBlock>();
+            if (previewWire != null) previewWire.SetEndpointMask(endpointMask);
+
+            foreach (MonoBehaviour behaviour in preview.GetComponentsInChildren<MonoBehaviour>(true))
+            {
+                behaviour.enabled = false;
+            }
+
+            foreach (Collider previewCollider in preview.GetComponentsInChildren<Collider>(true))
+            {
+                previewCollider.enabled = false;
+            }
+
+            ApplyWirePreviewMaterial(preview);
+            wirePreviewObjects.Add(preview);
+
+            if (index >= 1)
+            {
+                GameObject linkObject = new GameObject("Wire Route Preview Link");
+                LineRenderer link = linkObject.AddComponent<LineRenderer>();
+                link.useWorldSpace = true;
+                link.positionCount = 2;
+                link.startWidth = 0.18f;
+                link.endWidth = 0.18f;
+                link.SetPosition(0, path[index - 1]);
+                link.SetPosition(1, path[index]);
+
+                Renderer wireRenderer = wirePrefab.GetComponentInChildren<Renderer>();
+                if (wireRenderer != null) link.sharedMaterial = wireRenderer.sharedMaterial;
+                ApplyWirePreviewMaterial(linkObject);
+                wirePreviewObjects.Add(linkObject);
+            }
+        }
+    }
+
+    private static int GetRouteEndpointMask(List<Vector3Int> path, int index, Vector3Int targetNeighbor)
+    {
+        int mask = LogicWireBlock.GetDirectionBit(path[index - 1] - path[index]);
+        if (index < path.Count - 1)
+        {
+            mask |= LogicWireBlock.GetDirectionBit(path[index + 1] - path[index]);
+        }
+        else
+        {
+            mask |= LogicWireBlock.GetDirectionBit(targetNeighbor - path[index]);
+        }
+
+        return mask;
+    }
+
+    private void CommitWireRoute(Block wirePrefab)
+    {
+        if (wireRoutePath.Count < 2)
+        {
+            CancelWireRoute();
+            return;
+        }
+
+        for (int index = 1; index < wireRoutePath.Count; index++)
+        {
+            if (!Block.CanPlaceAt(wireRoutePath[index], wirePrefab)) return;
+        }
+
+        wireRouteAnchor.AddEndpointTowards(wireRoutePath[1] - wireRoutePath[0]);
+        for (int index = 1; index < wireRoutePath.Count; index++)
+        {
+            int endpointMask = GetRouteEndpointMask(wireRoutePath, index, wireRouteTargetNeighbor);
+            Vector3Int previous = wireRoutePath[index - 1];
+            Vector3Int next = index < wireRoutePath.Count - 1
+                ? wireRoutePath[index + 1]
+                : wireRouteTargetNeighbor;
+            Vector3Int primaryDirection = index < wireRoutePath.Count - 1
+                ? next - wireRoutePath[index]
+                : previous - wireRoutePath[index];
+            Quaternion rotation = Quaternion.FromToRotation(Vector3.up, (Vector3)primaryDirection);
+            Vector3 position = wireRoutePath[index];
+            GameObject placedObject = Instantiate(wirePrefab.gameObject, position, rotation);
+            LogicWireBlock placedWire = placedObject.GetComponent<LogicWireBlock>();
+            if (placedWire != null) placedWire.SetEndpointMask(endpointMask);
+
+            Block placedBlock = placedObject.GetComponent<Block>();
+            if (placedBlock != null)
+            {
+                Vector3Int footprint = placedBlock.GetFootprintSize();
+                placedObject.transform.localScale = Vector3.Scale(
+                    placedObject.transform.localScale,
+                    new Vector3(Mathf.Max(1, footprint.x), Mathf.Max(1, footprint.y), Mathf.Max(1, footprint.z)));
+            }
+        }
+
+        WorldSaveSystem.Instance?.MarkDirty();
+        CancelWireRoute();
+    }
+
+    private void CancelWireRoute()
+    {
+        wireRouteAnchor = null;
+        wireRoutePath.Clear();
+        ClearWirePreview();
+    }
+
+    private void ClearWirePreview()
+    {
+        foreach (GameObject preview in wirePreviewObjects)
+        {
+            if (preview != null) Destroy(preview);
+        }
+        wirePreviewObjects.Clear();
+
+        foreach (Material material in generatedPreviewMaterials)
+        {
+            if (material != null) Destroy(material);
+        }
+        generatedPreviewMaterials.Clear();
+    }
+
+    private void ApplyWirePreviewMaterial(GameObject preview)
+    {
+        foreach (Renderer previewRenderer in preview.GetComponentsInChildren<Renderer>(true))
+        {
+            if (wirePreviewMaterial != null)
+            {
+                Material[] materials = new Material[previewRenderer.sharedMaterials.Length];
+                for (int index = 0; index < materials.Length; index++)
+                {
+                    Material material = new Material(wirePreviewMaterial);
+                    ConfigureTransparentMaterial(material);
+                    materials[index] = material;
+                    generatedPreviewMaterials.Add(material);
+                }
+                previewRenderer.sharedMaterials = materials;
+                continue;
+            }
+
+            Material[] sourceMaterials = previewRenderer.sharedMaterials;
+            Material[] transparentMaterials = new Material[sourceMaterials.Length];
+            for (int index = 0; index < sourceMaterials.Length; index++)
+            {
+                if (sourceMaterials[index] == null) continue;
+                Material material = new Material(sourceMaterials[index]);
+                ConfigureTransparentMaterial(material);
+                transparentMaterials[index] = material;
+                generatedPreviewMaterials.Add(material);
+            }
+            previewRenderer.sharedMaterials = transparentMaterials;
+        }
+    }
+
+    private static void ConfigureTransparentMaterial(Material material)
+    {
+        if (material.HasProperty("_BaseColor"))
+        {
+            Color color = material.GetColor("_BaseColor");
+            color.a = 0.35f;
+            material.SetColor("_BaseColor", color);
+        }
+        if (material.HasProperty("_Color"))
+        {
+            Color color = material.GetColor("_Color");
+            color.a = 0.35f;
+            material.SetColor("_Color", color);
+        }
+
+        if (material.HasProperty("_Surface"))
+        {
+            material.SetFloat("_Surface", 1f);
+            material.SetFloat("_Blend", 0f);
+            material.SetFloat("_AlphaClip", 0f);
+            material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+            material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+            material.SetFloat("_ZWrite", 0f);
+            material.SetOverrideTag("RenderType", "Transparent");
+            material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            material.DisableKeyword("_ALPHATEST_ON");
+            material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+        }
+        if (material.HasProperty("_Mode"))
+        {
+            material.SetFloat("_Mode", 3f);
+            material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+            material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+            material.SetInt("_ZWrite", 0);
+            material.SetOverrideTag("RenderType", "Transparent");
+            material.EnableKeyword("_ALPHABLEND_ON");
+            material.DisableKeyword("_ALPHATEST_ON");
+            material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+            material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+        }
+    }
+
+    private static bool PathsMatch(List<Vector3Int> first, List<Vector3Int> second)
+    {
+        if (first.Count != second.Count) return false;
+        for (int index = 0; index < first.Count; index++)
+        {
+            if (first[index] != second[index]) return false;
+        }
+        return true;
     }
 
     private static Vector3 SnapToCardinalAxis(Vector3 direction)

@@ -67,4 +67,79 @@ public class LogicWireBlockTests
             Object.DestroyImmediate(gameObject);
         }
     }
+
+    [Test]
+    public void CustomEndpointMaskAllowsTurnedWireConnections()
+    {
+        var firstObject = new GameObject("Turn Wire");
+        var nextObject = new GameObject("Next Wire");
+        try
+        {
+            firstObject.transform.position = Vector3.zero;
+            nextObject.transform.position = Vector3.forward;
+            LogicWireBlock first = firstObject.AddComponent<LogicWireBlock>();
+            LogicWireBlock next = nextObject.AddComponent<LogicWireBlock>();
+
+            first.SetEndpointMask(
+                LogicWireBlock.GetDirectionBit(Vector3Int.right) |
+                LogicWireBlock.GetDirectionBit(new Vector3Int(0, 0, 1)));
+            next.SetEndpointMask(LogicWireBlock.GetDirectionBit(Vector3Int.back));
+
+            Assert.IsTrue(first.ConnectsTo(next));
+            Assert.IsTrue(first.HasEndpointTowards(Vector3Int.right));
+            Assert.IsTrue(first.HasEndpointTowards(Vector3Int.forward));
+            Assert.IsFalse(first.HasEndpointTowards(Vector3Int.up));
+        }
+        finally
+        {
+            Object.DestroyImmediate(firstObject);
+            Object.DestroyImmediate(nextObject);
+        }
+    }
+
+    [Test]
+    public void PathFinderReturnsShortestTurningPath()
+    {
+        bool found = LogicWirePathfinder.TryFindPath(
+            Vector3Int.zero,
+            new Vector3Int(1, 0, 1),
+            _ => true,
+            out var path);
+
+        Assert.IsTrue(found);
+        Assert.AreEqual(3, path.Count);
+        Assert.AreEqual(Vector3Int.zero, path[0]);
+        Assert.AreEqual(new Vector3Int(1, 0, 1), path[path.Count - 1]);
+        Assert.AreNotEqual(path[1] - path[0], path[2] - path[1]);
+    }
+
+    [Test]
+    public void PathFinderRoutesAroundOccupiedCells()
+    {
+        Vector3Int blocked = Vector3Int.right;
+        bool found = LogicWirePathfinder.TryFindPath(
+            Vector3Int.zero,
+            new Vector3Int(2, 0, 0),
+            cell => cell.y == 0 && cell.x >= 0 && cell.x <= 2 && cell.z >= -1 && cell.z <= 1 && cell != blocked,
+            out var path);
+
+        Assert.IsTrue(found);
+        Assert.AreEqual(5, path.Count);
+        CollectionAssert.DoesNotContain(path, blocked);
+    }
+
+    [Test]
+    public void SurfaceHitMapsToTheHitGroundCellInsteadOfItsOrigin()
+    {
+        Vector3Int firstCell = LogicWirePathfinder.GetCellBeyondSurfaceHit(
+            new Vector3(8.2f, 0.05f, -3.4f),
+            Vector3.up);
+        Vector3Int secondCell = LogicWirePathfinder.GetCellBeyondSurfaceHit(
+            new Vector3(12.3f, 0.05f, 5.1f),
+            Vector3.up);
+
+        Assert.AreEqual(new Vector3Int(8, 1, -3), firstCell);
+        Assert.AreEqual(new Vector3Int(12, 1, 5), secondCell);
+        Assert.AreNotEqual(firstCell, secondCell);
+    }
 }

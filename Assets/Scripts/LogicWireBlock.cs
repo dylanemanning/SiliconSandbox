@@ -16,17 +16,62 @@ public class LogicWireBlock : LogicSignalBlock
     private readonly LineRenderer[] connectionLines = new LineRenderer[6];
     private int signalState;
     private int connectionMask;
+    [SerializeField] private int endpointMask;
+    [SerializeField] private bool hasCustomEndpointMask;
 
     public override int SignalState => signalState;
     public int ConnectionMask => connectionMask;
     public int ConnectionCount => CountBits(connectionMask);
     public bool IsJunction => ConnectionCount >= 3;
+    public int EndpointMask => hasCustomEndpointMask ? endpointMask : GetAxisEndpointMask();
 
     public bool HasEndpointTowards(Vector3Int neighborPosition)
     {
         Vector3Int direction = neighborPosition - GridPosition;
+        int directionBit = GetDirectionBit(direction);
+        return directionBit != 0 && (EndpointMask & directionBit) != 0;
+    }
+
+    public void SetEndpointMask(int mask)
+    {
+        endpointMask = mask & 0x3f;
+        hasCustomEndpointMask = true;
+        ApplyEndpointVisuals(endpointMask);
+    }
+
+    public void AddEndpointTowards(Vector3Int direction)
+    {
+        SetEndpointMask(EndpointMask | GetDirectionBit(direction));
+    }
+
+    public static int GetDirectionBit(Vector3Int direction)
+    {
+        if (direction == Vector3Int.right) return 1 << 0;
+        if (direction == Vector3Int.left) return 1 << 1;
+        if (direction == Vector3Int.up) return 1 << 2;
+        if (direction == Vector3Int.down) return 1 << 3;
+        if (direction == new Vector3Int(0, 0, 1)) return 1 << 4;
+        if (direction == new Vector3Int(0, 0, -1)) return 1 << 5;
+        return 0;
+    }
+
+    private int GetAxisEndpointMask()
+    {
         Vector3Int axis = Vector3Int.RoundToInt(transform.up);
-        return direction == axis || direction == -axis;
+        return GetDirectionBit(axis) | GetDirectionBit(-axis);
+    }
+
+    private void ApplyEndpointVisuals(int mask)
+    {
+        if (directionVisuals == null) return;
+
+        for (int index = 0; index < directionVisuals.Length && index < 6; index++)
+        {
+            if (directionVisuals[index] != null)
+            {
+                directionVisuals[index].SetActive((mask & (1 << index)) != 0);
+            }
+        }
     }
 
     public bool ConnectsTo(LogicSignalBlock neighbor)
