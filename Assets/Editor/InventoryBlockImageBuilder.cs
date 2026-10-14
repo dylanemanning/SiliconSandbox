@@ -36,7 +36,7 @@ public static class InventoryBlockImageBuilder
         InstallImages();
         AssetDatabase.SaveAssets();
         CapturePreview();
-        Debug.Log("INVENTORY_IMAGES_BUILD_PASS: 13 catalog entries and isometric sprites, 23 empty slots.");
+        Debug.Log("INVENTORY_IMAGES_BUILD_PASS: 13 catalog entries, top-down block sprites and an angled wire sprite, 23 empty slots.");
     }
 
     static void GenerateIcons()
@@ -78,8 +78,17 @@ public static class InventoryBlockImageBuilder
                     var renderers=model.GetComponentsInChildren<Renderer>();
                     var bounds=renderers[0].bounds;
                     foreach(var renderer in renderers) bounds.Encapsulate(renderer.bounds);
-                    camera.transform.position=bounds.center+new Vector3(4,6,-8).normalized*8;
-                    camera.transform.LookAt(bounds.center);
+                    if(modelName=="wire_straight_off")
+                    {
+                        camera.transform.position=bounds.center+new Vector3(4,6,-8).normalized*8;
+                        camera.transform.LookAt(bounds.center);
+                    }
+                    else
+                    {
+                        // Put the +Z output on the right so gate symbols read left to right.
+                        camera.transform.position=bounds.center+Vector3.up*8;
+                        camera.transform.rotation=Quaternion.LookRotation(Vector3.down,Vector3.left);
+                    }
                     float size=0;
                     for(int x=-1;x<=1;x+=2) for(int y=-1;y<=1;y+=2) for(int z=-1;z<=1;z+=2)
                     {
@@ -178,6 +187,14 @@ public static class InventoryBlockImageBuilder
     public static void CapturePreview() => InventoryGridBuilder.CaptureTo("art/inventory-images-review/inventory-images.png");
 
     public static void CaptureAndBuildMac() { CapturePreview(); BuildMac(); }
+
+    public static void RefreshIconsAndBuildMac()
+    {
+        GenerateIcons();
+        AssetDatabase.SaveAssets();
+        CapturePreview();
+        BuildMac();
+    }
 
     public static void BuildMac()
     {

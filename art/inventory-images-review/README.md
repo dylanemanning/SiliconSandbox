@@ -10,7 +10,7 @@ There is one entry per type. Constant Signal uses the high-source prefab by defa
 
 ## Images and binding
 
-- `InventoryBlockImageBuilder` renders transparent 256×256 PNGs from the existing models. The basic building block uses its actual gameplay prefab. Lighting and grading match the model-review settings.
+- `InventoryBlockImageBuilder` renders transparent 256×256 PNGs from the existing models. Blocks use straight top-down views of their symbol faces, with gate outputs pointing right for familiar left-to-right reading. The wire retains its angled view. The basic building block uses its actual gameplay prefab. Lighting and grading match the model-review settings.
 - `Assets/UI/InventoryIcons/` contains imported Sprite assets. Images are baked in the Editor and referenced by the catalog; gameplay does not create thumbnail cameras or render models for each UI slot.
 - `Assets/Inventory/DefaultInventoryCatalog.asset` connects those images to actual gameplay prefabs.
 - `InventoryGrid.RefreshImages` binds catalog entries on enable. `InventorySlotImage.SetItem` changes or clears a slot while preserving its square frame and aspect ratio. Missing entries disable the icon and keep the empty slot visible.
@@ -25,4 +25,4 @@ Unity 6000.3.8f1 on macOS:
 - EditMode: **41 passed, 20 skipped, 0 failed**. Existing Windows-native tests are skipped on macOS. Tests cover all 13 types, unique IDs/images, valid gameplay prefabs, all eight gates, alpha margins, absence of error-shader pixels, white gate symbols and replacing/clearing slot content.
 - PlayMode: **27 passed, 2 skipped, 0 failed**. Existing pause-menu settings tests remain skipped. Tests cover the live 13/23 slot binding, image/prefab correspondence, preserved layout, refresh/reopen behavior, existing inventory input handling and gameplay tests, and the absence of thumbnail cameras in gameplay.
 - The macOS development player build succeeded. Local output: `Builds/InventoryImages/SiliconSandbox.app` (ignored). MainMenu loads the integrated gameplay scene containing the catalog and images.
-- The Unity screenshot shows the populated UI. The temporary camera-space capture disables post-processing on the UI so already-graded sprites are not graded twice; the real overlay UI is rendered after gameplay post-processing.
+- The Unity screenshot shows the populated UI with top-down block images and the angled wire image. The temporary camera-space capture disables post-processing on the UI so already-graded sprites are not graded twice; the real overlay UI is rendered after gameplay post-processing.
