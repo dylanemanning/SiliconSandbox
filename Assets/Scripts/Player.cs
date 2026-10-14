@@ -46,7 +46,7 @@ public class Player : MonoBehaviour
 
     void Update()
     {
-        if (PauseManager.IsPaused) return;
+        if (PauseManager.IsPaused || InventoryGrid.IsOpen || InventoryGrid.ClosedThisFrame) return;
 
         CheckFall();
         CheckRotation();
