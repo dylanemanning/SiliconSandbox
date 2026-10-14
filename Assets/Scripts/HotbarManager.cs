@@ -4,6 +4,7 @@ using UnityEngine.InputSystem;
 public class HotbarManager : MonoBehaviour
 {
     [SerializeField] private HotbarSlot[] slots;
+    [SerializeField] private InventoryCatalog catalog;
 
     private int selectedSlot = 0;
 
@@ -25,6 +26,8 @@ public class HotbarManager : MonoBehaviour
 
     private void Start()
     {
+        foreach (var slot in slots ?? System.Array.Empty<HotbarSlot>())
+            if (slot != null) slot.RefreshIcon(catalog);
         if (slots != null && slots.Length > 0)
             SelectSlot(0);
     }

@@ -76,11 +76,11 @@ public static class InventoryGridBuilder
 
     public static void Capture() => CaptureTo("art/inventory-review/inventory-grid.png");
 
-    public static void CaptureTo(string path)
+    public static void CaptureTo(string path, bool showInventory = true)
     {
         EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity");
         var inventory=UnityEngine.Object.FindFirstObjectByType<InventoryGrid>();
-        inventory.Panel.SetActive(true);
+        inventory.Panel.SetActive(showInventory);
         var camera=Camera.main;
         // Actual overlay UI is drawn after post-processing. Avoid grading baked
         // icon colors again when using a camera-space canvas for this capture.
