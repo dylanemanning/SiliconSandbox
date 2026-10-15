@@ -97,13 +97,13 @@ public class GatePortsTests
     // ---- Local layout (no rotation) ---------------------------------------
 
     [Test]
-    public void TwoInputGatesUnrotated_AOnLeft_BOnRight_OutputFront()
+    public void TwoInputGatesUnrotated_InputsBack_OutputFrontLeft()
     {
         foreach (GateType gate in TwoInputGates)
         {
             AssertPortFaces(gate, Quaternion.identity,
-                inputA: Vector3Int.left,
-                inputB: Vector3Int.right,
+                inputA: Vector3Int.back,
+                inputB: Vector3Int.back,
                 output: Vector3Int.forward);
         }
     }
@@ -129,10 +129,10 @@ public class GatePortsTests
     // is +Z.
     //
     //        yaw   output (front)   input A (left)   input B (right)
-    [TestCase(  0f,   0, 0,  1,       -1, 0,  0,        1, 0,  0)]
-    [TestCase( 90f,   1, 0,  0,        0, 0,  1,        0, 0, -1)]
-    [TestCase(180f,   0, 0, -1,        1, 0,  0,       -1, 0,  0)]
-    [TestCase(270f,  -1, 0,  0,        0, 0, -1,        0, 0,  1)]
+    [TestCase(  0f,   0, 0,  1,        0, 0, -1,        0, 0, -1)]
+    [TestCase( 90f,   1, 0,  0,       -1, 0,  0,       -1, 0,  0)]
+    [TestCase(180f,   0, 0, -1,        0, 0,  1,        0, 0,  1)]
+    [TestCase(270f,  -1, 0,  0,        1, 0,  0,        1, 0,  0)]
     public void AndGateRotatedByYaw(float yaw,
         int ox, int oy, int oz, int ax, int ay, int az, int bx, int by, int bz)
     {
@@ -161,19 +161,18 @@ public class GatePortsTests
     [TestCase(90f)]
     [TestCase(180f)]
     [TestCase(270f)]
-    public void OneByOneGatePortsAreOnTheAnchorCell(float yaw)
+    public void PortCellsFollowApprovedFootprint(float yaw)
     {
-        // Holds while gates are 1x1x1. When they become 2x2x1 (#64) this test is
-        // expected to fail and should be replaced with per-cell expectations.
         Quaternion rotation = Quaternion.Euler(0f, yaw, 0f);
-
-        foreach (GateType gate in Gates.Keys)
-        {
+        foreach (GateType gate in OneInputGates)
             foreach (GatePort port in GatePorts.For(gate))
-            {
-                Assert.AreEqual(Anchor, GatePorts.ToWorld(port, Anchor, rotation).cell,
-                    $"{gate} {port} at yaw {yaw}");
-            }
+                Assert.AreEqual(Anchor,GatePorts.ToWorld(port,Anchor,rotation).cell);
+        foreach (GateType gate in TwoInputGates)
+        {
+            var ports=GatePorts.For(gate);
+            Assert.AreEqual(Anchor,GatePorts.ToWorld(ports[0],Anchor,rotation).cell);
+            Assert.AreEqual(Anchor+Vector3Int.RoundToInt(rotation*Vector3.right),GatePorts.ToWorld(ports[1],Anchor,rotation).cell);
+            Assert.AreEqual(Anchor+Vector3Int.RoundToInt(rotation*Vector3.forward),GatePorts.ToWorld(ports[2],Anchor,rotation).cell);
         }
     }
 

@@ -5,7 +5,9 @@
         "SiliconSandbox.Game",
         "Unity.InputSystem",
         "Unity.InputSystem.TestFramework",
-        "Unity.TextMeshPro"
+        "Unity.TextMeshPro",
+        "Unity.RenderPipelines.Universal.Runtime",
+        "Unity.RenderPipelines.Core.Runtime"
     ],
     "optionalUnityReferences": [
         "TestAssemblies"

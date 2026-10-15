@@ -16,13 +16,13 @@ One Unity unit is one block. Imported model roots have unit scale and local +Y u
 
 Pins are diameter 0.33, protruding 0.0625 beyond the authored face. The larger gates' output is on the left output-side face cell, never between cells. Renderer bounds include pin protrusions; body dimensions are measured separately. Roots are body-centered; placement code must account for the complete footprint. Printed symbols stay inside their panel rings. NAND/NOR/XNOR inversion circles use the approved larger size, and XOR/XNOR inputs stop at the extra curve.
 
-These are visual assets. `Assets/Models/Prefabs/` contains ready material-mapped art prefabs without gameplay scripts or colliders. Existing gameplay gate prefabs and `GatePorts` still use their earlier one-cell layout; integrating the new footprint and pin arrangement into gameplay is subsequent work. Do not scale a 2×2 model down to match those existing one-cell prefabs.
+These are visual assets. `Assets/Models/Prefabs/` contains material-mapped art prefabs without gameplay scripts or colliders. Gameplay wrappers in `Assets/Prefabs/` now use these visuals at native scale, with multi-cell footprints, matching colliders and gate ports. Do not scale a 2×2 model down to a single cell.
 
 ## Materials and LED glow
 
 The FBX importer remaps model material slots to shared native URP Lit materials in `Assets/Models/Materials/`. Solid Blender palette values are converted from linear to sRGB for Unity color properties. The procedural PNGs store raw linear palette values, so their importer disables sRGB decoding; they use point filtering, no mipmaps, and no compression. Wires and source pins use muted blue for off and green for on. Constant Signal has separate 0/1 variants; Clock has a square-wave symbol and enabled-state dot.
 
-The review profile uses ACES tone mapping, exposure +0.4155, saturation -25, and contrast -8, together with ambient lighting and soft key-light shadows. The latest gameplay-preview adjustment reduces exposure by 0.2345 stops (15% less light before tone mapping) and ambient/fill contributions by 20% to darken faces opposite the key light. This gives the blue/green wires and gray blocks the softer, pastel presentation requested after the first Unity review. These settings approximate the approved Blender AgX studio render; they are not a pixel-identical reproduction of Cycles. Gameplay cameras need a compatible lighting/volume setup to reproduce this presentation.
+The review profile uses ACES tone mapping, exposure +0.4155, saturation -25, and contrast -8, together with ambient lighting and soft key-light shadows. The latest gameplay-preview adjustment reduces exposure by 0.2345 stops (15% less light before tone mapping) and ambient/fill contributions by 20% to darken faces opposite the key light. This gives the blue/green wires and gray blocks the softer, pastel presentation requested after the first Unity review. These settings approximate the approved Blender AgX studio render; they are not a pixel-identical reproduction of Cycles. The main `SampleScene` gameplay camera now uses the same lighting and a separate `Assets/Settings/GameplayAppearance.asset` profile, so the presentation is included in builds.
 
 Unity symbol textures use a near-black neutral background calibrated to the Blender reference; white symbol and boundary-ring texels are preserved. Blue/green wire and source-pin material colors are reduced to 75% of the original linear palette to match the darker clock pins in the approved Blender image. These Unity presentation adjustments do not modify the authored Blender source palette.
 
@@ -30,7 +30,7 @@ Non-LED model surfaces use zero smoothness with specular highlights and environm
 
 `SS_YellowLED.mat` enables HDR emission. `SS_FrostedLED.mat` uses a rough transparent surface with opacity 0.4; it approximates the Blender frost without a screen-space refraction shader. Emission makes the LED surface bright; a surrounding glow requires an HDR camera with post-processing enabled and a Volume containing Bloom. Emission alone does not create a realtime local light.
 
-Open `Assets/Scenes/ModelArtReview.unity` for the complete Unity gallery and the Bloom setup. This review scene is excluded from game build settings. Its `ModelReviewBloom.asset` profile belongs to the review scene; integrating glow into a gameplay camera should use that scene's volume and camera settings rather than adding a global volume from an individual LED prefab.
+Open `Assets/Scenes/ModelArtReview.unity` for the complete Unity gallery and the Bloom setup. This review scene is excluded from game build settings. Its `ModelReviewBloom.asset` profile belongs to the review scene. The gameplay scene has its own global Volume and matching `GameplayAppearance.asset` profile; individual LED prefabs do not create global volumes.
 
 ## Export and verify
 

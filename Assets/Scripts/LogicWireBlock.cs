@@ -45,7 +45,7 @@ public class LogicWireBlock : LogicSignalBlock
 
     private void ApplyVisualState()
     {
-        if (targetRenderer == null) return;
+        if (GetComponent<WireModelVisual>() != null || targetRenderer == null) return;
 
         Material nextMaterial = signalState == 1 ? poweredMaterial : unpoweredMaterial;
         if (nextMaterial != null)
@@ -63,7 +63,7 @@ public class LogicWireBlock : LogicSignalBlock
         foreach (Vector3Int neighborPosition in Neighbors(position))
         {
             LogicSignalBlock neighbor = At(neighborPosition);
-            if (neighbor is LogicWireBlock || neighbor is LogicSignalSource)
+            if (neighbor != null && neighbor.HasConnection(neighborPosition, position-neighborPosition))
             {
                 connectionMask |= 1 << index;
             }
@@ -96,9 +96,10 @@ public class LogicWireBlock : LogicSignalBlock
                 {
                     pending.Enqueue(neighborWire);
                 }
-                else if (neighbor is LogicSignalSource source)
+                else if (neighbor != null && neighbor.CanDrive(neighborPosition, wire.GridPosition-neighborPosition)
+                         && (neighbor is LogicSignalSource || neighbor is GateBlock))
                 {
-                    sourceStates.Add(source.SignalState);
+                    sourceStates.Add(neighbor.SignalState);
                 }
             }
         }
