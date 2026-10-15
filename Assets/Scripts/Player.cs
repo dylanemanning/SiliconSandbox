@@ -46,7 +46,9 @@ public class Player : MonoBehaviour
 
     void Update()
     {
-        if (PauseManager.IsPaused) return;
+        // The inventory can close before this Update runs; block gameplay for the
+        // rest of that frame so the closing input cannot also affect the world.
+        if (PauseManager.IsPaused || InventoryGrid.IsOpen || InventoryGrid.ClosedThisFrame) return;
 
         CheckFall();
         CheckRotation();
