@@ -5,6 +5,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Rendering.Universal;
 
 public static class InventoryGridBuilder
 {
@@ -73,12 +74,17 @@ public static class InventoryGridBuilder
         Debug.Log("INVENTORY_MAC_BUILD_PASS");
     }
 
-    public static void Capture()
+    public static void Capture() => CaptureTo("art/inventory-review/inventory-grid.png");
+
+    public static void CaptureTo(string path)
     {
         EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity");
         var inventory=UnityEngine.Object.FindFirstObjectByType<InventoryGrid>();
         inventory.Panel.SetActive(true);
         var camera=Camera.main;
+        // Actual overlay UI is drawn after post-processing. Avoid grading baked
+        // icon colors again when using a camera-space canvas for this capture.
+        camera.GetUniversalAdditionalCameraData().renderPostProcessing=false;
         var target=new RenderTexture(1600,900,24);camera.targetTexture=target;
         foreach(var canvas in UnityEngine.Object.FindObjectsByType<Canvas>(FindObjectsSortMode.None))
         {
@@ -91,8 +97,8 @@ public static class InventoryGridBuilder
         var previous=RenderTexture.active;camera.Render();RenderTexture.active=target;
         var image=new Texture2D(1600,900,TextureFormat.RGB24,false);
         image.ReadPixels(new Rect(0,0,1600,900),0,0);image.Apply();
-        Directory.CreateDirectory("art/inventory-review");
-        File.WriteAllBytes("art/inventory-review/inventory-grid.png",image.EncodeToPNG());
+        Directory.CreateDirectory(Path.GetDirectoryName(path));
+        File.WriteAllBytes(path,image.EncodeToPNG());
         RenderTexture.active=previous;camera.targetTexture=null;
         UnityEngine.Object.DestroyImmediate(target);UnityEngine.Object.DestroyImmediate(image);
         // Capture-only canvas changes must not alter the saved gameplay scene.
