@@ -143,22 +143,34 @@ public class InventorySelectionTests : InputTestFixture
         yield return null;
         yield return Tap(Key.Digit3);
         var player = Object.FindFirstObjectByType<Player>();
+        Assert.That(hotbar.SelectedBlock, Is.EqualTo(entries[9].Item.Prefab), "Clock assignment and selection must precede placement.");
         var body = player.GetComponent<Rigidbody>();
         body.useGravity = false;
         body.position = new Vector3(80,20,80);
         body.linearVelocity = Vector3.zero;
-        player.transform.rotation = Quaternion.identity;
-        player.cameraSettings.camera.transform.localRotation = Quaternion.identity;
+        Set(mouse.delta, Vector2.zero);
+        yield return new WaitForFixedUpdate();
         yield return null;
+        var camera = player.cameraSettings.camera;
         var target = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        target.transform.position = Vector3Int.RoundToInt(player.cameraSettings.camera.transform.position+Vector3.forward*3);
+        // Player.Update owns camera rotation; aim along its actual ray rather than
+        // assuming world-forward. Keep enough distance for placement beside the target.
+        target.transform.position = Vector3Int.RoundToInt(camera.ViewportPointToRay(new Vector3(.5f,.5f,0)).GetPoint(4));
         target.AddComponent<Block>();
         Physics.SyncTransforms();
         yield return null;
+        var ray = camera.ViewportPointToRay(new Vector3(.5f,.5f,0));
+        Assert.That(Physics.Raycast(ray, out var hit, player.reachDistance), Is.True, "The placement target must be in reach.");
+        Assert.That(hit.collider.gameObject, Is.EqualTo(target), "The gameplay ray must hit the test target.");
+        var rotation = Quaternion.Euler(0,Mathf.Round(player.transform.eulerAngles.y/90f)*90f,0);
+        Assert.That(BlockPlacement.TryGetAnchor(hotbar.SelectedBlock,hit.point,hit.normal,rotation,out var anchor),
+            Is.True, "The test must provide an unoccupied placement cell outside the player collider.");
         int count = Object.FindObjectsByType<LogicClockSource>(FindObjectsSortMode.None).Length;
         Press(mouse.rightButton); yield return null;
         Release(mouse.rightButton); yield return null;
         Assert.That(Object.FindObjectsByType<LogicClockSource>(FindObjectsSortMode.None).Length, Is.EqualTo(count+1));
+        Assert.That(Object.FindObjectsByType<LogicClockSource>(FindObjectsSortMode.None)
+            .Any(clock => clock.transform.position == (Vector3)anchor), Is.True, "The assigned Clock must be placed at the expected cell.");
         Object.Destroy(target);
         LogAssert.NoUnexpectedReceived();
     }
