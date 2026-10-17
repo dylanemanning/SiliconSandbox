@@ -7,16 +7,25 @@
 // keeps #12's netlist marshaling a matter of adding exports rather than
 // untangling Unity concerns from the engine.
 //
+// Exports:
+//   Silicon_EvaluateGate     one gate (#7)
+//   Silicon_EvaluateCircuit  a whole netlist in one pass (#12, stateless demo
+//                            version; #10 splits it into load + tick)
+//
 // Rules for anything added to this file:
 //   - extern "C" only. C++ name mangling is compiler-specific; DllImport
 //     resolves symbols by plain name.
-//   - Plain types across the boundary: int, pointers to int, sizes. No C++
-//     classes, no std:: types, no references, no exceptions allowed to escape.
+//   - Plain types across the boundary: int, pointers to int, sizes, and
+//     pointers to the all-int NetlistNode / NetlistConnection structs from
+//     netlist.h. No C++ classes, no std:: types, no references, no exceptions
+//     allowed to escape.
 //   - Memory crossing the boundary is allocated and owned by the caller (here,
 //     Unity's marshaler owns the inputs array).
+//   - Nothing is kept between calls. Each export builds what it needs on the
+//     stack and frees it before returning.
 //
 // Build the DLL from native/SiliconPlugin/:
-//     g++ -shared -O2 -static -s -o SiliconPlugin.dll src/plugin.cpp src/gates.cpp src/netlist.cpp
+//     g++ -shared -O2 -static -s -o SiliconPlugin.dll src/plugin.cpp src/gates.cpp src/netlist.cpp src/simulator.cpp
 //
 // -static matters: netlist.cpp uses the C++ standard library, and without it
 // the DLL depends on libstdc++-6.dll, which Unity can't find.
@@ -29,6 +38,10 @@
 // the copy will fail silently while it is open.
 
 #include "gates.h"
+#include "netlist.h"
+#include "simulator.h"
+
+#include <new>
 
 // Export decoration. MinGW and MSVC use __declspec; the GCC/Clang attribute is
 // here so a future macOS or Linux player build exports correctly without this
@@ -67,6 +80,67 @@ extern "C" {
 //
 SILICON_API int Silicon_EvaluateGate(int gateType, const int* inputs, int inputCount) {
     return silicon::EvaluateGate(gateType, inputs, inputCount);
+}
+
+// Parse a netlist and evaluate every node in one call (#12).
+//
+// Stateless: the graph is built, evaluated and thrown away inside this call.
+// C# calls it again whenever the placed circuit or a source changes. Parsing a
+// demo-sized circuit is microseconds, so caching the graph in the DLL is not
+// worth the lifetime questions yet; #10's Silicon_LoadCircuit is where that
+// happens.
+//
+//   nodes            caller-owned array of nodeCount silicon::NetlistNode
+//   connections      caller-owned array of connectionCount silicon::NetlistConnection
+//   states           caller-owned array of nodeCount ints, indexed like nodes.
+//                    In: the value of each SOURCE node (non-zero = 1); other
+//                    entries are ignored. Out: every node's value, 0 or 1. See
+//                    silicon::EvaluateCircuit in simulator.h for the details.
+//
+// Returns:
+//    0  SIM_OK
+//    1  SIM_HAS_CYCLE — evaluated, but nodes on or after a feedback loop read 0
+//   -10..-18  a NetlistStatus from the parser (netlist.h); states all 0
+//   -20..-22  a SimulateStatus failure (simulator.h); states all 0
+//
+// The caller must make states exactly nodeCount long. A pointer cannot carry
+// its length, so the C# wrapper checks this before calling.
+//
+// Matching C# declaration (keep in sync — Assets/Scripts/LogicEngine/LogicEngine.cs):
+//
+//     [DllImport("SiliconPlugin", EntryPoint = "Silicon_EvaluateCircuit")]
+//     private static extern int Silicon_EvaluateCircuit(
+//         NetlistNode[] nodes, int nodeCount,
+//         NetlistConnection[] connections, int connectionCount,
+//         int[] states);
+//
+SILICON_API int Silicon_EvaluateCircuit(const silicon::NetlistNode* nodes, int nodeCount,
+                                        const silicon::NetlistConnection* connections,
+                                        int connectionCount,
+                                        int* states) {
+    if (nodeCount > 0 && states == nullptr) {
+        return silicon::SIM_ERR_NULL_STATES;
+    }
+
+    // ParseNetlist and EvaluateCircuit never throw, but building the empty
+    // CircuitGraph and destroying the full one sit outside their guards. An
+    // exception escaping an extern "C" function takes the Unity editor down
+    // with it, so nothing is allowed through.
+    try {
+        silicon::CircuitGraph graph;
+        const int parsed = silicon::ParseNetlist(nodes, nodeCount, connections, connectionCount, graph);
+        if (parsed != silicon::NETLIST_OK) {
+            for (int i = 0; i < nodeCount; i++) {
+                states[i] = 0;
+            }
+            return parsed;
+        }
+        return silicon::EvaluateCircuit(graph, states);
+    } catch (const std::bad_alloc&) {
+        return silicon::NETLIST_ERR_OUT_OF_MEMORY;
+    } catch (...) {
+        return silicon::SIM_ERR_INTERNAL;
+    }
 }
 
 }  // extern "C"

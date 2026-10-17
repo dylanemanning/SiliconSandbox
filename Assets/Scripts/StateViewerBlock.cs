@@ -1,3 +1,9 @@
+// StateViewerBlock.cs — an LED.
+//
+// Display only (#82). The LED no longer reads its neighbours every frame: the
+// simulation driver evaluates the whole circuit through the logic engine and
+// pushes the LED's value in with SetDisplayedState.
+
 using UnityEngine;
 
 public class StateViewerBlock : LogicSignalBlock
@@ -16,16 +22,19 @@ public class StateViewerBlock : LogicSignalBlock
     protected override void OnEnable()
     {
         base.OnEnable();
-        ResolveRenderer();
-        propertyBlock = new MaterialPropertyBlock();
         ApplyVisualState();
     }
 
-    protected override void Update()
+    /// <summary>
+    /// Shows a new value. Called by the simulation driver (#82); does nothing if
+    /// the value hasn't changed, so the driver can call it freely.
+    /// </summary>
+    public void SetDisplayedState(int state)
     {
-        base.Update();
-        ResolveRenderer();
-        currentState = ReadAdjacentState();
+        int next = state == 0 ? 0 : 1;
+        if (next == currentState) return;
+
+        currentState = next;
         ApplyVisualState();
     }
 
@@ -40,27 +49,14 @@ public class StateViewerBlock : LogicSignalBlock
 
     private void ApplyVisualState()
     {
-        if (GetComponent<BlockModelVisual>() != null || targetRenderer == null) return;
+        // A prefab with the new LED model draws itself (BlockModelVisual).
+        if (GetComponent<BlockModelVisual>() != null) return;
+        ResolveRenderer();
+        if (targetRenderer == null) return;
         if (propertyBlock == null) propertyBlock = new MaterialPropertyBlock();
 
         propertyBlock.SetColor("_BaseColor", currentState == 1 ? highColor : lowColor);
         propertyBlock.SetColor("_Color", currentState == 1 ? highColor : lowColor);
         targetRenderer.SetPropertyBlock(propertyBlock);
-    }
-
-    private int ReadAdjacentState()
-    {
-        int state = 0;
-        foreach (Vector3Int neighborPosition in Neighbors(GridPosition))
-        {
-            LogicSignalBlock neighbor = At(neighborPosition);
-            if (neighbor != null && neighbor.CanDrive(neighborPosition, GridPosition-neighborPosition)
-                && (neighbor is LogicWireBlock || neighbor is LogicSignalSource || neighbor is GateBlock))
-            {
-                state = Mathf.Max(state, neighbor.SignalState);
-            }
-        }
-
-        return state;
     }
 }
