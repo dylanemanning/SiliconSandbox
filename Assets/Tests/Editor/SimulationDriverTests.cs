@@ -160,27 +160,22 @@ public class SimulationDriverEngineTests : DriverFixture
         Assert.AreEqual(0, led.CurrentState, "off: LED");
     }
 
-    // The demo: two sources into a gate, the gate's output to an LED.
+    // The demo: two sources into a gate, the gate's output to an LED
+    // (PlaceTwoInputCircuit has the layout).
     [Test]
     public void DemoCircuit_GateAndLedShowTheResult()
     {
-        GateBlock gate = Gate(GateType.And, 5, 0, 5, 90f);     // faces +X; A on +Z, B on -Z
-        LogicSignalSource a = Source(5, 0, 7, 1);
-        Wire(5, 0, 6);
-        LogicSignalSource b = Source(5, 0, 3, 0);
-        Wire(5, 0, 4);
-        LogicWireBlock output = Wire(6, 0, 5);
-        StateViewerBlock led = Led(7, 0, 5);
+        TwoInputCircuit c = PlaceTwoInputCircuit(GateType.And, a: 1, b: 0);
 
         Simulate();
-        Assert.AreEqual(0, gate.DisplayedState, "AND(1, 0)");
-        Assert.AreEqual(0, led.CurrentState);
+        Assert.AreEqual(0, c.Gate.DisplayedState, "AND(1, 0)");
+        Assert.AreEqual(0, c.Led.CurrentState);
 
-        b.SetState(1);
+        c.B.SetState(1);
         Simulate();
-        Assert.AreEqual(1, gate.DisplayedState, "AND(1, 1)");
-        Assert.AreEqual(1, output.SignalState, "the output wire shows the gate's value");
-        Assert.AreEqual(1, led.CurrentState);
+        Assert.AreEqual(1, c.Gate.DisplayedState, "AND(1, 1)");
+        Assert.AreEqual(1, c.OutputWire.SignalState, "the output wire shows the gate's value");
+        Assert.AreEqual(1, c.Led.CurrentState);
     }
 
     // TC-3.4.5: two sources on one network shows the error on every wire of

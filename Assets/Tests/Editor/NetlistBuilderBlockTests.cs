@@ -67,6 +67,42 @@ public abstract class PlacedBlockFixture
         return gate;
     }
 
+    // The two-input gate circuit the gate tests share: a gate at (5,0,5) turned
+    // to face +X (yaw 90), fed by two sources, its output wired to an LED. Two-
+    // input gates are 2x1x2 (GatePorts). Top view, x across, z up the page:
+    //
+    //   x:    3      4      5      6      7      8
+    //   z=5   srcA   BUF>   [A     out>]  wire   LED
+    //   z=4   srcB   wire   [B         ]
+    //
+    // At yaw 90 both inputs are on the gate's -X face: A on the anchor cell,
+    // B on the cell at -Z. The two cells facing them are side by side, and wires
+    // join on all six faces (until #63), so a wire in each would merge into one
+    // shorted network, and a source in A's cell would touch B's wire too. A is
+    // fed through a BUFFER instead: gates have no ports on their sides.
+    protected struct TwoInputCircuit
+    {
+        public GateBlock Gate, Buffer;
+        public LogicSignalSource A, B;
+        public LogicWireBlock OutputWire;
+        public StateViewerBlock Led;
+    }
+
+    protected TwoInputCircuit PlaceTwoInputCircuit(GateType type, int a = 0, int b = 0)
+    {
+        var circuit = new TwoInputCircuit
+        {
+            Gate = Gate(type, 5, 0, 5, 90f),
+            A = Source(3, 0, 5, a),
+            Buffer = Gate(GateType.Buffer, 4, 0, 5, 90f),
+            B = Source(3, 0, 4, b),
+        };
+        Wire(4, 0, 4);
+        circuit.OutputWire = Wire(7, 0, 5);
+        circuit.Led = Led(8, 0, 5);
+        return circuit;
+    }
+
     protected static int NodeOf(Netlist netlist, LogicSignalBlock block)
     {
         for (int node = 0; node < netlist.NodeCount; node++)
@@ -98,32 +134,22 @@ public class NetlistBuilderBlockTests : PlacedBlockFixture
         Assert.AreEqual(GateType.Output, (GateType)netlist.Nodes[NodeOf(netlist, led)].Type);
     }
 
-    // The real GatePorts table on a rotated gate. At yaw 90 the AND faces +X:
-    // input A is on +Z and input B on -Z (see GateBlockTests). Top view, x
-    // across, z down the page:
-    //
-    //   z=7  srcA
-    //   z=6  wire
-    //   z=5  AND>  wire  LED      (x = 5, 6, 7)
-    //   z=4  wire
-    //   z=3  srcB
+    // The real GatePorts table on a rotated gate (PlaceTwoInputCircuit). At yaw
+    // 90 the AND faces +X; input A is on the anchor cell's -X face, input B on
+    // the -Z cell's -X face, and the output on the +X cell's +X face (see
+    // GateBlockTests).
     [Test]
     public void RotatedGate_InputsLandOnTheRightPins()
     {
-        GateBlock gate = Gate(GateType.And, 5, 0, 5, 90f);
-        LogicSignalSource a = Source(5, 0, 7);
-        Wire(5, 0, 6);
-        LogicSignalSource b = Source(5, 0, 3);
-        Wire(5, 0, 4);
-        StateViewerBlock led = Led(7, 0, 5);
-        Wire(6, 0, 5);
+        TwoInputCircuit c = PlaceTwoInputCircuit(GateType.And);
 
         Netlist netlist = NetlistBuilder.FromBlocks(AllPlaced());
 
-        Assert.IsTrue(HasConnection(netlist, a, gate, 0), "source on +Z feeds pin 0 (A)");
-        Assert.IsTrue(HasConnection(netlist, b, gate, 1), "source on -Z feeds pin 1 (B)");
-        Assert.IsTrue(HasConnection(netlist, gate, led, 0), "output on +X reaches the LED");
-        Assert.AreEqual(3, netlist.Connections.Length);
+        Assert.IsTrue(HasConnection(netlist, c.A, c.Buffer, 0), "source A feeds the buffer directly");
+        Assert.IsTrue(HasConnection(netlist, c.Buffer, c.Gate, 0), "buffer on the anchor cell feeds pin 0 (A)");
+        Assert.IsTrue(HasConnection(netlist, c.B, c.Gate, 1), "wire on the -Z cell feeds pin 1 (B)");
+        Assert.IsTrue(HasConnection(netlist, c.Gate, c.Led, 0), "output on the +X cell reaches the LED");
+        Assert.AreEqual(4, netlist.Connections.Length);
         Assert.IsEmpty(netlist.Warnings);
     }
 
@@ -257,33 +283,27 @@ public class NetlistToEngineTests : PlacedBlockFixture
         Assert.AreEqual(0, Evaluate()[led], "after two toggles");
     }
 
-    // The demo circuit: two sources wired into a gate, the gate wired to an LED,
-    // across every input combination, for a rotated gate.
+    // The demo circuit: two sources into a gate, the gate wired to an LED,
+    // across every input combination, for a rotated gate (PlaceTwoInputCircuit).
     [TestCase(GateType.And)]
     [TestCase(GateType.Or)]
     [TestCase(GateType.Xor)]
     [TestCase(GateType.Nand)]
     public void DemoCircuit_TwoSourcesGateLed_MatchesTruthTable(GateType type)
     {
-        GateBlock gate = Gate(type, 5, 0, 5, 90f);     // same layout as RotatedGate_InputsLandOnTheRightPins
-        LogicSignalSource a = Source(5, 0, 7);
-        Wire(5, 0, 6);
-        LogicSignalSource b = Source(5, 0, 3);
-        Wire(5, 0, 4);
-        Wire(6, 0, 5);
-        StateViewerBlock led = Led(7, 0, 5);
+        TwoInputCircuit c = PlaceTwoInputCircuit(type);
 
         for (int bits = 0; bits < 4; bits++)
         {
             int av = bits & 1, bv = (bits >> 1) & 1;
-            a.SetState(av);
-            b.SetState(bv);
+            c.A.SetState(av);
+            c.B.SetState(bv);
 
             Dictionary<LogicSignalBlock, int> values = Evaluate();
 
             int expected = LogicEngine.Evaluate(type, new[] { av, bv });
-            Assert.AreEqual(expected, values[gate], $"{type}({av}, {bv}) gate");
-            Assert.AreEqual(expected, values[led], $"{type}({av}, {bv}) LED");
+            Assert.AreEqual(expected, values[c.Gate], $"{type}({av}, {bv}) gate");
+            Assert.AreEqual(expected, values[c.Led], $"{type}({av}, {bv}) LED");
         }
     }
 
