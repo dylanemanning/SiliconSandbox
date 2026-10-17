@@ -80,6 +80,8 @@ public class LogicWireBlock : LogicSignalBlock
 
     private void ApplyVisualState()
     {
+        // A prefab with the new wire model draws itself (WireModelVisual).
+        if (GetComponent<WireModelVisual>() != null) return;
         ResolveRenderer();
         if (targetRenderer == null) return;
 
@@ -116,7 +118,7 @@ public class LogicWireBlock : LogicSignalBlock
         foreach (Vector3Int neighborPosition in Neighbors(position))
         {
             LogicSignalBlock neighbor = At(neighborPosition);
-            if (neighbor is LogicWireBlock || neighbor is LogicSignalSource)
+            if (neighbor != null && neighbor.HasConnection(neighborPosition, position-neighborPosition))
             {
                 connectionMask |= 1 << index;
             }

@@ -46,14 +46,15 @@ public class Player : MonoBehaviour
 
     void Update()
     {
-        if (PauseManager.IsPaused) return;
+        // The inventory can close before this Update runs; block gameplay for the
+        // rest of that frame so the closing input cannot also affect the world.
+        if (PauseManager.IsPaused || InventoryGrid.IsOpen || InventoryGrid.ClosedThisFrame) return;
 
         CheckFall();
         CheckRotation();
         CheckMovement();
         CheckJump();
         CheckTargetBlock();
-        HandleHotbarInput();
 
         // New Input System check for Left Click (Breaking)
         if (KeybindSettings.IsMouseButtonPressed(KeybindSettings.BreakMouseButton)) 
@@ -180,45 +181,26 @@ public class Player : MonoBehaviour
         // Check if the ray hits a block within reach distance
         if (Physics.Raycast(ray, out targetRaycastHit, reachDistance)) 
         {
-            targetBlock = targetRaycastHit.transform.GetComponent<Block>(); // Try to get the Block component from the hit object
+            targetBlock = targetRaycastHit.collider.GetComponentInParent<Block>(); // Try to get the Block component from the hit object
 
             if (targetBlock != null) // If we hit a block, show the highlighter at the block's position
             {
                 if (blockHighlighter != null)
                 {
                     blockHighlighter.SetActive(true);
-                    blockHighlighter.transform.position = targetBlock.transform.position;
+                    var collider = targetBlock.GetComponent<Collider>();
+                    blockHighlighter.transform.position = collider.bounds.center;
+                    blockHighlighter.transform.rotation = targetBlock.transform.rotation;
+                    blockHighlighter.transform.localScale = (Vector3)targetBlock.footprint * 1.02f;
                 }
             }
+            else if (blockHighlighter != null) blockHighlighter.SetActive(false);
         }
         else // If we don't hit anything, clear the target block and hide the highlighter
         {
             targetBlock = null;
             if (blockHighlighter != null)
                 blockHighlighter.SetActive(false);
-        }
-    }
-
-    void HandleHotbarInput()
-    {
-        Keyboard keyboard = Keyboard.current;
-        if (keyboard == null) return;
-        // Directly check each number key. 
-        // This is the most reliable way with the New Input System's current API.
-        if (Keyboard.current.digit1Key.wasPressedThisFrame) selectedBlockIndex = 0;
-        else if (Keyboard.current.digit2Key.wasPressedThisFrame) selectedBlockIndex = 1;
-        else if (Keyboard.current.digit3Key.wasPressedThisFrame) selectedBlockIndex = 2;
-        else if (Keyboard.current.digit4Key.wasPressedThisFrame) selectedBlockIndex = 3;
-        else if (Keyboard.current.digit5Key.wasPressedThisFrame) selectedBlockIndex = 4;
-        else if (Keyboard.current.digit6Key.wasPressedThisFrame) selectedBlockIndex = 5;
-        else if (Keyboard.current.digit7Key.wasPressedThisFrame) selectedBlockIndex = 6;
-        else if (Keyboard.current.digit8Key.wasPressedThisFrame) selectedBlockIndex = 7;
-        else if (Keyboard.current.digit9Key.wasPressedThisFrame) selectedBlockIndex = 8;
-
-        // Clamp the index to ensure it doesn't exceed the number of blocks you've actually added to the palette
-        if (blockPalette != null && blockPalette.Length > 0)
-        {
-            selectedBlockIndex = Mathf.Clamp(selectedBlockIndex, 0, blockPalette.Length - 1);
         }
     }
 
@@ -242,43 +224,12 @@ public class Player : MonoBehaviour
         Block selectedBlock = hotbar ? hotbar.SelectedBlock : null;
         if (targetBlock == null || selectedBlock == null) return;
 
-        Block prefabToPlace = blockPalette[selectedBlockIndex];
-        
-        // Round to Int ensures the grid is perfect (1.0, 2.0, etc.)
-        Vector3 spawnPosition = targetBlock.transform.position + targetRaycastHit.normal;
-        if (!targetBlock.breakable)
-        {
-            float gridSize = Mathf.Max(targetBlock.placementGridSize, 0.001f);
-            spawnPosition.x = Mathf.Round(targetRaycastHit.point.x / gridSize) * gridSize;
-            spawnPosition.z = Mathf.Round(targetRaycastHit.point.z / gridSize) * gridSize;
-            spawnPosition.y = targetBlock.transform.position.y + targetRaycastHit.normal.y;
-        }
-        
+        Block prefabToPlace = selectedBlock;
         float playerYaw = transform.eulerAngles.y;
-        Quaternion spawnRotation = Quaternion.identity;
-
-        // Check if the prefab is a wire. 
-        if (prefabToPlace.name.Contains("Wire")) 
-        {
-            if (playerYaw > 45 && playerYaw <= 135)
-                spawnRotation = Quaternion.Euler(0,0, 90);
-            else if (playerYaw > 135 && playerYaw <= 225)
-                spawnRotation = Quaternion.Euler(0, 90, 90);
-            else if (playerYaw > 225 && playerYaw <= 315)
-                spawnRotation = Quaternion.Euler(0, 00, 90);
-            else
-                spawnRotation = Quaternion.Euler(0, 90, 90);
-        }
-        // Gates face the way the player is looking: output on the far side,
-        // inputs left and right. Yaw is snapped to 90 degrees so the gate's
-        // ports (GateBlock.WorldPorts) point along whole grid directions.
-        else if (prefabToPlace.GetComponent<GateBlock>() != null)
-        {
-            spawnRotation = Quaternion.Euler(0, Mathf.Round(playerYaw / 90f) * 90f, 0);
-        }
-
-        // Single Instantiate call at the end using whichever rotation was calculated
-        Instantiate(prefabToPlace, spawnPosition, spawnRotation);
+        Quaternion spawnRotation = Quaternion.Euler(0, Mathf.Round(playerYaw / 90f) * 90f, 0);
+        if (!BlockPlacement.TryGetAnchor(prefabToPlace, targetRaycastHit.point,
+                targetRaycastHit.normal, spawnRotation, out Vector3Int anchor)) return;
+        Instantiate(prefabToPlace, anchor, spawnRotation);
         WorldSaveSystem.Instance?.MarkDirty();
     }
 

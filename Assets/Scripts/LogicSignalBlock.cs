@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public abstract class LogicSignalBlock : MonoBehaviour
@@ -7,6 +8,16 @@ public abstract class LogicSignalBlock : MonoBehaviour
         new Dictionary<Vector3Int, LogicSignalBlock>();
 
     private static int circuitVersion;
+
+    // Every cell this block holds. One for a 1x1x1 block; a multi-cell block
+    // (Block.footprint, e.g. a 2x1x2 gate) holds all of them, each pointing back
+    // at the block, so At(cell) finds it from any of its cells.
+    private readonly List<Vector3Int> registeredCells = new List<Vector3Int>();
+    private Vector3Int lastAnchor, lastFootprint;
+    private Quaternion lastRotation;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetRegistry() => blocks.Clear();
 
     public Vector3Int GridPosition => Vector3Int.RoundToInt(transform.position);
 
@@ -52,35 +63,71 @@ public abstract class LogicSignalBlock : MonoBehaviour
     /// </summary>
     protected bool Register()
     {
-        Vector3Int position = GridPosition;
-        if (blocks.ContainsKey(position))
+        var block = GetComponent<Block>();
+        Vector3Int anchor = GridPosition;
+        Vector3Int footprint = block != null ? block.footprint : Vector3Int.one;
+        Quaternion rotation = transform.rotation;
+
+        // Already registered where it is now: no change. This is the per-frame case.
+        if (registeredCells.Count > 0 && lastAnchor == anchor && lastFootprint == footprint
+            && lastRotation == rotation
+            && blocks.TryGetValue(anchor, out LogicSignalBlock registered) && registered == this)
         {
-            // Either this block is already registered, or another block holds
-            // the cell. Both are "no change".
             return false;
         }
 
-        blocks[position] = this;
+        var cells = block != null
+            ? new List<Vector3Int>(block.OccupiedCells(anchor, rotation))
+            : new List<Vector3Int> { anchor };
+
+        // Moved, rotated or resized: drop the old cells first. That alone is a change.
+        bool changed = Unregister();
+
+        foreach (Vector3Int cell in cells)
+        {
+            // Another block holds one of the cells: stay out until it frees up.
+            if (blocks.TryGetValue(cell, out LogicSignalBlock other) && other != this) return changed;
+        }
+
+        foreach (Vector3Int cell in cells)
+        {
+            blocks[cell] = this;
+            registeredCells.Add(cell);
+        }
+
+        lastAnchor = anchor;
+        lastFootprint = footprint;
+        lastRotation = rotation;
         return true;
     }
 
     private bool Unregister()
     {
-        Vector3Int position = GridPosition;
-        if (blocks.TryGetValue(position, out LogicSignalBlock existing) && existing == this)
+        bool removed = false;
+        foreach (Vector3Int cell in registeredCells)
         {
-            blocks.Remove(position);
-            return true;
+            if (blocks.TryGetValue(cell, out LogicSignalBlock other) && other == this)
+            {
+                blocks.Remove(cell);
+                removed = true;
+            }
         }
 
-        return false;
+        registeredCells.Clear();
+        return removed;
     }
 
     /// <summary>
-    /// Every registered block, one per grid cell. The netlist builder (#18)
-    /// builds the circuit from this.
+    /// Every registered block, once each. A multi-cell block holds several cells
+    /// in the registry, so this de-duplicates. The netlist builder (#18) builds
+    /// the circuit from this.
     /// </summary>
-    public static IEnumerable<LogicSignalBlock> All => blocks.Values;
+    public static IEnumerable<LogicSignalBlock> All => blocks.Values.Distinct();
+
+    // Which faces a block connects on. Used by the wire junction visuals; the
+    // netlist builder (#18) has its own port rules (NetlistBuilder.Blocks.cs).
+    public virtual bool HasConnection(Vector3Int cell, Vector3Int face) => cell == GridPosition;
+    public virtual bool CanDrive(Vector3Int cell, Vector3Int face) => HasConnection(cell, face);
 
     public static LogicSignalBlock At(Vector3Int position)
     {

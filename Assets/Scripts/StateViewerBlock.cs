@@ -40,6 +40,7 @@ public class StateViewerBlock : LogicSignalBlock
 
     private void ResolveRenderer()
     {
+        if (GetComponent<BlockModelVisual>() != null) return;
         if (targetRenderer == null)
         {
             targetRenderer = GetComponentInChildren<Renderer>(true);
@@ -48,6 +49,8 @@ public class StateViewerBlock : LogicSignalBlock
 
     private void ApplyVisualState()
     {
+        // A prefab with the new LED model draws itself (BlockModelVisual).
+        if (GetComponent<BlockModelVisual>() != null) return;
         ResolveRenderer();
         if (targetRenderer == null) return;
         if (propertyBlock == null) propertyBlock = new MaterialPropertyBlock();

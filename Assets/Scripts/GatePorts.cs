@@ -2,8 +2,7 @@
 //
 // Ports are data, not code. The netlist builder (#18) and the simulation driver
 // (#82) only ever ask this table where a gate's ports are, so changing a gate's
-// footprint (1x1x1 now, 2x2x1 once #64 supports multi-cell blocks) means editing
-// the table below and nothing else.
+// footprint is reflected by this table and the gameplay prefab occupied cells.
 //
 // Everything in the table is in the gate's LOCAL frame, before placement
 // rotation: +Z is the gate's front (the output side), +X its right, -X its left.
@@ -26,8 +25,7 @@ public enum PortRole
 public readonly struct GatePort
 {
     /// <summary>
-    /// Cell the port is on, relative to the gate's anchor cell. Always zero while
-    /// gates are 1x1x1; this is the field that changes for 2x2x1.
+    /// Cell the port is on, relative to the gate's back-left anchor cell.
     /// </summary>
     public readonly Vector3Int CellOffset;
 
@@ -64,12 +62,12 @@ public readonly struct GatePort
 
 public static class GatePorts
 {
-    // A on the left, B on the right, output out the front.
+    // A/B on the two back face cells; output on the left front face cell.
     private static readonly GatePort[] TwoInput =
     {
-        GatePort.Input(0, Vector3Int.left),
-        GatePort.Input(1, Vector3Int.right),
-        GatePort.Output(Vector3Int.forward),
+        GatePort.Input(0, Vector3Int.back),
+        GatePort.Input(1, Vector3Int.back, Vector3Int.right),
+        GatePort.Output(Vector3Int.forward, Vector3Int.forward),
     };
 
     // Input on the back, output out the front.

@@ -4,8 +4,21 @@ using UnityEngine.InputSystem;
 public class HotbarManager : MonoBehaviour
 {
     [SerializeField] private HotbarSlot[] slots;
+    [SerializeField] private InventoryCatalog catalog;
 
     private int selectedSlot = 0;
+
+    public int SelectedSlotIndex => selectedSlot;
+    public int SlotCount => slots != null ? slots.Length : 0;
+    public HotbarSlot GetSlot(int index) => slots != null && index >= 0 && index < slots.Length ? slots[index] : null;
+
+    public bool AssignItem(int index, InventoryItem item)
+    {
+        var slot = GetSlot(index);
+        if (slot == null || item == null || item.Prefab == null) return false;
+        slot.SetItem(item);
+        return true;
+    }
 
     public Block SelectedBlock => slots != null && slots.Length > 0
         ? slots[selectedSlot].BlockPrefab
@@ -13,12 +26,15 @@ public class HotbarManager : MonoBehaviour
 
     private void Start()
     {
+        foreach (var slot in slots ?? System.Array.Empty<HotbarSlot>())
+            if (slot != null) slot.RefreshIcon(catalog);
         if (slots != null && slots.Length > 0)
             SelectSlot(0);
     }
 
     private void Update()
     {
+        if (PauseManager.IsPaused || InventoryGrid.IsOpen || InventoryGrid.ClosedThisFrame) return;
         if (Keyboard.current == null)
             return;
 
