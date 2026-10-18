@@ -31,6 +31,7 @@ public class StateViewerBlock : LogicSignalBlock
 
     private void ResolveRenderer()
     {
+        if (GetComponent<BlockModelVisual>() != null) return;
         if (targetRenderer == null)
         {
             targetRenderer = GetComponentInChildren<Renderer>(true);
@@ -39,7 +40,7 @@ public class StateViewerBlock : LogicSignalBlock
 
     private void ApplyVisualState()
     {
-        if (targetRenderer == null) return;
+        if (GetComponent<BlockModelVisual>() != null || targetRenderer == null) return;
         if (propertyBlock == null) propertyBlock = new MaterialPropertyBlock();
 
         propertyBlock.SetColor("_BaseColor", currentState == 1 ? highColor : lowColor);
@@ -49,6 +50,7 @@ public class StateViewerBlock : LogicSignalBlock
 
     private int ReadAdjacentState()
     {
+        int state = 0;
         foreach (Vector3Int neighborPosition in Neighbors(GridPosition))
         {
             LogicSignalBlock neighbor = At(neighborPosition);
@@ -59,10 +61,10 @@ public class StateViewerBlock : LogicSignalBlock
 
             if (neighbor is LogicSignalSource)
             {
-                return neighbor.SignalState;
+                state = Mathf.Max(state, neighbor.SignalState);
             }
         }
 
-        return 0;
+        return state;
     }
 }

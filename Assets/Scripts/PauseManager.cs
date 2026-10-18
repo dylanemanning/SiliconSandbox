@@ -27,6 +27,7 @@ public class PauseManager : MonoBehaviour
 
     private void Update()
     {
+        if (InventoryGrid.ClosedThisFrame) return;
         if (KeybindSettings.WasPressedThisFrame(KeybindSettings.Pause))
         {
             TogglePause();
@@ -47,6 +48,7 @@ public class PauseManager : MonoBehaviour
 
     public void PauseGame()
     {
+        InventoryGrid.Close();
         Debug.Log("Pause");
         IsPaused = true;
 

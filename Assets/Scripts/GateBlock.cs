@@ -86,9 +86,23 @@ public class GateBlock : LogicSignalBlock
         }
     }
 
+    public override bool HasConnection(Vector3Int cell, Vector3Int face)
+    {
+        foreach (var port in WorldPorts())
+            if (port.cell == cell && port.face == face) return true;
+        return false;
+    }
+
+    public override bool CanDrive(Vector3Int cell, Vector3Int face)
+    {
+        foreach (var port in WorldPorts())
+            if (port.port.Role == PortRole.Output && port.cell == cell && port.face == face) return true;
+        return false;
+    }
+
     private void ResolveRenderer()
     {
-        if (outputIndicator != null) return;
+        if (GetComponent<BlockModelVisual>() != null || outputIndicator != null) return;
 
         // Own renderer first: GetComponentInChildren would also do that, but
         // being explicit keeps a marker child from being picked by accident.
@@ -101,7 +115,7 @@ public class GateBlock : LogicSignalBlock
 
     private void ApplyVisualState()
     {
-        if (outputIndicator == null) return;
+        if (GetComponent<BlockModelVisual>() != null || outputIndicator == null) return;
         if (propertyBlock == null) propertyBlock = new MaterialPropertyBlock();
 
         Color color = displayedState == 1 ? highColor : lowColor;

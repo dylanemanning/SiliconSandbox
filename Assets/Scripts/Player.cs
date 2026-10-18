@@ -59,14 +59,15 @@ public class Player : MonoBehaviour
 
     void Update()
     {
-        if (PauseManager.IsPaused) return;
+        // The inventory can close before this Update runs; block gameplay for the
+        // rest of that frame so the closing input cannot also affect the world.
+        if (PauseManager.IsPaused || InventoryGrid.IsOpen || InventoryGrid.ClosedThisFrame) return;
 
         CheckFall();
         CheckRotation();
         CheckMovement();
         CheckJump();
         CheckTargetBlock();
-        HandleHotbarInput();
 
         bool routeWasActive = wireRouteAnchor != null;
         if (routeWasActive && !IsWireSelected())
@@ -216,45 +217,26 @@ public class Player : MonoBehaviour
         // Check if the ray hits a block within reach distance
         if (Physics.Raycast(ray, out targetRaycastHit, reachDistance)) 
         {
-            targetBlock = targetRaycastHit.transform.GetComponent<Block>(); // Try to get the Block component from the hit object
+            targetBlock = targetRaycastHit.collider.GetComponentInParent<Block>(); // Try to get the Block component from the hit object
 
             if (targetBlock != null) // If we hit a block, show the highlighter at the block's position
             {
                 if (blockHighlighter != null)
                 {
                     blockHighlighter.SetActive(true);
-                    blockHighlighter.transform.position = targetBlock.transform.position;
+                    var collider = targetBlock.GetComponent<Collider>();
+                    blockHighlighter.transform.position = collider.bounds.center;
+                    blockHighlighter.transform.rotation = targetBlock.transform.rotation;
+                    blockHighlighter.transform.localScale = (Vector3)targetBlock.footprint * 1.02f;
                 }
             }
+            else if (blockHighlighter != null) blockHighlighter.SetActive(false);
         }
         else // If we don't hit anything, clear the target block and hide the highlighter
         {
             targetBlock = null;
             if (blockHighlighter != null)
                 blockHighlighter.SetActive(false);
-        }
-    }
-
-    void HandleHotbarInput()
-    {
-        Keyboard keyboard = Keyboard.current;
-        if (keyboard == null) return;
-        // Directly check each number key. 
-        // This is the most reliable way with the New Input System's current API.
-        if (Keyboard.current.digit1Key.wasPressedThisFrame) selectedBlockIndex = 0;
-        else if (Keyboard.current.digit2Key.wasPressedThisFrame) selectedBlockIndex = 1;
-        else if (Keyboard.current.digit3Key.wasPressedThisFrame) selectedBlockIndex = 2;
-        else if (Keyboard.current.digit4Key.wasPressedThisFrame) selectedBlockIndex = 3;
-        else if (Keyboard.current.digit5Key.wasPressedThisFrame) selectedBlockIndex = 4;
-        else if (Keyboard.current.digit6Key.wasPressedThisFrame) selectedBlockIndex = 5;
-        else if (Keyboard.current.digit7Key.wasPressedThisFrame) selectedBlockIndex = 6;
-        else if (Keyboard.current.digit8Key.wasPressedThisFrame) selectedBlockIndex = 7;
-        else if (Keyboard.current.digit9Key.wasPressedThisFrame) selectedBlockIndex = 8;
-
-        // Clamp the index to ensure it doesn't exceed the number of blocks you've actually added to the palette
-        if (blockPalette != null && blockPalette.Length > 0)
-        {
-            selectedBlockIndex = Mathf.Clamp(selectedBlockIndex, 0, blockPalette.Length - 1);
         }
     }
 
