@@ -17,8 +17,6 @@ public class Player : MonoBehaviour
     public GameObject blockHighlighter; // Visual indicator for targeted block
     public Block[] blockPalette; // Array of different block prefabs (Grass, Wire, Voltage, etc.)
     [SerializeField] private Material wirePreviewMaterial;
-    private int selectedBlockIndex = 0; // The current slot selected
-
     float xRotation;
     float yRotation;
     bool isGrounded;
@@ -260,7 +258,7 @@ public class Player : MonoBehaviour
         Block selectedBlock = hotbar ? hotbar.SelectedBlock : null;
         if (targetBlock == null || selectedBlock == null) return;
 
-        Block prefabToPlace = blockPalette[selectedBlockIndex];
+        Block prefabToPlace = selectedBlock;
         if (prefabToPlace == null) return;
 
         if (prefabToPlace.GetComponent<LogicWireBlock>() != null)
@@ -349,9 +347,8 @@ public class Player : MonoBehaviour
 
     private bool IsWireSelected()
     {
-        return blockPalette != null && selectedBlockIndex >= 0 && selectedBlockIndex < blockPalette.Length &&
-               blockPalette[selectedBlockIndex] != null &&
-               blockPalette[selectedBlockIndex].GetComponent<LogicWireBlock>() != null;
+        return hotbar != null && hotbar.SelectedBlock != null &&
+               hotbar.SelectedBlock.GetComponent<LogicWireBlock>() != null;
     }
 
     private bool TryGetWireTarget(
@@ -365,6 +362,25 @@ public class Player : MonoBehaviour
         rotation = Quaternion.identity;
         if (targetBlock == null || wirePrefab == null) return false;
 
+        Vector3Int facing = Vector3Int.RoundToInt(SnapToCardinalAxis(-transform.forward));
+        if (targetBlock.TryGetComponent<GateBlock>(out GateBlock gate) &&
+            gate.TryGetFacingPort(facing, targetRaycastHit.point, out targetNeighbor, out Vector3Int gateFace))
+        {
+            targetCell = targetNeighbor + gateFace;
+            rotation = Quaternion.FromToRotation(Vector3.up, (Vector3)gateFace);
+            return true;
+        }
+
+        if (targetBlock.TryGetComponent<LogicSignalSource>(out LogicSignalSource source))
+        {
+            Vector3Int sourceForward = Vector3Int.RoundToInt(source.transform.forward);
+            Vector3Int sourceFace = Vector3.Dot(sourceForward, facing) >= 0f ? sourceForward : -sourceForward;
+            targetNeighbor = source.GridPosition;
+            targetCell = targetNeighbor + sourceFace;
+            rotation = Quaternion.FromToRotation(Vector3.up, (Vector3)sourceFace);
+            return true;
+        }
+
         Vector3 axis = SnapToCardinalAxis(targetRaycastHit.normal);
         targetCell = LogicWirePathfinder.GetCellBeyondSurfaceHit(targetRaycastHit.point, axis);
         targetNeighbor = targetCell - Vector3Int.RoundToInt(axis);
@@ -374,7 +390,7 @@ public class Player : MonoBehaviour
 
     private void BeginWireRoute(Block wirePrefab)
     {
-        if (!TryGetWireTarget(wirePrefab, out Vector3Int targetCell, out _, out Quaternion rotation)) return;
+        if (!TryGetWireTarget(wirePrefab, out Vector3Int targetCell, out Vector3Int targetNeighbor, out Quaternion rotation)) return;
         Vector3 position = targetCell;
         if (!Block.CanPlaceAt(position, wirePrefab.GetComponent<Block>())) return;
 
@@ -389,13 +405,17 @@ public class Player : MonoBehaviour
         }
 
         wireRouteAnchor = placedObject.GetComponent<LogicWireBlock>();
+        if (wireRouteAnchor != null)
+        {
+            wireRouteAnchor.SetEndpointMask(LogicWireBlock.GetDirectionBit(targetNeighbor - targetCell));
+        }
         wireRoutePath.Clear();
         WorldSaveSystem.Instance?.MarkDirty();
     }
 
     private void UpdateWireRoutePreview()
     {
-        Block wirePrefab = blockPalette[selectedBlockIndex];
+        Block wirePrefab = hotbar != null ? hotbar.SelectedBlock : null;
         if (!TryGetWireTarget(wirePrefab, out Vector3Int targetCell, out Vector3Int targetNeighbor, out _))
         {
             wireRoutePath.Clear();
@@ -440,6 +460,8 @@ public class Player : MonoBehaviour
             GameObject preview = Instantiate(wirePrefab.gameObject, path[index], rotation);
             LogicWireBlock previewWire = preview.GetComponent<LogicWireBlock>();
             if (previewWire != null) previewWire.SetEndpointMask(endpointMask);
+            WireModelVisual previewVisual = preview.GetComponent<WireModelVisual>();
+            if (previewVisual != null) previewVisual.RefreshForConnections(endpointMask);
 
             foreach (MonoBehaviour behaviour in preview.GetComponentsInChildren<MonoBehaviour>(true))
             {
@@ -501,7 +523,9 @@ public class Player : MonoBehaviour
             if (!Block.CanPlaceAt(wireRoutePath[index], wirePrefab)) return;
         }
 
-        wireRouteAnchor.AddEndpointTowards(wireRoutePath[1] - wireRoutePath[0]);
+        wireRouteAnchor.SetEndpointMask(
+            wireRouteAnchor.EndpointMask |
+            LogicWireBlock.GetDirectionBit(wireRoutePath[1] - wireRoutePath[0]));
         for (int index = 1; index < wireRoutePath.Count; index++)
         {
             int endpointMask = GetRouteEndpointMask(wireRoutePath, index, wireRouteTargetNeighbor);
@@ -516,7 +540,10 @@ public class Player : MonoBehaviour
             Vector3 position = wireRoutePath[index];
             GameObject placedObject = Instantiate(wirePrefab.gameObject, position, rotation);
             LogicWireBlock placedWire = placedObject.GetComponent<LogicWireBlock>();
-            if (placedWire != null) placedWire.SetEndpointMask(endpointMask);
+            if (placedWire != null)
+            {
+                placedWire.SetEndpointMask(endpointMask);
+            }
 
             Block placedBlock = placedObject.GetComponent<Block>();
             if (placedBlock != null)

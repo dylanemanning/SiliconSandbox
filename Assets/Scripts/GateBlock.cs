@@ -86,6 +86,35 @@ public class GateBlock : LogicSignalBlock
         }
     }
 
+    public bool TryGetFacingPort(
+        Vector3Int facingDirection,
+        Vector3 hitPoint,
+        out Vector3Int cell,
+        out Vector3Int face)
+    {
+        bool found = false;
+        float bestAlignment = float.NegativeInfinity;
+        float bestDistance = float.PositiveInfinity;
+        cell = default;
+        face = default;
+
+        foreach (var port in WorldPorts())
+        {
+            float alignment = Vector3.Dot(port.face, facingDirection);
+            Vector3 portFacePosition = port.cell + (Vector3)port.face * 0.5f;
+            float distance = (portFacePosition - hitPoint).sqrMagnitude;
+            if (alignment < bestAlignment || (alignment == bestAlignment && distance >= bestDistance)) continue;
+
+            found = true;
+            bestAlignment = alignment;
+            bestDistance = distance;
+            cell = port.cell;
+            face = port.face;
+        }
+
+        return found;
+    }
+
     public override bool HasConnection(Vector3Int cell, Vector3Int face)
     {
         foreach (var port in WorldPorts())

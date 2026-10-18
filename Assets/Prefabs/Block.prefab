@@ -68,7 +68,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 36fc3cd384372419c949993875a71ce9, type: 2}
+  - {fileID: 2100000, guid: fc3b1278c2f433e4c95790c289231b42, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -129,5 +129,6 @@ MonoBehaviour:
   breakingParticlesPrefab: {fileID: 0}
   breakable: 1
   placementGridSize: 1
+  footprintSize: {x: 1, y: 1, z: 1}
   isGround: 0
   footprint: {x: 1, y: 1, z: 1}

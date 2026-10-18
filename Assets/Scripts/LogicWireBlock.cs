@@ -74,17 +74,17 @@ public class LogicWireBlock : LogicSignalBlock
         }
     }
 
-    public bool ConnectsTo(LogicSignalBlock neighbor)
+    public bool ConnectsTo(LogicSignalBlock neighbor, Vector3Int neighborCell)
     {
         if (neighbor == null) return false;
 
         if (neighbor is LogicWireBlock neighborWire)
         {
-            return HasEndpointTowards(neighbor.GridPosition) ||
-                   neighborWire.HasEndpointTowards(GridPosition);
+            return HasEndpointTowards(neighborCell) || neighborWire.HasEndpointTowards(GridPosition);
         }
 
-        return neighbor is LogicSignalSource && HasEndpointTowards(neighbor.GridPosition);
+        if (!HasEndpointTowards(neighborCell)) return false;
+        return neighbor.HasConnection(neighborCell, GridPosition - neighborCell);
     }
 
     protected override void OnEnable()
@@ -167,8 +167,8 @@ public class LogicWireBlock : LogicSignalBlock
         foreach (Vector3Int neighborPosition in Neighbors(position))
         {
             LogicSignalBlock neighbor = At(neighborPosition);
-            bool connected = ConnectsTo(neighbor);
-            if ((neighbor != null && neighbor.HasConnection(neighborPosition, position-neighborPosition)) || connected)
+            bool connected = ConnectsTo(neighbor, neighborPosition);
+            if (connected)
             {
                 connectionMask |= 1 << index;
             }
@@ -233,7 +233,7 @@ public class LogicWireBlock : LogicSignalBlock
             foreach (Vector3Int neighborPosition in Neighbors(wire.GridPosition))
             {
                 LogicSignalBlock neighbor = At(neighborPosition);
-                if (!wire.ConnectsTo(neighbor)) continue;
+                if (!wire.ConnectsTo(neighbor, neighborPosition)) continue;
 
                 if (neighbor is LogicWireBlock neighborWire)
                 {
