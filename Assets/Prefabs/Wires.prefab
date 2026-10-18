@@ -59,6 +59,7 @@ MonoBehaviour:
   breakingParticlesPrefab: {fileID: 0}
   breakable: 1
   placementGridSize: 1
+  footprintSize: {x: 1, y: 1, z: 1}
   isGround: 0
   footprint: {x: 1, y: 1, z: 1}
 --- !u!114 &-2267795032034591227
@@ -76,7 +77,10 @@ MonoBehaviour:
   targetRenderer: {fileID: 0}
   unpoweredMaterial: {fileID: 2100000, guid: 3858a1dce2b23404f96f5a685e80da8c, type: 2}
   poweredMaterial: {fileID: 2100000, guid: 24f092a81ff974c1baec89fbd1293cc0, type: 2}
+  erroredMaterial: {fileID: 2100000, guid: 7f211796a0624aa46b7492a28c1dfc45, type: 2}
   directionVisuals: []
+  endpointMask: 0
+  hasCustomEndpointMask: 0
 --- !u!65 &6520559417064147276
 BoxCollider:
   m_ObjectHideFlags: 0

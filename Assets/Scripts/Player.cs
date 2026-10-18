@@ -275,62 +275,22 @@ public class Player : MonoBehaviour
             return;
         }
 
-        // Round to Int ensures the grid is perfect (1.0, 2.0, etc.)
-        Vector3 spawnPosition = targetBlock.transform.position + targetRaycastHit.normal;
-        if (!targetBlock.breakable)
-        {
-            float gridSize = Mathf.Max(targetBlock.placementGridSize, 0.001f);
-            spawnPosition.x = Mathf.Round(targetRaycastHit.point.x / gridSize) * gridSize;
-            spawnPosition.z = Mathf.Round(targetRaycastHit.point.z / gridSize) * gridSize;
-            spawnPosition.y = targetBlock.transform.position.y + targetRaycastHit.normal.y;
-        }
-        else
-        {
-            float gridSize = Mathf.Max(targetBlock.placementGridSize, 0.001f);
-            spawnPosition.x = Mathf.Round(spawnPosition.x / gridSize) * gridSize;
-            spawnPosition.y = Mathf.Round(spawnPosition.y / gridSize) * gridSize;
-            spawnPosition.z = Mathf.Round(spawnPosition.z / gridSize) * gridSize;
-        }
-
-        Block prototypeBlock = prefabToPlace.GetComponent<Block>();
-        Vector3Int footprint = prototypeBlock != null ? prototypeBlock.GetFootprintSize() : Vector3Int.one;
-        if (footprint != Vector3Int.one)
-        {
-            Vector3 halfExtent = new Vector3(
-                (footprint.x - 1) * 0.5f,
-                (footprint.y - 1) * 0.5f,
-                (footprint.z - 1) * 0.5f);
-            spawnPosition = new Vector3(
-                Mathf.Round(spawnPosition.x / 1f) * 1f,
-                Mathf.Round(spawnPosition.y / 1f) * 1f,
-                Mathf.Round(spawnPosition.z / 1f) * 1f);
-            spawnPosition += Vector3.Scale(targetRaycastHit.normal, halfExtent);
-        }
-
-        if (!Block.CanPlaceAt(spawnPosition, prefabToPlace.GetComponent<Block>()))
-        {
-            return;
-        }
-        
         float playerYaw = transform.eulerAngles.y;
         Quaternion spawnRotation = Quaternion.identity;
-
-        // Wires must always sit on a cardinal axis and remain centered inside the
-        // target grid cell. Use the dominant face normal, snapped to a single axis,
-        // so the wire is straight and the model never drifts off-grid.
-        if (prefabToPlace.GetComponent<LogicWireBlock>() != null)
-        {
-            Vector3 placementAxis = SnapToCardinalAxis(targetRaycastHit.normal);
-            spawnPosition = targetBlock.transform.position + placementAxis;
-            spawnRotation = Quaternion.FromToRotation(Vector3.up, placementAxis);
-        }
-        // Gates face the way the player is looking: output on the far side,
-        // inputs left and right. Yaw is snapped to 90 degrees so the gate's
-        // ports (GateBlock.WorldPorts) point along whole grid directions.
-        else if (prefabToPlace.GetComponent<GateBlock>() != null)
+        if (prefabToPlace.GetComponent<GateBlock>() != null)
         {
             spawnRotation = Quaternion.Euler(0, Mathf.Round(playerYaw / 90f) * 90f, 0);
         }
+
+        if (!BlockPlacement.TryGetAnchor(
+                prefabToPlace,
+                targetRaycastHit.point,
+                targetRaycastHit.normal,
+                spawnRotation,
+                out Vector3Int anchor)) return;
+
+        Vector3 spawnPosition = anchor;
+        if (!Block.CanPlaceAt(spawnPosition, prefabToPlace)) return;
 
         GameObject placedBlockObject = Instantiate(prefabToPlace.gameObject, spawnPosition, spawnRotation);
         Block placedBlock = placedBlockObject.GetComponent<Block>();

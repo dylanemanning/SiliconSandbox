@@ -49,7 +49,7 @@ public class PauseManager : MonoBehaviour
     public void PauseGame()
     {
         InventoryGrid.Close();
-        Debug.Log("Pause");
+        //Debug.Log("Pause");
         IsPaused = true;
 
         if (menuStyler == null) EnsureMenuStyler();
@@ -97,7 +97,7 @@ public class PauseManager : MonoBehaviour
 
     public void ResumeGame()
     {
-        Debug.Log("Resume");
+        //Debug.Log("Resume");
         IsPaused = false;
 
         pausePanel.SetActive(false);
@@ -110,7 +110,7 @@ public class PauseManager : MonoBehaviour
 
     public void ReturnToMainMenu()
     {
-        Debug.Log("Main Menu");
+        //Debug.Log("Main Menu");
         IsPaused = false;
         Time.timeScale = 1f;
         Cursor.lockState = CursorLockMode.None;

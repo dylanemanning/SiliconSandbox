@@ -45,7 +45,7 @@ public abstract class LogicSignalBlock : MonoBehaviour
             : new List<Vector3Int>{GridPosition};
         Unregister();
         foreach (var cell in cells)
-            if (blocks.TryGetValue(cell, out var other) && other != this) return;
+            if (TryGetRegisteredBlock(cell, out var other) && other != this) return;
         foreach (var cell in cells) { blocks[cell] = this; registeredCells.Add(cell); }
         lastAnchor=GridPosition;lastFootprint=footprint;lastRotation=transform.rotation;
     }
@@ -62,8 +62,18 @@ public abstract class LogicSignalBlock : MonoBehaviour
 
     public static LogicSignalBlock At(Vector3Int position)
     {
-        blocks.TryGetValue(position, out LogicSignalBlock block);
+        TryGetRegisteredBlock(position, out LogicSignalBlock block);
         return block;
+    }
+
+    private static bool TryGetRegisteredBlock(Vector3Int position, out LogicSignalBlock block)
+    {
+        if (!blocks.TryGetValue(position, out block)) return false;
+        if (block != null) return true;
+
+        blocks.Remove(position);
+        block = null;
+        return false;
     }
 
     public static IEnumerable<Vector3Int> Neighbors(Vector3Int position)

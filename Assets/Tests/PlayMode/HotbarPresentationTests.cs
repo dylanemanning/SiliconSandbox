@@ -22,8 +22,13 @@ public class HotbarPresentationTests : InputTestFixture
     [UnityTearDown]
     public IEnumerator Cleanup()
     {
-        Time.timeScale = 1;WorldSaveSystem.PendingWorldName = null;
-        yield return SceneManager.LoadSceneAsync("EmptyScene");yield return null;
+        if (keyboard != null) InputSystem.ResetDevice(keyboard);
+        if (mouse != null) InputSystem.ResetDevice(mouse);
+
+        Time.timeScale = 1;
+        WorldSaveSystem.PendingWorldName = null;
+        yield return SceneManager.LoadSceneAsync("EmptyScene");
+        yield return null;
     }
 
     private IEnumerator LoadGameplay()

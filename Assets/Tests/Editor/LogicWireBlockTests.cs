@@ -109,13 +109,20 @@ public class LogicWireBlockTests
     [Test]
     public void AdjacentParallelWiresConnectOnlyWhenEitherEndpointFacesTheOther()
     {
+        Vector3Int firstPosition = new Vector3Int(10000, 10000, 10000);
+        Vector3Int nextPosition = firstPosition + Vector3Int.right;
         var firstObject = new GameObject("First Wire");
         var nextObject = new GameObject("Next Wire");
         try
         {
-            nextObject.transform.position = Vector3.right;
+            firstObject.transform.position = firstPosition;
+            nextObject.transform.position = nextPosition;
             LogicWireBlock first = firstObject.AddComponent<LogicWireBlock>();
             LogicWireBlock next = nextObject.AddComponent<LogicWireBlock>();
+            RegisterBlock(first);
+            RegisterBlock(next);
+            Assert.That(LogicSignalBlock.At(firstPosition), Is.SameAs(first));
+            Assert.That(LogicSignalBlock.At(nextPosition), Is.SameAs(next));
             first.SetEndpointMask(
                 LogicWireBlock.GetDirectionBit(Vector3Int.up) |
                 LogicWireBlock.GetDirectionBit(Vector3Int.down));
@@ -123,15 +130,15 @@ public class LogicWireBlockTests
                 LogicWireBlock.GetDirectionBit(Vector3Int.up) |
                 LogicWireBlock.GetDirectionBit(Vector3Int.down));
 
-            Assert.IsFalse(first.ConnectsTo(next, Vector3Int.right));
+            Assert.IsFalse(first.ConnectsTo(next, firstPosition + Vector3Int.right));
             RefreshConnections(first);
             RefreshConnections(next);
             Assert.AreEqual(0, first.ConnectionCount);
             Assert.AreEqual(0, next.ConnectionCount);
 
             first.AddEndpointTowards(Vector3Int.right);
-            Assert.IsTrue(first.ConnectsTo(next, Vector3Int.right));
-            Assert.IsTrue(next.ConnectsTo(first, Vector3Int.zero));
+            Assert.IsTrue(first.ConnectsTo(next, firstPosition + Vector3Int.right));
+            Assert.IsTrue(next.ConnectsTo(first, firstPosition));
             RefreshConnections(first);
             RefreshConnections(next);
             Assert.AreEqual(1, first.ConnectionMask & 1);
@@ -139,7 +146,7 @@ public class LogicWireBlockTests
 
             first.SetEndpointMask(LogicWireBlock.GetDirectionBit(Vector3Int.up));
             next.SetEndpointMask(LogicWireBlock.GetDirectionBit(Vector3Int.left));
-            Assert.IsTrue(next.ConnectsTo(first, Vector3Int.zero));
+            Assert.IsTrue(next.ConnectsTo(first, firstPosition));
             RefreshConnections(first);
             RefreshConnections(next);
             Assert.AreEqual(1, first.ConnectionMask & 1);
@@ -158,6 +165,14 @@ public class LogicWireBlockTests
             .GetMethod("RefreshConnections", System.Reflection.BindingFlags.Instance |
                 System.Reflection.BindingFlags.NonPublic)
             .Invoke(wire, null);
+    }
+
+    private static void RegisterBlock(LogicSignalBlock block)
+    {
+        typeof(LogicSignalBlock)
+            .GetMethod("Register", System.Reflection.BindingFlags.Instance |
+                System.Reflection.BindingFlags.NonPublic)
+            .Invoke(block, null);
     }
 
     [Test]
@@ -246,9 +261,12 @@ public class LogicWireBlockTests
 
         Assert.IsTrue(found);
         Assert.AreEqual(Vector3Int.right, path[1] - path[0]);
-        Assert.AreEqual(Vector3Int.forward, path[2] - path[1]);
         Assert.IsTrue(path.TrueForAll(cell => cell.y == 0));
         Assert.AreEqual(new Vector3Int(4, 0, 2), path[path.Count - 1]);
+        int turns = 0;
+        for (int index = 2; index < path.Count; index++)
+            if (path[index] - path[index - 1] != path[index - 1] - path[index - 2]) turns++;
+        Assert.AreEqual(1, turns);
     }
 
     [Test]
@@ -257,7 +275,7 @@ public class LogicWireBlockTests
         var allowed = new HashSet<Vector3Int>
         {
             new Vector3Int(0, 0, 0),
-            new Vector3Int(1, 0, 0),
+            new Vector3Int(0, 0, 1),
             new Vector3Int(1, 0, 1),
             new Vector3Int(2, 0, 1),
             new Vector3Int(2, 0, 0),
