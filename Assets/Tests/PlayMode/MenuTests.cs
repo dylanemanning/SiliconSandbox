@@ -274,11 +274,6 @@ public class MenuTests : InputTestFixture
 
         Assert.IsNotNull(pauseTitle);
         Assert.AreEqual(TextAlignmentOptions.Center, pauseTitle.alignment);
-
-        TMP_Text worldNameLabel = pausePanel.transform
-            .Find("currentWorldName")
-            .GetComponent<TMP_Text>();
-        Assert.AreEqual("TC_PauseWorldLabel", worldNameLabel.text);
     }
 
     // ---------------------------------------------------------

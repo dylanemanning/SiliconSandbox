@@ -53,9 +53,9 @@ public abstract class PlacedBlockFixture
 
     protected StateViewerBlock Led(int x, int y, int z) => Place<StateViewerBlock>(x, y, z);
 
-    protected LogicSignalSource Source(int x, int y, int z, int state = 0)
+    protected LogicSignalSource Source(int x, int y, int z, int state = 0, float yaw = 0f)
     {
-        LogicSignalSource source = Place<LogicSignalSource>(x, y, z);
+        LogicSignalSource source = Place<LogicSignalSource>(x, y, z, yaw);
         source.SetState(state);
         return source;
     }
@@ -93,9 +93,9 @@ public abstract class PlacedBlockFixture
         var circuit = new TwoInputCircuit
         {
             Gate = Gate(type, 5, 0, 5, 90f),
-            A = Source(3, 0, 5, a),
+            A = Source(3, 0, 5, a, 90f),
             Buffer = Gate(GateType.Buffer, 4, 0, 5, 90f),
-            B = Source(3, 0, 4, b),
+            B = Source(3, 0, 4, b, 90f),
         };
         Wire(4, 0, 4);
         circuit.OutputWire = Wire(7, 0, 5);
@@ -114,6 +114,13 @@ public abstract class PlacedBlockFixture
 
     protected static bool HasConnection(Netlist netlist, LogicSignalBlock from, LogicSignalBlock to, int pin)
         => netlist.Connections.Contains(new NetlistConnection(NodeOf(netlist, from), NodeOf(netlist, to), pin));
+
+    protected static WireNetwork NetworkFor(Netlist netlist, LogicWireBlock wire)
+    {
+        int part = Enumerable.Range(0, netlist.Blocks.Count)
+            .Single(index => netlist.Blocks[index] == wire);
+        return netlist.Networks[netlist.NetworkOfPart[part]];
+    }
 }
 
 public class NetlistBuilderBlockTests : PlacedBlockFixture
@@ -158,7 +165,7 @@ public class NetlistBuilderBlockTests : PlacedBlockFixture
     [Test]
     public void LookupTable_PointsBackAtTheBlocks()
     {
-        LogicSignalSource source = Source(0, 0, 0);
+        LogicSignalSource source = Source(0, 0, 0, 0, 90f);
         LogicWireBlock w1 = Wire(1, 0, 0);
         LogicWireBlock w2 = Wire(2, 0, 0);
         Led(3, 0, 0);
@@ -170,12 +177,25 @@ public class NetlistBuilderBlockTests : PlacedBlockFixture
         Assert.AreSame(source, netlist.NodeBlock(network.DriverNode));
     }
 
+    [Test]
+    public void SourceOnlyDrivesWiresOnItsForwardAndBackFaces()
+    {
+        LogicSignalSource source = Source(0, 0, 0);
+        LogicWireBlock sideWire = Wire(1, 0, 0);
+        LogicWireBlock forwardWire = Wire(0, 0, 1);
+
+        Netlist netlist = NetlistBuilder.FromBlocks(AllPlaced());
+
+        Assert.IsTrue(NetworkFor(netlist, sideWire).HasNoDriver);
+        Assert.AreSame(source, netlist.NodeBlock(NetworkFor(netlist, forwardWire).DriverNode));
+    }
+
     // The same world gives the same netlist whatever order the blocks arrive in
     // (the registry is a Dictionary, so its order is not something to rely on).
     [Test]
     public void BlockOrder_DoesNotChangeTheNetlist()
     {
-        Source(0, 0, 0);
+        Source(0, 0, 0, 0, 90f);
         Wire(1, 0, 0);
         Gate(GateType.Not, 2, 0, 0, 90f);
         Wire(3, 0, 0);
@@ -206,7 +226,7 @@ public class NetlistBuilderBlockTests : PlacedBlockFixture
     [Test]
     public void NullAndDestroyedBlocks_AreSkipped()
     {
-        LogicSignalSource source = Source(0, 0, 0);
+        LogicSignalSource source = Source(0, 0, 0, 0, 90f);
         StateViewerBlock led = Led(1, 0, 0);
         LogicWireBlock destroyed = Wire(5, 0, 0);
         Object.DestroyImmediate(destroyed.gameObject);
@@ -260,7 +280,7 @@ public class NetlistToEngineTests : PlacedBlockFixture
     [TestCase(0, TestName = "TC_3_4_2_LowSourceThroughWire_LeavesLedOff")]
     public void SourceThroughWire_ReachesLed(int sourceState)
     {
-        Source(0, 0, 0, sourceState);
+        Source(0, 0, 0, sourceState, 90f);
         Wire(1, 0, 0);
         Wire(2, 0, 0);
         StateViewerBlock led = Led(3, 0, 0);
@@ -272,7 +292,7 @@ public class NetlistToEngineTests : PlacedBlockFixture
     [Test]
     public void TC_3_4_4_TogglingTheSource_TogglesTheLed()
     {
-        LogicSignalSource source = Source(0, 0, 0, 0);
+        LogicSignalSource source = Source(0, 0, 0, 0, 90f);
         Wire(1, 0, 0);
         StateViewerBlock led = Led(2, 0, 0);
 
@@ -312,9 +332,9 @@ public class NetlistToEngineTests : PlacedBlockFixture
     [Test]
     public void TC_3_4_5_ShortedNetwork_IsFlaggedAndEvaluationStillRuns()
     {
-        Source(0, 0, 0, 1);
+        Source(0, 0, 0, 1, 90f);
         Wire(1, 0, 0);
-        Source(2, 0, 0, 0);
+        Source(2, 0, 0, 0, 270f);
         StateViewerBlock led = Led(1, 0, 1);
 
         Dictionary<LogicSignalBlock, int> values = null;

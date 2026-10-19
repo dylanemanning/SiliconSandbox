@@ -14,8 +14,9 @@
 //     over/under) replaces this with #63 after the demo, and only
 //     WireNeighbours below needs to change.
 //
-//   - Part to wire: a port connects to a wire in the cell it faces. Sources and
-//     LEDs have a port on every face; a gate only on the faces GatePorts lists.
+//   - Part to wire: a port connects to a wire in the cell it faces. Sources
+//     expose their oriented forward/back faces, LEDs have a port on every face,
+//     and gates only on the faces GatePorts lists.
 //     A wire beside a gate's side with no port is not connected.
 //
 //   - Part to part, no wire between: an output connects straight to an input
