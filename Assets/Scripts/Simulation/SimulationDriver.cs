@@ -46,6 +46,16 @@ public class SimulationDriver : MonoBehaviour
     /// <summary>How the most recent evaluation went.</summary>
     public CircuitResult LastResult { get; private set; }
 
+    /// <summary>
+    /// True on platforms that have a native SiliconPlugin build. The committed
+    /// library is Windows x86_64 only, so this is false in the Linux editor the
+    /// CI runner uses (and on a Mac). Tests that need real circuit values check
+    /// it and skip themselves where the simulation cannot run.
+    /// </summary>
+    public static bool SimulationAvailable =>
+        Application.platform == RuntimePlatform.WindowsEditor ||
+        Application.platform == RuntimePlatform.WindowsPlayer;
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void CreateOnStartup()
     {
@@ -65,6 +75,20 @@ public class SimulationDriver : MonoBehaviour
             return;
         }
         Instance = this;
+
+        // Without a native build, don't try to load the plugin at all. Deciding
+        // here, rather than on the first failed call, keeps the "simulation is
+        // off" message out of whichever test happens to build the first circuit
+        // (PlayMode tests that call LogAssert.NoUnexpectedReceived would fail on
+        // it). Batch mode (CI) stays quiet; an interactive editor gets one note.
+        if (!SimulationAvailable)
+        {
+            pluginUnavailable = true;
+            if (!Application.isBatchMode)
+            {
+                Debug.LogWarning("Circuit simulation is off: SiliconPlugin is built for Windows x86_64 only.");
+            }
+        }
     }
 
     private void OnDestroy()
