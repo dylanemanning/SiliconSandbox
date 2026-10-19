@@ -5,8 +5,9 @@
 // skips those tests). Catches the 20 Sep 2026 failure: a committed binary built
 // from older gate source than the C# GateType enum.
 //
-// Also fails if the DLL still carries debug sections, since an unstripped build
-// adds ~460 KB to repo history on every rebuild.
+// Also checks whole-circuit evaluation through LogicEngine.EvaluateCircuit
+// (#12), and fails if the DLL still carries debug sections, since an unstripped
+// build adds ~460 KB to repo history on every rebuild.
 //
 // Run locally (Windows, from the repo root, needs the .NET 8 SDK):
 //     dotnet run -c Release --project native/SiliconPlugin/tests/PluginCheck
@@ -58,6 +59,13 @@ internal static class Program
         {
             CheckRejected(type);
         }
+
+        CheckHalfAdder();
+        CheckMultiLevel();
+        CheckUnwiredPinReadsLow();
+        CheckFeedbackLoopReported();
+        CheckMultipleDriversRejected();
+        CheckStatesLengthEnforced();
 
         Console.WriteLine(new string('-', 40));
         if (failures == 0)
@@ -127,6 +135,149 @@ internal static class Program
         catch (Exception e)
         {
             Record(false, $"{type} rejected", $"threw {e.GetType().Name} instead of LogicEngineException: {e.Message}");
+        }
+    }
+
+    // ---- Whole-circuit checks (#12) ------------------------------------------
+
+    // Sum = A XOR B, carry = A AND B: fan-out from both sources into two gates,
+    // each with an LED. Nodes: 0 A, 1 B, 2 XOR, 3 AND, 4 sum LED, 5 carry LED.
+    private static void CheckHalfAdder()
+    {
+        NetlistNode[] nodes =
+        {
+            new NetlistNode(0, GateType.Source), new NetlistNode(1, GateType.Source),
+            new NetlistNode(2, GateType.Xor),    new NetlistNode(3, GateType.And),
+            new NetlistNode(4, GateType.Output), new NetlistNode(5, GateType.Output),
+        };
+        NetlistConnection[] connections =
+        {
+            new NetlistConnection(0, 2, 0), new NetlistConnection(1, 2, 1),
+            new NetlistConnection(0, 3, 0), new NetlistConnection(1, 3, 1),
+            new NetlistConnection(2, 4, 0), new NetlistConnection(3, 5, 0),
+        };
+
+        var states = new int[nodes.Length];
+        for (int bits = 0; bits < 4; bits++)
+        {
+            int a = bits & 1, b = (bits >> 1) & 1;
+            states[0] = a;
+            states[1] = b;
+            string name = $"half adder A={a} B={b}";
+            try
+            {
+                CircuitResult result = LogicEngine.EvaluateCircuit(nodes, connections, states);
+                bool ok = result == CircuitResult.Complete && states[4] == (a ^ b) && states[5] == (a & b);
+                Record(ok, $"{name} -> sum {states[4]}, carry {states[5]}",
+                       $"{result}, states [{string.Join(", ", states)}]");
+            }
+            catch (Exception e)
+            {
+                Record(false, name, $"threw {e.GetType().Name}: {e.Message}");
+            }
+        }
+    }
+
+    // LED = (A AND B) OR (NOT C), with the nodes listed downstream-first so the
+    // check fails if the plugin evaluates in array order instead of dependency
+    // order. Nodes: 0 LED, 1 OR, 2 AND, 3 NOT, 4 A, 5 B, 6 C.
+    private static void CheckMultiLevel()
+    {
+        NetlistNode[] nodes =
+        {
+            new NetlistNode(0, GateType.Output), new NetlistNode(1, GateType.Or),
+            new NetlistNode(2, GateType.And),    new NetlistNode(3, GateType.Not),
+            new NetlistNode(4, GateType.Source), new NetlistNode(5, GateType.Source),
+            new NetlistNode(6, GateType.Source),
+        };
+        NetlistConnection[] connections =
+        {
+            new NetlistConnection(4, 2, 0), new NetlistConnection(5, 2, 1),
+            new NetlistConnection(6, 3, 0), new NetlistConnection(2, 1, 0),
+            new NetlistConnection(3, 1, 1), new NetlistConnection(1, 0, 0),
+        };
+
+        var states = new int[nodes.Length];
+        int wrong = 0;
+        for (int bits = 0; bits < 8; bits++)
+        {
+            int a = bits & 1, b = (bits >> 1) & 1, c = (bits >> 2) & 1;
+            states[4] = a;
+            states[5] = b;
+            states[6] = c;
+            LogicEngine.EvaluateCircuit(nodes, connections, states);
+            int expected = (a & b) | (c == 1 ? 0 : 1);
+            if (states[0] != expected) wrong++;
+        }
+        Record(wrong == 0, "(A AND B) OR (NOT C), all 8 rows, nodes out of order",
+               $"{wrong} of 8 rows wrong");
+    }
+
+    // A half-built circuit: an AND with only pin 0 wired reads pin 1 as 0.
+    private static void CheckUnwiredPinReadsLow()
+    {
+        NetlistNode[] nodes = { new NetlistNode(0, GateType.Source), new NetlistNode(1, GateType.And) };
+        NetlistConnection[] connections = { new NetlistConnection(0, 1, 0) };
+        int[] states = { 1, 0 };
+        LogicEngine.EvaluateCircuit(nodes, connections, states);
+        Record(states[1] == 0, "AND(1, unwired) = 0", $"returned {states[1]}");
+    }
+
+    // Two NOTs feeding each other. Reported, not simulated, until #10.
+    private static void CheckFeedbackLoopReported()
+    {
+        NetlistNode[] nodes = { new NetlistNode(0, GateType.Not), new NetlistNode(1, GateType.Not) };
+        NetlistConnection[] connections = { new NetlistConnection(0, 1, 0), new NetlistConnection(1, 0, 0) };
+        var states = new int[2];
+        CircuitResult result = LogicEngine.EvaluateCircuit(nodes, connections, states);
+        Record(result == CircuitResult.HasFeedbackLoop && states[0] == 0 && states[1] == 0,
+               "feedback loop reported as HasFeedbackLoop, loop nodes read 0",
+               $"{result}, states [{string.Join(", ", states)}]");
+    }
+
+    // Two sources on one AND pin (TC-3.4.5) must come back as a typed failure.
+    private static void CheckMultipleDriversRejected()
+    {
+        NetlistNode[] nodes =
+        {
+            new NetlistNode(0, GateType.Source), new NetlistNode(1, GateType.Source), new NetlistNode(2, GateType.And),
+        };
+        NetlistConnection[] connections = { new NetlistConnection(0, 2, 0), new NetlistConnection(1, 2, 0) };
+        int[] states = { 1, 1, 1 };
+        try
+        {
+            LogicEngine.EvaluateCircuit(nodes, connections, states);
+            Record(false, "multiple drivers rejected", "was accepted");
+        }
+        catch (LogicEngineException e)
+        {
+            bool ok = e.StatusCode == (int)NetlistStatus.MultipleDrivers && states.All(s => s == 0);
+            Record(ok, "multiple drivers rejected with NetlistStatus.MultipleDrivers, states zeroed",
+                   $"status {e.StatusCode}, states [{string.Join(", ", states)}]");
+        }
+        catch (Exception e)
+        {
+            Record(false, "multiple drivers rejected", $"threw {e.GetType().Name}: {e.Message}");
+        }
+    }
+
+    // A states array the wrong length would be written past its end natively,
+    // so the wrapper must refuse it before calling.
+    private static void CheckStatesLengthEnforced()
+    {
+        NetlistNode[] nodes = { new NetlistNode(0, GateType.Source), new NetlistNode(1, GateType.Output) };
+        try
+        {
+            LogicEngine.EvaluateCircuit(nodes, null, new int[1]);
+            Record(false, "short states array refused", "was accepted");
+        }
+        catch (ArgumentException)
+        {
+            Record(true, "short states array refused with ArgumentException", null);
+        }
+        catch (Exception e)
+        {
+            Record(false, "short states array refused", $"threw {e.GetType().Name}: {e.Message}");
         }
     }
 
