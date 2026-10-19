@@ -68,6 +68,9 @@ public class GameplayModelIntegrationTests
         var source=Object.Instantiate(Prefab("Voltage Source"),new Vector3(30,1,30),Quaternion.identity);
         var wire=Object.Instantiate(Prefab("Wires"),new Vector3(30,1,31),Quaternion.identity);
         var led=Object.Instantiate(Prefab("Viewer Block"),new Vector3(30,1,32),Quaternion.identity);
+        wire.GetComponent<LogicWireBlock>().SetEndpointMask(
+            LogicWireBlock.GetDirectionBit(Vector3Int.forward) |
+            LogicWireBlock.GetDirectionBit(Vector3Int.back));
         try
         {
             yield return null;yield return null;yield return null;
@@ -97,6 +100,10 @@ public class GameplayModelIntegrationTests
         var gate=Object.Instantiate(Prefab("AND Gate"),new Vector3(40,1,40),Quaternion.identity);
         var outputWire=Object.Instantiate(Prefab("Wires"),new Vector3(40,1,42),Quaternion.identity);
         var blankFaceWire=Object.Instantiate(Prefab("Wires"),new Vector3(41,1,42),Quaternion.identity);
+        int zAxisEndpoints = LogicWireBlock.GetDirectionBit(Vector3Int.forward) |
+                     LogicWireBlock.GetDirectionBit(Vector3Int.back);
+        outputWire.GetComponent<LogicWireBlock>().SetEndpointMask(zAxisEndpoints);
+        blankFaceWire.GetComponent<LogicWireBlock>().SetEndpointMask(zAxisEndpoints);
         try
         {
             yield return null;yield return null;
@@ -132,6 +139,11 @@ public class GameplayModelIntegrationTests
         var center=Object.Instantiate(Prefab("Wires"),new Vector3(50,1,50),Quaternion.identity);
         var right=Object.Instantiate(Prefab("Wires"),new Vector3(51,1,50),Quaternion.identity);
         var forward=Object.Instantiate(Prefab("Wires"),new Vector3(50,1,51),Quaternion.identity);
+        center.GetComponent<LogicWireBlock>().SetEndpointMask(
+            LogicWireBlock.GetDirectionBit(Vector3Int.right) |
+            LogicWireBlock.GetDirectionBit(Vector3Int.forward));
+        right.GetComponent<LogicWireBlock>().SetEndpointMask(LogicWireBlock.GetDirectionBit(Vector3Int.left));
+        forward.GetComponent<LogicWireBlock>().SetEndpointMask(LogicWireBlock.GetDirectionBit(Vector3Int.back));
         GameObject above=null;
         try
         {
@@ -143,6 +155,7 @@ public class GameplayModelIntegrationTests
             var ends=new[]{Vector3Int.RoundToInt(rotation*Vector3.back),Vector3Int.RoundToInt(rotation*Vector3.right)};
             CollectionAssert.AreEquivalent(new[]{Vector3Int.right,Vector3Int.forward},ends);
             above=Object.Instantiate(Prefab("Wires"),new Vector3(50,2,50),Quaternion.identity);
+            above.GetComponent<LogicWireBlock>().SetEndpointMask(LogicWireBlock.GetDirectionBit(Vector3Int.down));
             yield return null;yield return null;
             Assert.That(center.GetComponent<LogicWireBlock>().IsJunction,Is.True);
             Assert.That(visual.branches.Count(b=>b.activeSelf),Is.EqualTo(3));

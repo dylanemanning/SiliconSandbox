@@ -6,7 +6,7 @@
 // like as a part:
 //
 //   LogicWireBlock     Wire
-//   LogicSignalSource  Source, an output on all six faces
+//   LogicSignalSource  Source, outputs on its forward and back faces
 //   StateViewerBlock   Output (LED), input pin 0 on all six faces
 //   GateBlock          Gate, ports from GateBlock.WorldPorts (the GatePorts table)
 //
@@ -69,12 +69,17 @@ public static partial class NetlistBuilder
             case LogicWireBlock _:
                 return new CircuitPart { Kind = PartKind.Wire, Cell = cell };
 
-            case LogicSignalSource _:
+            case LogicSignalSource source:
+                Vector3Int forward = Vector3Int.RoundToInt(source.transform.forward);
                 return new CircuitPart
                 {
                     Kind = PartKind.Source,
                     Cell = cell,
-                    Ports = Faces.Select(f => PartPort.Output(cell, f)).ToArray(),
+                    Ports = new[]
+                    {
+                        PartPort.Output(cell, forward),
+                        PartPort.Output(cell, -forward),
+                    },
                 };
 
             case StateViewerBlock _:

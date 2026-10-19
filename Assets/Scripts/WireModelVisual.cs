@@ -17,7 +17,18 @@ public class WireModelVisual : MonoBehaviour
     public void Refresh()
     {
         if (wire == null) wire = GetComponent<LogicWireBlock>();
-        int mask = wire.ConnectionMask, state = wire.SignalState;
+        if (wire == null) return;
+        RefreshForConnections(wire.ConnectionMask, wire.SignalState);
+    }
+
+    public void RefreshForConnections(int mask)
+    {
+        if (wire == null) wire = GetComponent<LogicWireBlock>();
+        RefreshForConnections(mask, wire != null ? wire.SignalState : 0);
+    }
+
+    private void RefreshForConnections(int mask, int state)
+    {
         if (mask == oldMask && state == oldState) return;
         oldMask = mask; oldState = state;
         straightModel.SetActive(false); elbowModel.SetActive(false);

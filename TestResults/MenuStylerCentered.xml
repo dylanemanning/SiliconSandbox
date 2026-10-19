@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="1" result="Passed" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-10-12 01:42:53Z" end-time="2026-10-12 01:42:54Z" duration="1.1128127">
+  <test-suite type="TestSuite" id="1031" name="Silicon Sandbox" fullname="Silicon Sandbox" runstate="Runnable" testcasecount="23" result="Passed" start-time="2026-10-12 01:42:53Z" end-time="2026-10-12 01:42:54Z" duration="1.112813" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="Assembly" id="1027" name="SiliconSandbox.PlayModeTests.dll" fullname="C:/Users/dylan/Silicon Sandbox/Library/ScriptAssemblies/SiliconSandbox.PlayModeTests.dll" runstate="Runnable" testcasecount="23" result="Passed" start-time="2026-10-12 01:42:53Z" end-time="2026-10-12 01:42:54Z" duration="1.098050" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="33992" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestFixture" id="1001" name="MenuTests" fullname="MenuTests" classname="MenuTests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-10-12 01:42:53Z" end-time="2026-10-12 01:42:54Z" duration="1.094596" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-case id="1003" name="MenuStylerUsesConsistentCenteredLayoutAndPageColors" fullname="MenuTests.MenuStylerUsesConsistentCenteredLayoutAndPageColors" methodname="MenuStylerUsesConsistentCenteredLayoutAndPageColors" classname="MenuTests" runstate="Runnable" seed="521630020" result="Passed" start-time="2026-10-12 01:42:53Z" end-time="2026-10-12 01:42:54Z" duration="1.063531" asserts="0">
+          <properties>
+            <property name="_JOINTYPE" value="UnityCombinatorial" />
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <output><![CDATA[Saving results to: C:/Users/dylan/AppData/LocalLow/DefaultCompany/Silicon Sandbox\TestResults.xml
+]]></output>
+        </test-case>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

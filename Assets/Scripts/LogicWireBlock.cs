@@ -17,6 +17,7 @@ public class LogicWireBlock : LogicSignalBlock
     [SerializeField] private Renderer targetRenderer;
     [SerializeField] private Material unpoweredMaterial;
     [SerializeField] private Material poweredMaterial;
+    [SerializeField] private Material erroredMaterial;
 
     [Tooltip("Optional. Shown when two outputs drive this wire's network. " +
              "If empty, the unpowered material is tinted with Error Color instead.")]
@@ -27,9 +28,12 @@ public class LogicWireBlock : LogicSignalBlock
     [Tooltip("Child objects for +X, -X, +Y, -Y, +Z, -Z branches.")]
     [SerializeField] private GameObject[] directionVisuals = new GameObject[6];
 
+    private readonly LineRenderer[] connectionLines = new LineRenderer[6];
     private int signalState;
     private bool isError;
     private int connectionMask;
+    [SerializeField] private int endpointMask;
+    [SerializeField] private bool hasCustomEndpointMask;
     private MaterialPropertyBlock propertyBlock;
 
     public override int SignalState => signalState;
@@ -40,11 +44,75 @@ public class LogicWireBlock : LogicSignalBlock
     public int ConnectionMask => connectionMask;
     public int ConnectionCount => CountBits(connectionMask);
     public bool IsJunction => ConnectionCount >= 3;
+    public int EndpointMask => hasCustomEndpointMask ? endpointMask : GetAxisEndpointMask();
+
+    public bool HasEndpointTowards(Vector3Int neighborPosition)
+    {
+        Vector3Int direction = neighborPosition - GridPosition;
+        int directionBit = GetDirectionBit(direction);
+        return directionBit != 0 && (EndpointMask & directionBit) != 0;
+    }
+
+    public void SetEndpointMask(int mask)
+    {
+        endpointMask = mask & 0x3f;
+        hasCustomEndpointMask = true;
+        ApplyEndpointVisuals(endpointMask);
+    }
+
+    public void AddEndpointTowards(Vector3Int direction)
+    {
+        SetEndpointMask(EndpointMask | GetDirectionBit(direction));
+    }
+
+    public static int GetDirectionBit(Vector3Int direction)
+    {
+        if (direction == Vector3Int.right) return 1 << 0;
+        if (direction == Vector3Int.left) return 1 << 1;
+        if (direction == Vector3Int.up) return 1 << 2;
+        if (direction == Vector3Int.down) return 1 << 3;
+        if (direction == new Vector3Int(0, 0, 1)) return 1 << 4;
+        if (direction == new Vector3Int(0, 0, -1)) return 1 << 5;
+        return 0;
+    }
+
+    private int GetAxisEndpointMask()
+    {
+        Vector3Int axis = Vector3Int.RoundToInt(transform.up);
+        return GetDirectionBit(axis) | GetDirectionBit(-axis);
+    }
+
+    private void ApplyEndpointVisuals(int mask)
+    {
+        if (directionVisuals == null) return;
+
+        for (int index = 0; index < directionVisuals.Length && index < 6; index++)
+        {
+            if (directionVisuals[index] != null)
+            {
+                directionVisuals[index].SetActive((mask & (1 << index)) != 0);
+            }
+        }
+    }
+
+    public bool ConnectsTo(LogicSignalBlock neighbor, Vector3Int neighborCell)
+    {
+        if (neighbor == null) return false;
+
+        if (neighbor is LogicWireBlock neighborWire)
+        {
+            return HasEndpointTowards(neighborCell) || neighborWire.HasEndpointTowards(GridPosition);
+        }
+
+        if (!HasEndpointTowards(neighborCell)) return false;
+        return neighbor.HasConnection(neighborCell, GridPosition - neighborCell);
+    }
 
     protected override void OnEnable()
     {
         base.OnEnable();
         ResolveRenderer();
+        EnsureConnectionLines();
         ApplyVisualState();
     }
 
@@ -86,12 +154,25 @@ public class LogicWireBlock : LogicSignalBlock
         if (targetRenderer == null) return;
 
         Material nextMaterial;
-        if (isError && errorMaterial != null) nextMaterial = errorMaterial;
-        else nextMaterial = signalState == 1 && !isError ? poweredMaterial : unpoweredMaterial;
+        if (isError)
+        {
+            nextMaterial = errorMaterial != null
+                ? errorMaterial
+                : erroredMaterial != null ? erroredMaterial : unpoweredMaterial;
+        }
+        else
+        {
+            nextMaterial = signalState == 1 ? poweredMaterial : unpoweredMaterial;
+        }
 
         if (nextMaterial != null)
         {
             targetRenderer.sharedMaterial = nextMaterial;
+
+            foreach (LineRenderer line in connectionLines)
+            {
+                if (line != null) line.sharedMaterial = nextMaterial;
+            }
         }
 
         // No error material assigned: tint instead. Cleared again as soon as the
@@ -109,6 +190,32 @@ public class LogicWireBlock : LogicSignalBlock
         }
     }
 
+    private void EnsureConnectionLines()
+    {
+        for (int index = 0; index < connectionLines.Length; index++)
+        {
+            Transform existing = transform.Find($"Wire Connection {index}");
+            GameObject lineObject = existing != null
+                ? existing.gameObject
+                : new GameObject($"Wire Connection {index}");
+
+            if (existing == null)
+            {
+                lineObject.transform.SetParent(transform, false);
+            }
+
+            LineRenderer line = lineObject.GetComponent<LineRenderer>();
+            if (line == null) line = lineObject.AddComponent<LineRenderer>();
+
+            line.useWorldSpace = true;
+            line.positionCount = 2;
+            line.startWidth = 0.18f;
+            line.endWidth = 0.18f;
+            line.enabled = false;
+            connectionLines[index] = line;
+        }
+    }
+
     private void RefreshConnections()
     {
         connectionMask = 0;
@@ -118,7 +225,8 @@ public class LogicWireBlock : LogicSignalBlock
         foreach (Vector3Int neighborPosition in Neighbors(position))
         {
             LogicSignalBlock neighbor = At(neighborPosition);
-            if (neighbor != null && neighbor.HasConnection(neighborPosition, position-neighborPosition))
+            bool connected = ConnectsTo(neighbor, neighborPosition);
+            if (connected)
             {
                 connectionMask |= 1 << index;
             }
@@ -128,8 +236,44 @@ public class LogicWireBlock : LogicSignalBlock
                 directionVisuals[index].SetActive((connectionMask & (1 << index)) != 0);
             }
 
+            UpdateConnectionLine(index, position, neighborPosition, neighbor, connected);
             index++;
         }
+    }
+
+    private void UpdateConnectionLine(
+        int index,
+        Vector3Int position,
+        Vector3Int neighborPosition,
+        LogicSignalBlock neighbor,
+        bool connected)
+    {
+        LineRenderer line = connectionLines[index];
+        if (line == null) return;
+
+        LogicWireBlock neighborWire = neighbor as LogicWireBlock;
+        bool wireConnected = connected && neighborWire != null;
+        int oppositeIndex = index ^ 1;
+        bool hasAuthoredVisual = directionVisuals != null && index < directionVisuals.Length && directionVisuals[index] != null;
+        if (neighborWire != null && neighborWire.directionVisuals != null &&
+            oppositeIndex < neighborWire.directionVisuals.Length && neighborWire.directionVisuals[oppositeIndex] != null)
+        {
+            hasAuthoredVisual = true;
+        }
+
+        bool drawLine = wireConnected && !hasAuthoredVisual && IsBefore(position, neighborPosition);
+        line.enabled = drawLine;
+        if (!drawLine) return;
+
+        line.SetPosition(0, transform.position);
+        line.SetPosition(1, neighborWire.transform.position);
+    }
+
+    private static bool IsBefore(Vector3Int first, Vector3Int second)
+    {
+        if (first.x != second.x) return first.x < second.x;
+        if (first.y != second.y) return first.y < second.y;
+        return first.z < second.z;
     }
 
     private static int CountBits(int value)

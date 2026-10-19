@@ -13,7 +13,10 @@ public class WorldSaveSystem : MonoBehaviour
         public Vector3 position;
         public Quaternion rotation;
         public Vector3 scale = Vector3.one;
+        public Vector3Int footprintSize = Vector3Int.one;
         public bool isGround;
+        public bool hasWireEndpointMask;
+        public int wireEndpointMask;
     }
 
     [Serializable]
@@ -124,7 +127,12 @@ public class WorldSaveSystem : MonoBehaviour
                 position = block.transform.position,
                 rotation = block.transform.rotation,
                 scale = block.transform.localScale,
-                isGround = block.isGround
+                footprintSize = block.GetFootprintSize(),
+                isGround = block.isGround,
+                hasWireEndpointMask = block.GetComponent<LogicWireBlock>() != null,
+                wireEndpointMask = block.GetComponent<LogicWireBlock>() != null
+                    ? block.GetComponent<LogicWireBlock>().EndpointMask
+                    : 0
             });
         }
 
@@ -154,6 +162,29 @@ public class WorldSaveSystem : MonoBehaviour
         }
 
         return names.ToArray();
+    }
+
+    public static bool DeleteSavedWorld(string worldName)
+    {
+        if (string.IsNullOrWhiteSpace(worldName)) return false;
+
+        string filePath = Path.Combine(
+            Application.persistentDataPath,
+            "Worlds",
+            SanitizeFileName(worldName) + ".json"
+        );
+
+        try
+        {
+            if (!File.Exists(filePath)) return false;
+            File.Delete(filePath);
+            return true;
+        }
+        catch (Exception exception)
+        {
+            Debug.LogError($"Could not delete world '{worldName}': {exception.Message}");
+            return false;
+        }
     }
 
     private IEnumerator LoadAfterWorldGeneration(string filePath)
@@ -194,10 +225,18 @@ public class WorldSaveSystem : MonoBehaviour
             Block savedBlockComponent = block.GetComponent<Block>();
             if (savedBlockComponent != null)
             {
+                savedBlockComponent.footprintSize = savedBlock.footprintSize != Vector3Int.zero ? savedBlock.footprintSize : Vector3Int.one;
+
                 bool isGround = savedBlock.isGround
                     || (!nativeArt && (savedBlock.scale.x > 1.001f || savedBlock.scale.z > 1.001f));
                 savedBlockComponent.isGround = isGround;
                 if (isGround) savedBlockComponent.breakable = false;
+            }
+
+            LogicWireBlock savedWire = block.GetComponent<LogicWireBlock>();
+            if (savedWire != null && savedBlock.hasWireEndpointMask)
+            {
+                savedWire.SetEndpointMask(savedBlock.wireEndpointMask);
             }
         }
     }

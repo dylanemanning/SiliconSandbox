@@ -2,9 +2,24 @@ using System.Collections;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Controls;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using UnityEngine.UI;
+
+internal static class TestMouseBindings
+{
+    public static ButtonControl GetControl(Mouse mouse, int binding)
+    {
+        return binding switch
+        {
+            0 => mouse.leftButton,
+            1 => mouse.rightButton,
+            2 => mouse.middleButton,
+            _ => throw new System.ArgumentOutOfRangeException(nameof(binding))
+        };
+    }
+}
 
 public class InventoryGridTests : InputTestFixture
 {
@@ -87,7 +102,10 @@ public class InventoryGridTests : InputTestFixture
         Assert.That(body.linearVelocity.x,Is.Zero);Assert.That(body.linearVelocity.z,Is.Zero);
         var rotation=player.transform.rotation;var cameraRotation=player.cameraSettings.camera.transform.localRotation;
         int count=Object.FindObjectsByType<Block>(FindObjectsSortMode.None).Length;
-        Press(keyboard.wKey);Press(keyboard.digit2Key);Press(mouse.leftButton);Press(mouse.rightButton);
+        var placeButton=TestMouseBindings.GetControl(mouse,KeybindSettings.PlaceMouseButton);
+        var breakButton=TestMouseBindings.GetControl(mouse,KeybindSettings.BreakMouseButton);
+        Press(keyboard.wKey);Press(keyboard.digit2Key);Press(placeButton);
+        if (breakButton != placeButton) Press(breakButton);
         Set(mouse.delta,new Vector2(120,90));
         yield return null;yield return null;
         Assert.That(body.linearVelocity.x,Is.Zero);Assert.That(body.linearVelocity.z,Is.Zero);
@@ -95,7 +113,8 @@ public class InventoryGridTests : InputTestFixture
         Assert.That(player.cameraSettings.camera.transform.localRotation,Is.EqualTo(cameraRotation));
         Assert.That((int)slotField.GetValue(player.hotbar),Is.EqualTo(initialSelected));
         Assert.That(Object.FindObjectsByType<Block>(FindObjectsSortMode.None).Length,Is.EqualTo(count));
-        Release(keyboard.wKey);Release(keyboard.digit2Key);Release(mouse.leftButton);Release(mouse.rightButton);
+        Release(keyboard.wKey);Release(keyboard.digit2Key);Release(placeButton);
+        if (breakButton != placeButton) Release(breakButton);
         Object.FindFirstObjectByType<InventoryGrid>().SetOpen(false);
         Object.Destroy(target);
     }

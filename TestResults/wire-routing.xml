@@ -1,0 +1,421 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="58" result="Passed" total="58" passed="58" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-10-14 19:44:00Z" end-time="2026-10-14 19:44:01Z" duration="0.2240582">
+  <test-suite type="TestSuite" id="1000" name="Silicon Sandbox" fullname="Silicon Sandbox" runstate="Runnable" testcasecount="58" result="Passed" start-time="2026-10-14 19:44:00Z" end-time="2026-10-14 19:44:01Z" duration="0.224058" total="58" passed="58" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1073" name="Assembly-CSharp-Editor.dll" fullname="C:/Users/dylan/Silicon Sandbox/Library/ScriptAssemblies/Assembly-CSharp-Editor.dll" runstate="Runnable" testcasecount="58" result="Passed" start-time="2026-10-14 19:44:00Z" end-time="2026-10-14 19:44:01Z" duration="0.182174" total="58" passed="58" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="6072" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestFixture" id="1001" name="GateBlockTests" fullname="GateBlockTests" classname="GateBlockTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-10-14 19:44:00Z" end-time="2026-10-14 19:44:01Z" duration="0.102426" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-case id="1007" name="DisplayedStateIsClampedToBinary" fullname="GateBlockTests.DisplayedStateIsClampedToBinary" methodname="DisplayedStateIsClampedToBinary" classname="GateBlockTests" runstate="Runnable" seed="594020864" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.042822" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <output><![CDATA[Test Or Gate: GateBlock.gateType is Invalid, which is not a gate. Pick a gate type.
+]]></output>
+        </test-case>
+        <test-case id="1006" name="DisplayedStateIsWhatOtherBlocksRead" fullname="GateBlockTests.DisplayedStateIsWhatOtherBlocksRead" methodname="DisplayedStateIsWhatOtherBlocksRead" classname="GateBlockTests" runstate="Runnable" seed="1235971821" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.001593" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <output><![CDATA[Test And Gate: GateBlock.gateType is Invalid, which is not a gate. Pick a gate type.
+]]></output>
+        </test-case>
+        <test-case id="1005" name="GateLeftAtInvalidTypeFailsLoudly" fullname="GateBlockTests.GateLeftAtInvalidTypeFailsLoudly" methodname="GateLeftAtInvalidTypeFailsLoudly" classname="GateBlockTests" runstate="Runnable" seed="1562013566" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.011121" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <output><![CDATA[Test Invalid Gate: GateBlock.gateType is Invalid, which is not a gate. Pick a gate type.
+]]></output>
+        </test-case>
+        <test-case id="1004" name="WorldPortsCountMatchesTheGateType" fullname="GateBlockTests.WorldPortsCountMatchesTheGateType" methodname="WorldPortsCountMatchesTheGateType" classname="GateBlockTests" runstate="Runnable" seed="25470506" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.004332" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <output><![CDATA[Test Xor Gate: GateBlock.gateType is Invalid, which is not a gate. Pick a gate type.
+Test Buffer Gate: GateBlock.gateType is Invalid, which is not a gate. Pick a gate type.
+]]></output>
+        </test-case>
+        <test-case id="1002" name="WorldPortsFollowTheGatesPositionAndRotation" fullname="GateBlockTests.WorldPortsFollowTheGatesPositionAndRotation" methodname="WorldPortsFollowTheGatesPositionAndRotation" classname="GateBlockTests" runstate="Runnable" seed="1733025491" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.005555" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <output><![CDATA[Test And Gate: GateBlock.gateType is Invalid, which is not a gate. Pick a gate type.
+]]></output>
+        </test-case>
+        <test-case id="1003" name="WorldPortsSnapSlightlyOffGridTransformsToTheGrid" fullname="GateBlockTests.WorldPortsSnapSlightlyOffGridTransformsToTheGrid" methodname="WorldPortsSnapSlightlyOffGridTransformsToTheGrid" classname="GateBlockTests" runstate="Runnable" seed="1969514224" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.002137" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <output><![CDATA[Test Not Gate: GateBlock.gateType is Invalid, which is not a gate. Pick a gate type.
+]]></output>
+        </test-case>
+      </test-suite>
+      <test-suite type="TestFixture" id="1008" name="GatePortsTests" fullname="GatePortsTests" classname="GatePortsTests" runstate="Runnable" testcasecount="19" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.031131" total="19" passed="19" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="ParameterizedMethod" id="1021" name="AndGateRotatedByYaw" fullname="GatePortsTests.AndGateRotatedByYaw" classname="GatePortsTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.003992" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-case id="1017" name="AndGateRotatedByYaw(0.0f,0,0,1,-1,0,0,1,0,0)" fullname="GatePortsTests.AndGateRotatedByYaw(0.0f,0,0,1,-1,0,0,1,0,0)" methodname="AndGateRotatedByYaw" classname="GatePortsTests" runstate="Runnable" seed="67027907" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.002174" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="1018" name="AndGateRotatedByYaw(90.0f,1,0,0,0,0,1,0,0,-1)" fullname="GatePortsTests.AndGateRotatedByYaw(90.0f,1,0,0,0,0,1,0,0,-1)" methodname="AndGateRotatedByYaw" classname="GatePortsTests" runstate="Runnable" seed="1402927690" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.000193" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="1019" name="AndGateRotatedByYaw(180.0f,0,0,-1,1,0,0,-1,0,0)" fullname="GatePortsTests.AndGateRotatedByYaw(180.0f,0,0,-1,1,0,0,-1,0,0)" methodname="AndGateRotatedByYaw" classname="GatePortsTests" runstate="Runnable" seed="305965877" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.000108" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="1020" name="AndGateRotatedByYaw(270.0f,-1,0,0,0,0,-1,0,0,1)" fullname="GatePortsTests.AndGateRotatedByYaw(270.0f,-1,0,0,0,0,-1,0,0,1)" methodname="AndGateRotatedByYaw" classname="GatePortsTests" runstate="Runnable" seed="1004165302" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.000085" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+        </test-suite>
+        <test-case id="1009" name="EveryGateHasOneOutputAndTheRightNumberOfInputs" fullname="GatePortsTests.EveryGateHasOneOutputAndTheRightNumberOfInputs" methodname="EveryGateHasOneOutputAndTheRightNumberOfInputs" classname="GatePortsTests" runstate="Runnable" seed="1661329977" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.007031" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1010" name="EveryPortIsOnADistinctUnitAxisFace" fullname="GatePortsTests.EveryPortIsOnADistinctUnitAxisFace" methodname="EveryPortIsOnADistinctUnitAxisFace" classname="GatePortsTests" runstate="Runnable" seed="372388576" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.006648" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-suite type="ParameterizedMethod" id="1014" name="NonGatesHaveNoPortTable" fullname="GatePortsTests.NonGatesHaveNoPortTable" classname="GatePortsTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.001805" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-case id="1011" name="NonGatesHaveNoPortTable(Invalid)" fullname="GatePortsTests.NonGatesHaveNoPortTable(Invalid)" methodname="NonGatesHaveNoPortTable" classname="GatePortsTests" runstate="Runnable" seed="596713866" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.000534" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="1012" name="NonGatesHaveNoPortTable(Source)" fullname="GatePortsTests.NonGatesHaveNoPortTable(Source)" methodname="NonGatesHaveNoPortTable" classname="GatePortsTests" runstate="Runnable" seed="83765422" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.000144" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="1013" name="NonGatesHaveNoPortTable(Output)" fullname="GatePortsTests.NonGatesHaveNoPortTable(Output)" methodname="NonGatesHaveNoPortTable" classname="GatePortsTests" runstate="Runnable" seed="1303608900" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.000091" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+        </test-suite>
+        <test-suite type="ParameterizedMethod" id="1026" name="NotGateInputIsOppositeItsOutput" fullname="GatePortsTests.NotGateInputIsOppositeItsOutput" classname="GatePortsTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.002664" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-case id="1022" name="NotGateInputIsOppositeItsOutput(0.0f)" fullname="GatePortsTests.NotGateInputIsOppositeItsOutput(0.0f)" methodname="NotGateInputIsOppositeItsOutput" classname="GatePortsTests" runstate="Runnable" seed="1750842307" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.000813" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="1023" name="NotGateInputIsOppositeItsOutput(90.0f)" fullname="GatePortsTests.NotGateInputIsOppositeItsOutput(90.0f)" methodname="NotGateInputIsOppositeItsOutput" classname="GatePortsTests" runstate="Runnable" seed="1310191074" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.000104" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="1024" name="NotGateInputIsOppositeItsOutput(180.0f)" fullname="GatePortsTests.NotGateInputIsOppositeItsOutput(180.0f)" methodname="NotGateInputIsOppositeItsOutput" classname="GatePortsTests" runstate="Runnable" seed="634937635" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.000093" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="1025" name="NotGateInputIsOppositeItsOutput(270.0f)" fullname="GatePortsTests.NotGateInputIsOppositeItsOutput(270.0f)" methodname="NotGateInputIsOppositeItsOutput" classname="GatePortsTests" runstate="Runnable" seed="259124815" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.000222" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+        </test-suite>
+        <test-suite type="ParameterizedMethod" id="1031" name="OneByOneGatePortsAreOnTheAnchorCell" fullname="GatePortsTests.OneByOneGatePortsAreOnTheAnchorCell" classname="GatePortsTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.004162" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-case id="1027" name="OneByOneGatePortsAreOnTheAnchorCell(0.0f)" fullname="GatePortsTests.OneByOneGatePortsAreOnTheAnchorCell(0.0f)" methodname="OneByOneGatePortsAreOnTheAnchorCell" classname="GatePortsTests" runstate="Runnable" seed="813979715" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.001284" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="1028" name="OneByOneGatePortsAreOnTheAnchorCell(90.0f)" fullname="GatePortsTests.OneByOneGatePortsAreOnTheAnchorCell(90.0f)" methodname="OneByOneGatePortsAreOnTheAnchorCell" classname="GatePortsTests" runstate="Runnable" seed="1252915214" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.000454" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="1029" name="OneByOneGatePortsAreOnTheAnchorCell(180.0f)" fullname="GatePortsTests.OneByOneGatePortsAreOnTheAnchorCell(180.0f)" methodname="OneByOneGatePortsAreOnTheAnchorCell" classname="GatePortsTests" runstate="Runnable" seed="156089176" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.000525" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="1030" name="OneByOneGatePortsAreOnTheAnchorCell(270.0f)" fullname="GatePortsTests.OneByOneGatePortsAreOnTheAnchorCell(270.0f)" methodname="OneByOneGatePortsAreOnTheAnchorCell" classname="GatePortsTests" runstate="Runnable" seed="861141300" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.000317" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+        </test-suite>
+        <test-case id="1016" name="OneInputGatesUnrotated_InputBack_OutputFront" fullname="GatePortsTests.OneInputGatesUnrotated_InputBack_OutputFront" methodname="OneInputGatesUnrotated_InputBack_OutputFront" classname="GatePortsTests" runstate="Runnable" seed="1274202969" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.000345" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1015" name="TwoInputGatesUnrotated_AOnLeft_BOnRight_OutputFront" fullname="GatePortsTests.TwoInputGatesUnrotated_AOnLeft_BOnRight_OutputFront" methodname="TwoInputGatesUnrotated_AOnLeft_BOnRight_OutputFront" classname="GatePortsTests" runstate="Runnable" seed="948998207" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.000449" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+      </test-suite>
+      <test-suite type="TestFixture" id="1032" name="LogicEngineTests" fullname="LogicEngineTests" classname="LogicEngineTests" runstate="Runnable" testcasecount="20" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.020671" total="20" passed="20" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="ParameterizedMethod" id="1042" name="Evaluate_EveryGate_DoesNotThrow" fullname="LogicEngineTests.Evaluate_EveryGate_DoesNotThrow" classname="LogicEngineTests" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.007165" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-case id="1034" name="Evaluate_EveryGate_DoesNotThrow(And)" fullname="LogicEngineTests.Evaluate_EveryGate_DoesNotThrow(And)" methodname="Evaluate_EveryGate_DoesNotThrow" classname="LogicEngineTests" runstate="Runnable" seed="840754083" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.005264" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="1035" name="Evaluate_EveryGate_DoesNotThrow(Or)" fullname="LogicEngineTests.Evaluate_EveryGate_DoesNotThrow(Or)" methodname="Evaluate_EveryGate_DoesNotThrow" classname="LogicEngineTests" runstate="Runnable" seed="700615787" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.000127" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="1036" name="Evaluate_EveryGate_DoesNotThrow(Not)" fullname="LogicEngineTests.Evaluate_EveryGate_DoesNotThrow(Not)" methodname="Evaluate_EveryGate_DoesNotThrow" classname="LogicEngineTests" runstate="Runnable" seed="458072513" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.000072" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="1037" name="Evaluate_EveryGate_DoesNotThrow(Nand)" fullname="LogicEngineTests.Evaluate_EveryGate_DoesNotThrow(Nand)" methodname="Evaluate_EveryGate_DoesNotThrow" classname="LogicEngineTests" runstate="Runnable" seed="1486814159" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.000069" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="1038" name="Evaluate_EveryGate_DoesNotThrow(Nor)" fullname="LogicEngineTests.Evaluate_EveryGate_DoesNotThrow(Nor)" methodname="Evaluate_EveryGate_DoesNotThrow" classname="LogicEngineTests" runstate="Runnable" seed="1399538898" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.000067" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="1039" name="Evaluate_EveryGate_DoesNotThrow(Xor)" fullname="LogicEngineTests.Evaluate_EveryGate_DoesNotThrow(Xor)" methodname="Evaluate_EveryGate_DoesNotThrow" classname="LogicEngineTests" runstate="Runnable" seed="287103048" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.000066" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="1040" name="Evaluate_EveryGate_DoesNotThrow(Xnor)" fullname="LogicEngineTests.Evaluate_EveryGate_DoesNotThrow(Xnor)" methodname="Evaluate_EveryGate_DoesNotThrow" classname="LogicEngineTests" runstate="Runnable" seed="1020610912" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.000061" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="1041" name="Evaluate_EveryGate_DoesNotThrow(Buffer)" fullname="LogicEngineTests.Evaluate_EveryGate_DoesNotThrow(Buffer)" methodname="Evaluate_EveryGate_DoesNotThrow" classname="LogicEngineTests" runstate="Runnable" seed="532166923" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.000055" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+        </test-suite>
+        <test-suite type="ParameterizedMethod" id="1051" name="Evaluate_EveryGate_MatchesTruthTable" fullname="LogicEngineTests.Evaluate_EveryGate_MatchesTruthTable" classname="LogicEngineTests" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.003458" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-case id="1043" name="Evaluate_EveryGate_MatchesTruthTable(And)" fullname="LogicEngineTests.Evaluate_EveryGate_MatchesTruthTable(And)" methodname="Evaluate_EveryGate_MatchesTruthTable" classname="LogicEngineTests" runstate="Runnable" seed="1151568542" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.000946" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="1044" name="Evaluate_EveryGate_MatchesTruthTable(Or)" fullname="LogicEngineTests.Evaluate_EveryGate_MatchesTruthTable(Or)" methodname="Evaluate_EveryGate_MatchesTruthTable" classname="LogicEngineTests" runstate="Runnable" seed="564989700" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.000120" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="1045" name="Evaluate_EveryGate_MatchesTruthTable(Not)" fullname="LogicEngineTests.Evaluate_EveryGate_MatchesTruthTable(Not)" methodname="Evaluate_EveryGate_MatchesTruthTable" classname="LogicEngineTests" runstate="Runnable" seed="294651246" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.000063" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="1046" name="Evaluate_EveryGate_MatchesTruthTable(Nand)" fullname="LogicEngineTests.Evaluate_EveryGate_MatchesTruthTable(Nand)" methodname="Evaluate_EveryGate_MatchesTruthTable" classname="LogicEngineTests" runstate="Runnable" seed="1413462210" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.000101" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="1047" name="Evaluate_EveryGate_MatchesTruthTable(Nor)" fullname="LogicEngineTests.Evaluate_EveryGate_MatchesTruthTable(Nor)" methodname="Evaluate_EveryGate_MatchesTruthTable" classname="LogicEngineTests" runstate="Runnable" seed="209527698" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.000072" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="1048" name="Evaluate_EveryGate_MatchesTruthTable(Xor)" fullname="LogicEngineTests.Evaluate_EveryGate_MatchesTruthTable(Xor)" methodname="Evaluate_EveryGate_MatchesTruthTable" classname="LogicEngineTests" runstate="Runnable" seed="276697551" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.000062" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="1049" name="Evaluate_EveryGate_MatchesTruthTable(Xnor)" fullname="LogicEngineTests.Evaluate_EveryGate_MatchesTruthTable(Xnor)" methodname="Evaluate_EveryGate_MatchesTruthTable" classname="LogicEngineTests" runstate="Runnable" seed="901901452" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.000063" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="1050" name="Evaluate_EveryGate_MatchesTruthTable(Buffer)" fullname="LogicEngineTests.Evaluate_EveryGate_MatchesTruthTable(Buffer)" methodname="Evaluate_EveryGate_MatchesTruthTable" classname="LogicEngineTests" runstate="Runnable" seed="164550078" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.000052" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+        </test-suite>
+        <test-suite type="ParameterizedMethod" id="1055" name="Evaluate_NonGate_ThrowsLogicEngineException" fullname="LogicEngineTests.Evaluate_NonGate_ThrowsLogicEngineException" classname="LogicEngineTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.002016" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-case id="1052" name="Evaluate_NonGate_ThrowsLogicEngineException(Invalid)" fullname="LogicEngineTests.Evaluate_NonGate_ThrowsLogicEngineException(Invalid)" methodname="Evaluate_NonGate_ThrowsLogicEngineException" classname="LogicEngineTests" runstate="Runnable" seed="91986949" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.000814" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="1053" name="Evaluate_NonGate_ThrowsLogicEngineException(Source)" fullname="LogicEngineTests.Evaluate_NonGate_ThrowsLogicEngineException(Source)" methodname="Evaluate_NonGate_ThrowsLogicEngineException" classname="LogicEngineTests" runstate="Runnable" seed="1712721524" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.000118" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="1054" name="Evaluate_NonGate_ThrowsLogicEngineException(Output)" fullname="LogicEngineTests.Evaluate_NonGate_ThrowsLogicEngineException(Output)" methodname="Evaluate_NonGate_ThrowsLogicEngineException" classname="LogicEngineTests" runstate="Runnable" seed="423471400" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.000075" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+        </test-suite>
+        <test-case id="1033" name="EveryGateType_IsCoveredByThisFixture" fullname="LogicEngineTests.EveryGateType_IsCoveredByThisFixture" methodname="EveryGateType_IsCoveredByThisFixture" classname="LogicEngineTests" runstate="Runnable" seed="1246201042" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.005027" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+      </test-suite>
+      <test-suite type="TestFixture" id="1056" name="LogicSignalRulesTests" fullname="LogicSignalRulesTests" classname="LogicSignalRulesTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.003051" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-case id="1060" name="ConflictingHighAndLowSourcesResolveErrored" fullname="LogicSignalRulesTests.ConflictingHighAndLowSourcesResolveErrored" methodname="ConflictingHighAndLowSourcesResolveErrored" classname="LogicSignalRulesTests" runstate="Runnable" seed="763183646" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.000448" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1061" name="ErroredSourceStatePropagates" fullname="LogicSignalRulesTests.ErroredSourceStatePropagates" methodname="ErroredSourceStatePropagates" classname="LogicSignalRulesTests" runstate="Runnable" seed="843040606" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.000187" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1058" name="HighSourceDrivesEntireWireNetworkHigh" fullname="LogicSignalRulesTests.HighSourceDrivesEntireWireNetworkHigh" methodname="HighSourceDrivesEntireWireNetworkHigh" classname="LogicSignalRulesTests" runstate="Runnable" seed="1565828895" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.000145" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1059" name="MultipleLowSourcesKeepJunctionLow" fullname="LogicSignalRulesTests.MultipleLowSourcesKeepJunctionLow" methodname="MultipleLowSourcesKeepJunctionLow" classname="LogicSignalRulesTests" runstate="Runnable" seed="352901612" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.000128" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1062" name="NonBinarySourceStateResolvesErrored" fullname="LogicSignalRulesTests.NonBinarySourceStateResolvesErrored" methodname="NonBinarySourceStateResolvesErrored" classname="LogicSignalRulesTests" runstate="Runnable" seed="659220507" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.000131" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1057" name="NoSourcesResolveLow" fullname="LogicSignalRulesTests.NoSourcesResolveLow" methodname="NoSourcesResolveLow" classname="LogicSignalRulesTests" runstate="Runnable" seed="829381253" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.000166" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+      </test-suite>
+      <test-suite type="TestFixture" id="1063" name="LogicWireBlockTests" fullname="LogicWireBlockTests" classname="LogicWireBlockTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.017956" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-case id="1064" name="AdjacentWiresConnectWhenEitherEndFacesTheOtherWire" fullname="LogicWireBlockTests.AdjacentWiresConnectWhenEitherEndFacesTheOtherWire" methodname="AdjacentWiresConnectWhenEitherEndFacesTheOtherWire" classname="LogicWireBlockTests" runstate="Runnable" seed="1487804871" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.002513" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1068" name="CustomEndpointMaskAllowsTurnedWireConnections" fullname="LogicWireBlockTests.CustomEndpointMaskAllowsTurnedWireConnections" methodname="CustomEndpointMaskAllowsTurnedWireConnections" classname="LogicWireBlockTests" runstate="Runnable" seed="113653142" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.001473" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-suite type="ParameterizedMethod" id="1067" name="EndpointsFollowTheWiresRotatedLocalYAxis" fullname="LogicWireBlockTests.EndpointsFollowTheWiresRotatedLocalYAxis" classname="LogicWireBlockTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.002454" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-case id="1065" name="EndpointsFollowTheWiresRotatedLocalYAxis(0.0f,0.0f,90.0f,1,0,0)" fullname="LogicWireBlockTests.EndpointsFollowTheWiresRotatedLocalYAxis(0.0f,0.0f,90.0f,1,0,0)" methodname="EndpointsFollowTheWiresRotatedLocalYAxis" classname="LogicWireBlockTests" runstate="Runnable" seed="528834866" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.000964" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="1066" name="EndpointsFollowTheWiresRotatedLocalYAxis(0.0f,90.0f,90.0f,0,0,1)" fullname="LogicWireBlockTests.EndpointsFollowTheWiresRotatedLocalYAxis(0.0f,90.0f,90.0f,0,0,1)" methodname="EndpointsFollowTheWiresRotatedLocalYAxis" classname="LogicWireBlockTests" runstate="Runnable" seed="71724167" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.000208" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+        </test-suite>
+        <test-case id="1069" name="PathFinderReturnsShortestTurningPath" fullname="LogicWireBlockTests.PathFinderReturnsShortestTurningPath" methodname="PathFinderReturnsShortestTurningPath" classname="LogicWireBlockTests" runstate="Runnable" seed="1608879474" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.008115" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1070" name="PathFinderRoutesAroundOccupiedCells" fullname="LogicWireBlockTests.PathFinderRoutesAroundOccupiedCells" methodname="PathFinderRoutesAroundOccupiedCells" classname="LogicWireBlockTests" runstate="Runnable" seed="13180825" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.001520" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+      </test-suite>
+      <test-suite type="TestFixture" id="1071" name="SmokeTest" fullname="SmokeTest" classname="SmokeTest" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.001660" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-case id="1072" name="Trivial" fullname="SmokeTest.Trivial" methodname="Trivial" classname="SmokeTest" runstate="Runnable" seed="1428272511" result="Passed" start-time="2026-10-14 19:44:01Z" end-time="2026-10-14 19:44:01Z" duration="0.000219" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <output><![CDATA[Saving results to: C:/Users/dylan/AppData/LocalLow/DefaultCompany/Silicon Sandbox\TestResults.xml
+]]></output>
+        </test-case>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

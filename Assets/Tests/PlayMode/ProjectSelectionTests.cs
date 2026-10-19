@@ -4,6 +4,7 @@ using System.Linq;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 using UnityEngine.TestTools;
 
 public class ProjectSelectionTests
@@ -306,6 +307,82 @@ public class ProjectSelectionTests
             "TC_ListProject",
             saved
         );
+    }
+
+    [UnityTest]
+    public IEnumerator TC_1_3_DeleteProjectRequiresConfirmation()
+    {
+        const string worldName = "TC_DeleteConfirmed";
+        string savePath = Path.Combine(worldsDirectory, worldName + ".json");
+        File.WriteAllText(savePath, "{\"worldName\":\"" + worldName + "\",\"blocks\":[]}");
+
+        yield return LoadMainMenu();
+
+        MenuTraversal menu = GetMenu();
+        menu.openLoad();
+
+        Transform row = menu.savedWorldContainer.Find("SavedWorldRow_" + worldName);
+        Assert.IsNotNull(row, "The saved world should have a row in the load list.");
+
+        Button deleteButton = row.Find("DeleteWorldButton").GetComponent<Button>();
+        deleteButton.onClick.Invoke();
+
+        Assert.IsTrue(File.Exists(savePath), "Opening confirmation must not delete the save.");
+
+        Button cancelButton = menu.LoadPanel.transform
+            .Find("DeleteWorldConfirmation/ConfirmationDialog/ConfirmationButtons/CancelDeleteButton")
+            .GetComponent<Button>();
+        cancelButton.onClick.Invoke();
+        Assert.IsTrue(File.Exists(savePath), "Cancel must preserve the save.");
+
+        yield return null;
+
+        deleteButton.onClick.Invoke();
+        Button confirmButton = menu.LoadPanel.transform
+            .Find("DeleteWorldConfirmation/ConfirmationDialog/ConfirmationButtons/ConfirmDeleteButton")
+            .GetComponent<Button>();
+        confirmButton.onClick.Invoke();
+
+        Assert.IsFalse(File.Exists(savePath), "Confirm should remove the save file.");
+        Assert.IsFalse(
+            WorldSaveSystem.GetSavedWorldNames().Contains(worldName),
+            "Deleted worlds should no longer appear in the saved-world list."
+        );
+    }
+
+    [UnityTest]
+    public IEnumerator SavedWorldRowShowsAndLoadsWorldNameButton()
+    {
+        const string worldName = "TC_LoadButtonVisible";
+        string savePath = Path.Combine(worldsDirectory, worldName + ".json");
+        File.WriteAllText(savePath, "{\"worldName\":\"" + worldName + "\",\"blocks\":[]}");
+
+        yield return LoadMainMenu();
+
+        MenuTraversal menu = GetMenu();
+        menu.openLoad();
+
+        Transform row = menu.savedWorldContainer.Find("SavedWorldRow_" + worldName);
+        Assert.IsNotNull(row);
+
+        Button loadButton = row.Find("LoadWorldButton").GetComponent<Button>();
+        Assert.IsNotNull(loadButton);
+        Assert.AreEqual(worldName, loadButton.GetComponentInChildren<TMPro.TMP_Text>(true).text);
+        Assert.IsTrue(loadButton.interactable);
+        Canvas.ForceUpdateCanvases();
+        Assert.Greater(
+            loadButton.GetComponent<RectTransform>().rect.width,
+            300f,
+            "The world-name load button should remain visible beside the delete button."
+        );
+
+        loadButton.onClick.Invoke();
+        yield return null;
+
+        Assert.AreEqual(GameplayScene, SceneManager.GetActiveScene().name);
+        WorldSaveSystem saveSystem = Object.FindFirstObjectByType<WorldSaveSystem>();
+        Assert.IsNotNull(saveSystem);
+        Assert.AreEqual(worldName, saveSystem.WorldName);
     }
 
     // ---------------------------------------------------------

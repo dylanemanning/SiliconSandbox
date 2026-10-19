@@ -18,7 +18,7 @@ public enum PartKind
     /// <summary>A wire block. Wires join into networks; they are never nodes.</summary>
     Wire,
 
-    /// <summary>A signal source (switch / voltage / ground). Every face is an output.</summary>
+    /// <summary>A signal source (switch / voltage / ground). Outputs are defined by its ports.</summary>
     Source,
 
     /// <summary>A logic gate. Ports come from the GatePorts table.</summary>
