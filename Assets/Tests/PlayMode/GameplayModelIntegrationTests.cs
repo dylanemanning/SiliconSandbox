@@ -24,6 +24,21 @@ public class GameplayModelIntegrationTests
     GameObject Prefab(string name) => AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/"+name+".prefab");
 #endif
 
+    // The wire network this wire belongs to in the simulation driver's latest netlist.
+    static WireNetwork NetworkOf(GameObject wire)
+    {
+        Assert.That(SimulationDriver.Instance,Is.Not.Null,"The simulation driver should exist in play mode.");
+        Netlist netlist=SimulationDriver.Instance.LastNetlist;
+        Assert.That(netlist,Is.Not.Null,"The simulation driver has not built a netlist yet.");
+        var block=wire.GetComponent<LogicWireBlock>();
+        int part=-1;
+        for(int i=0;i<netlist.Blocks.Count;i++) if(netlist.Blocks[i]==block){part=i;break;}
+        Assert.That(part,Is.GreaterThanOrEqualTo(0),wire.name+" is not in the netlist.");
+        int network=netlist.NetworkOfPart[part];
+        Assert.That(network,Is.GreaterThanOrEqualTo(0),wire.name+" is not in a wire network.");
+        return netlist.Networks[network];
+    }
+
     [UnityTest]
     public IEnumerator MainGameplayUsesApprovedLightingAndPostProcessing()
     {
@@ -46,6 +61,10 @@ public class GameplayModelIntegrationTests
     public IEnumerator SourceWireAndLedUseApprovedStateModelsAndDisconnectedFacesStayLow()
     {
 #if UNITY_EDITOR
+        // Signal values come from the native logic engine (#82), which only has a
+        // Windows build. Skip, rather than fail, on the Linux CI runner.
+        if(!SimulationDriver.SimulationAvailable)
+            Assert.Ignore("Needs the native SiliconPlugin (Windows x86_64 only) to evaluate the circuit.");
         var source=Object.Instantiate(Prefab("Voltage Source"),new Vector3(30,1,30),Quaternion.identity);
         var wire=Object.Instantiate(Prefab("Wires"),new Vector3(30,1,31),Quaternion.identity);
         var led=Object.Instantiate(Prefab("Viewer Block"),new Vector3(30,1,32),Quaternion.identity);
@@ -87,7 +106,6 @@ public class GameplayModelIntegrationTests
         blankFaceWire.GetComponent<LogicWireBlock>().SetEndpointMask(zAxisEndpoints);
         try
         {
-            gate.GetComponent<GateBlock>().SetDisplayedState(1);
             yield return null;yield return null;
             foreach(var cell in gate.GetComponent<Block>().OccupiedCells(new Vector3Int(40,1,40),Quaternion.identity))
                 Assert.That(LogicSignalBlock.At(cell),Is.EqualTo(gate.GetComponent<GateBlock>()));
@@ -95,10 +113,16 @@ public class GameplayModelIntegrationTests
             outputWire.SetActive(false);
             yield return null;yield return null;
             Assert.That(blankFaceWire.GetComponent<LogicWireBlock>().ConnectionCount,Is.EqualTo(0));
-            Assert.That(blankFaceWire.GetComponent<LogicWireBlock>().SignalState,Is.EqualTo(0));
+            // Wires no longer pick up a value from a neighbouring gate's display (#82):
+            // the simulation driver builds the netlist and only a gate's output pin
+            // drives a wire network. Check that wiring directly, so the test does not
+            // need the native plugin (Windows only) and also runs on the Linux CI runner.
+            Assert.That(NetworkOf(blankFaceWire).HasNoDriver,Is.True,"A wire on the gate's blank front face must not be driven.");
             outputWire.SetActive(true);blankFaceWire.SetActive(false);
             yield return null;yield return null;
-            Assert.That(outputWire.GetComponent<LogicWireBlock>().SignalState,Is.EqualTo(1));
+            var outputNetwork=NetworkOf(outputWire);
+            Assert.That(outputNetwork.DriverNode,Is.GreaterThanOrEqualTo(0),"The gate's output pin must drive the wire in front of it.");
+            Assert.That(SimulationDriver.Instance.LastNetlist.NodeBlock(outputNetwork.DriverNode),Is.EqualTo(gate.GetComponent<GateBlock>()));
             gate.SetActive(false);
             foreach(var cell in gate.GetComponent<Block>().OccupiedCells(new Vector3Int(40,1,40),Quaternion.identity))
                 Assert.That(LogicSignalBlock.At(cell),Is.Null);

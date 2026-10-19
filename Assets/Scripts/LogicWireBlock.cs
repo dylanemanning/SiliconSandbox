@@ -1,4 +1,14 @@
-using System.Collections.Generic;
+// LogicWireBlock.cs — a placed wire.
+//
+// Display only (#82). A wire does not work out its own signal any more: the
+// simulation driver evaluates the whole circuit through the logic engine and
+// pushes each wire network's value in with SetDisplayedState. The old per-frame
+// search that ORed every source it could reach is gone; one driver per network
+// is the rule now (decision 1), and two drivers show as an error.
+//
+// The wire still works out its own junction arms every frame (RefreshConnections),
+// since that is purely visual.
+
 using UnityEngine;
 
 public class LogicWireBlock : LogicSignalBlock
@@ -9,17 +19,28 @@ public class LogicWireBlock : LogicSignalBlock
     [SerializeField] private Material poweredMaterial;
     [SerializeField] private Material erroredMaterial;
 
+    [Tooltip("Optional. Shown when two outputs drive this wire's network. " +
+             "If empty, the unpowered material is tinted with Error Color instead.")]
+    [SerializeField] private Material errorMaterial;
+    [SerializeField] private Color errorColor = Color.red;
+
     [Header("Optional junction visuals")]
     [Tooltip("Child objects for +X, -X, +Y, -Y, +Z, -Z branches.")]
     [SerializeField] private GameObject[] directionVisuals = new GameObject[6];
 
     private readonly LineRenderer[] connectionLines = new LineRenderer[6];
     private int signalState;
+    private bool isError;
     private int connectionMask;
     [SerializeField] private int endpointMask;
     [SerializeField] private bool hasCustomEndpointMask;
+    private MaterialPropertyBlock propertyBlock;
 
     public override int SignalState => signalState;
+
+    /// <summary>True while this wire's network has more than one driver.</summary>
+    public bool IsError => isError;
+
     public int ConnectionMask => connectionMask;
     public int ConnectionCount => CountBits(connectionMask);
     public bool IsJunction => ConnectionCount >= 3;
@@ -99,7 +120,21 @@ public class LogicWireBlock : LogicSignalBlock
     {
         base.Update();
         RefreshConnections();
-        signalState = ResolveNetworkState();
+    }
+
+    /// <summary>
+    /// Shows a new signal. Called by the simulation driver (#82) with the value
+    /// of the network's driver, or 0 for a network with no driver. error is true
+    /// when the network has two or more drivers. Does nothing if neither changed,
+    /// so the driver can call it freely.
+    /// </summary>
+    public void SetDisplayedState(int state, bool error = false)
+    {
+        int next = state == 0 ? 0 : 1;
+        if (next == signalState && error == isError) return;
+
+        signalState = next;
+        isError = error;
         ApplyVisualState();
     }
 
@@ -113,22 +148,45 @@ public class LogicWireBlock : LogicSignalBlock
 
     private void ApplyVisualState()
     {
-        if (GetComponent<WireModelVisual>() != null || targetRenderer == null) return;
+        // A prefab with the new wire model draws itself (WireModelVisual).
+        if (GetComponent<WireModelVisual>() != null) return;
+        ResolveRenderer();
+        if (targetRenderer == null) return;
 
-        Material nextMaterial = signalState == 1
-            ? poweredMaterial
-            : signalState == -1 ? erroredMaterial : unpoweredMaterial;
+        Material nextMaterial;
+        if (isError)
+        {
+            nextMaterial = errorMaterial != null
+                ? errorMaterial
+                : erroredMaterial != null ? erroredMaterial : unpoweredMaterial;
+        }
+        else
+        {
+            nextMaterial = signalState == 1 ? poweredMaterial : unpoweredMaterial;
+        }
+
         if (nextMaterial != null)
         {
-            if (targetRenderer != null)
-            {
-                targetRenderer.sharedMaterial = nextMaterial;
-            }
+            targetRenderer.sharedMaterial = nextMaterial;
 
             foreach (LineRenderer line in connectionLines)
             {
                 if (line != null) line.sharedMaterial = nextMaterial;
             }
+        }
+
+        // No error material assigned: tint instead. Cleared again as soon as the
+        // error goes away, so normal wires never carry a property block.
+        if (isError && errorMaterial == null)
+        {
+            if (propertyBlock == null) propertyBlock = new MaterialPropertyBlock();
+            propertyBlock.SetColor("_BaseColor", errorColor); // URP / HDRP Lit
+            propertyBlock.SetColor("_Color", errorColor);     // Built-in Standard
+            targetRenderer.SetPropertyBlock(propertyBlock);
+        }
+        else
+        {
+            targetRenderer.SetPropertyBlock(null);
         }
     }
 
@@ -216,38 +274,6 @@ public class LogicWireBlock : LogicSignalBlock
         if (first.x != second.x) return first.x < second.x;
         if (first.y != second.y) return first.y < second.y;
         return first.z < second.z;
-    }
-
-    private int ResolveNetworkState()
-    {
-        var visited = new HashSet<LogicWireBlock>();
-        var pending = new Queue<LogicWireBlock>();
-        var sourceStates = new List<int>();
-        pending.Enqueue(this);
-
-        while (pending.Count > 0)
-        {
-            LogicWireBlock wire = pending.Dequeue();
-            if (!visited.Add(wire)) continue;
-
-            foreach (Vector3Int neighborPosition in Neighbors(wire.GridPosition))
-            {
-                LogicSignalBlock neighbor = At(neighborPosition);
-                if (!wire.ConnectsTo(neighbor, neighborPosition)) continue;
-
-                if (neighbor is LogicWireBlock neighborWire)
-                {
-                    pending.Enqueue(neighborWire);
-                }
-                else if (neighbor != null && neighbor.CanDrive(neighborPosition, wire.GridPosition-neighborPosition)
-                         && (neighbor is LogicSignalSource || neighbor is GateBlock))
-                {
-                    sourceStates.Add(neighbor.SignalState);
-                }
-            }
-        }
-
-        return LogicSignalRules.ResolveSources(sourceStates);
     }
 
     private static int CountBits(int value)
