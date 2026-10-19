@@ -129,7 +129,7 @@ public class SimulationDriverEngineTests : DriverFixture
     [Test]
     public void TC_3_4_1_HighSource_PowersWiresAndLed()
     {
-        Source(0, 0, 0, 1);
+        Source(0, 0, 0, 1, 90f);
         LogicWireBlock w1 = Wire(1, 0, 0);
         LogicWireBlock w2 = Wire(2, 0, 0);
         StateViewerBlock led = Led(3, 0, 0);
@@ -147,7 +147,7 @@ public class SimulationDriverEngineTests : DriverFixture
     [Test]
     public void TC_3_4_4_TogglingTheSource_TogglesWiresAndLed()
     {
-        LogicSignalSource source = Source(0, 0, 0, 1);
+        LogicSignalSource source = Source(0, 0, 0, 1, 90f);
         LogicWireBlock wire = Wire(1, 0, 0);
         StateViewerBlock led = Led(2, 0, 0);
 
@@ -183,10 +183,10 @@ public class SimulationDriverEngineTests : DriverFixture
     [Test]
     public void TC_3_4_5_ShortedNetwork_ShowsErrorUntilFixed()
     {
-        Source(0, 0, 0, 1);
+        Source(0, 0, 0, 1, 90f);
         LogicWireBlock w1 = Wire(1, 0, 0);
         LogicWireBlock w2 = Wire(2, 0, 0);
-        LogicSignalSource second = Source(3, 0, 0, 1);
+        LogicSignalSource second = Source(3, 0, 0, 1, 270f);
         StateViewerBlock led = Led(1, 0, 1);
 
         Simulate();
@@ -206,7 +206,7 @@ public class SimulationDriverEngineTests : DriverFixture
     [Test]
     public void TC_3_1_4_BreakingAWire_CutsOffTheRest()
     {
-        Source(0, 0, 0, 1);
+        Source(0, 0, 0, 1, 90f);
         LogicWireBlock near = Wire(1, 0, 0);
         LogicWireBlock middle = Wire(2, 0, 0);
         LogicWireBlock far = Wire(3, 0, 0);
