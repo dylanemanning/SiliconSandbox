@@ -55,9 +55,11 @@ public class LogicWireBlock : LogicSignalBlock
 
     public void SetEndpointMask(int mask)
     {
+        int previous = EndpointMask;
         endpointMask = mask & 0x3f;
         hasCustomEndpointMask = true;
         ApplyEndpointVisuals(endpointMask);
+        if (EndpointMask != previous) MarkCircuitChanged();
     }
 
     public void AddEndpointTowards(Vector3Int direction)

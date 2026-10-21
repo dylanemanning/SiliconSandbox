@@ -6,18 +6,12 @@
 // from hand-written parts. NetlistBuilder.Blocks.cs is the thin adapter that
 // turns placed LogicSignalBlocks into parts.
 //
-// Connection rules (demo version):
+// Connection rules:
 //
-//   - Wire to wire: two wire blocks connect if they share a face — all six
-//     neighbours, the same rule Dylan's LogicWireBlock uses to draw junctions.
-//     The end-face rule (decision 2; parallel wires stay separate, crossings go
-//     over/under) replaces this with #63 after the demo, and only
-//     WireNeighbours below needs to change.
-//
-//   - Part to wire: a port connects to a wire in the cell it faces. Sources
-//     expose their oriented forward/back faces, LEDs have a port on every face,
-//     and gates only on the faces GatePorts lists.
-//     A wire beside a gate's side with no port is not connected.
+//   - Wire to wire: use the visible endpoint connection rule. Parallel wires
+//     remain separate; an endpoint meeting a neighbouring wire makes a junction.
+//   - Part to wire: both the part's port and the wire endpoint must face each other.
+//     Being adjacent to the insulated side of a wire never transfers a signal.
 //
 //   - Part to part, no wire between: an output connects straight to an input
 //     when each faces the other's cell. So an LED placed right against a gate's
@@ -42,8 +36,7 @@ using UnityEngine;
 
 public static partial class NetlistBuilder
 {
-    // The six face neighbours. Kept in one place because #63 replaces wire
-    // adjacency with the end-face rule, and part ports already use their own.
+    // Endpoint-mask bit order matches LogicWireBlock.GetDirectionBit (+X, -X, +Y, -Y, +Z, -Z).
     private static readonly Vector3Int[] Faces =
     {
         new Vector3Int(1, 0, 0), new Vector3Int(-1, 0, 0),
@@ -104,7 +97,7 @@ public static partial class NetlistBuilder
             nodeParts.Add(p);
         }
 
-        // 3. Wire networks: flood fill over face-adjacent wire blocks.
+        // 3. Wire networks: flood fill only over connected wire endpoints.
         var networkOfPart = new int[partCount];
         for (int p = 0; p < partCount; p++) networkOfPart[p] = -1;
 
@@ -128,6 +121,7 @@ public static partial class NetlistBuilder
                 {
                     if (partAt.TryGetValue(parts[wire].Cell + face, out int next) &&
                         parts[next].Kind == PartKind.Wire &&
+                        (WireExposes(parts[wire], face) || WireExposes(parts[next], -face)) &&
                         networkOfPart[next] < 0)
                     {
                         networkOfPart[next] = network;
@@ -161,6 +155,7 @@ public static partial class NetlistBuilder
                 int network = networkOfPart[other];
                 if (network >= 0)
                 {
+                    if (!WireExposes(parts[other], port.OnCell - port.FacingCell)) continue;
                     if (port.IsOutput)
                     {
                         drivers[network].Add(node);
@@ -240,6 +235,12 @@ public static partial class NetlistBuilder
         netlist.Networks = networks;
         netlist.NetworkOfPart = networkOfPart;
         return netlist;
+    }
+
+    private static bool WireExposes(CircuitPart wire, Vector3Int direction)
+    {
+        int face = Array.IndexOf(Faces, direction);
+        return face >= 0 && (wire.WireEndpointMask & (1 << face)) != 0;
     }
 
     private static IReadOnlyList<PartPort> PortsOf(CircuitPart part)
