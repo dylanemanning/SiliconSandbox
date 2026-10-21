@@ -108,7 +108,8 @@ public class Player : MonoBehaviour
             breakingBlock = null;
         }
 
-        if (!cancelRoutePressed && KeybindSettings.WasMouseButtonPressedThisFrame(KeybindSettings.PlaceMouseButton))
+        bool toggledSource = !cancelRoutePressed && TryToggleSource();
+        if (!cancelRoutePressed && !toggledSource && KeybindSettings.WasMouseButtonPressedThisFrame(KeybindSettings.PlaceMouseButton))
         {
             TryPlaceBlock();
         }
@@ -253,6 +254,21 @@ public class Player : MonoBehaviour
         }
     }
 
+    private bool TryToggleSource()
+    {
+        var keyboard = Keyboard.current;
+        var mouse = Mouse.current;
+        if (keyboard == null || mouse == null || !mouse.rightButton.wasPressedThisFrame ||
+            !(keyboard.leftShiftKey.isPressed || keyboard.rightShiftKey.isPressed)) return false;
+        if (targetBlock == null || !targetBlock.TryGetComponent<LogicSignalSource>(out var source) ||
+            source is LogicClockSource) return false;
+
+        // Consume the interaction so this click cannot also place a block or finish a wire route.
+        source.ToggleState();
+        WorldSaveSystem.Instance?.MarkDirty();
+        return true;
+    }
+
     void TryPlaceBlock() 
     {
         Block selectedBlock = hotbar ? hotbar.SelectedBlock : null;
@@ -334,7 +350,10 @@ public class Player : MonoBehaviour
         if (targetBlock.TryGetComponent<LogicSignalSource>(out LogicSignalSource source))
         {
             Vector3Int sourceForward = Vector3Int.RoundToInt(source.transform.forward);
-            Vector3Int sourceFace = Vector3.Dot(sourceForward, facing) >= 0f ? sourceForward : -sourceForward;
+            // Pick the terminal nearest the actual hit, not the player's heading.
+            // A top-down or oblique view can have a heading perpendicular to both pins.
+            float terminalSide = Vector3.Dot(targetRaycastHit.point - source.transform.position, sourceForward);
+            Vector3Int sourceFace = terminalSide >= 0f ? sourceForward : -sourceForward;
             targetNeighbor = source.GridPosition;
             targetCell = targetNeighbor + sourceFace;
             rotation = Quaternion.FromToRotation(Vector3.up, (Vector3)sourceFace);

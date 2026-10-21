@@ -49,7 +49,14 @@ public abstract class PlacedBlockFixture
         return block;
     }
 
-    protected LogicWireBlock Wire(int x, int y, int z) => Place<LogicWireBlock>(x, y, z);
+    // Older abstract circuit fixtures use six-way junctions. Endpoint-specific tests
+    // set an explicit mask to exercise the geometry of placed wires.
+    protected LogicWireBlock Wire(int x, int y, int z)
+    {
+        var wire = Place<LogicWireBlock>(x, y, z);
+        wire.SetEndpointMask(0x3f);
+        return wire;
+    }
 
     protected StateViewerBlock Led(int x, int y, int z) => Place<StateViewerBlock>(x, y, z);
 
