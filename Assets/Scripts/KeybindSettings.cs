@@ -10,6 +10,7 @@ public static class KeybindSettings
     private const string JumpKey = "Keybind.Jump";
     private const string FlyDownKey = "Keybind.FlyDown";
     private const string PauseKey = "Keybind.Pause";
+    private const string InteractKey = "Keybind.Interact";
     private const string PlaceMouseButtonKey = "Keybind.PlaceMouseButton";
     private const string BreakMouseButtonKey = "Keybind.BreakMouseButton";
 
@@ -20,6 +21,7 @@ public static class KeybindSettings
     public static Key Jump => GetKey(JumpKey, Key.Space);
     public static Key FlyDown => GetKey(FlyDownKey, Key.LeftShift);
     public static Key Pause => GetKey(PauseKey, Key.Escape);
+    public static Key Interact => GetKey(InteractKey, Key.F);
     public static int PlaceMouseButton => PlayerPrefs.GetInt(PlaceMouseButtonKey, 1);
     public static int BreakMouseButton => PlayerPrefs.GetInt(BreakMouseButtonKey, 0);
 
