@@ -18,7 +18,7 @@ public class WireModelVisual : MonoBehaviour
     {
         if (wire == null) wire = GetComponent<LogicWireBlock>();
         if (wire == null) return;
-        RefreshForConnections(wire.ConnectionMask, wire.SignalState);
+        RefreshForConnections(wire.EndpointMask, wire.SignalState);
     }
 
     public void RefreshForConnections(int mask)
@@ -40,11 +40,10 @@ public class WireModelVisual : MonoBehaviour
             Vector3 local = transform.InverseTransformDirection(Directions[i]);
             if (count++ == 0) a = local; else b = local;
         }
-        if (count == 0 || (count == 2 && Vector3.Dot(a,b) < -.9f))
+        if (count == 2 && Vector3.Dot(a,b) < -.9f)
         {
             straightModel.SetActive(true);
-            straightModel.transform.localRotation = count == 0 ? Quaternion.identity
-                : Quaternion.FromToRotation(Vector3.forward,a);
+            straightModel.transform.localRotation = Quaternion.FromToRotation(Vector3.forward,a);
         }
         else if (count == 2)
         {

@@ -71,8 +71,16 @@ jobs:
     permissions:
       contents: read
 
-    name: Check Native Plugin (Windows)
-    runs-on: windows-latest
+    name: Check Native Plugin (${{ matrix.platform }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform: Windows
+          - os: macos-latest
+            platform: macOS
+    runs-on: ${{ matrix.os }}
 
     steps:
       - name: Checkout repository
@@ -83,7 +91,13 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
-      - name: Check committed SiliconPlugin.dll
+      - name: Verify universal Mac binary and signature
+        if: runner.os == 'macOS'
+        run: |
+          xcrun lipo Assets/Plugins/macOS/libSiliconPlugin.dylib -verify_arch arm64 x86_64
+          codesign --verify --strict Assets/Plugins/macOS/libSiliconPlugin.dylib
+
+      - name: Check committed native plugin through managed wrapper
         run: dotnet run -c Release --project native/SiliconPlugin/tests/PluginCheck
 
   build:

@@ -68,7 +68,8 @@ public sealed class CircuitPart
 {
     public PartKind Kind;
 
-    // Abstract parts default to a six-way junction; placed wires supply their actual world-space endpoints.
+    // Visible endpoint arms are the entire wire geometry. Facing arms touch
+    // each other, or a matching component pin, without a separate join state.
     public int WireEndpointMask = 0x3f;
 
     /// <summary>

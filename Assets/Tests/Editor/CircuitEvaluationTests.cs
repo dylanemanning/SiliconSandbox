@@ -8,9 +8,8 @@
 //
 // Test names carry the Verification Test Inventory IDs they provide evidence for.
 //
-// Platform note: same as LogicEngineTests — the only committed native library is
-// Windows x86_64, so the fixture is ignored on any other editor (including the
-// Linux CI runner). The same checks run on Windows in CI through PluginCheck.
+// Native tests run on Windows and macOS; the Linux Unity runner skips them.
+// PluginCheck also exercises the wrapper on both supported desktop platforms.
 
 using System;
 using System.Linq;
@@ -20,13 +19,12 @@ using UnityEngine;
 public class CircuitEvaluationTests
 {
     [OneTimeSetUp]
-    public void RequireWindowsEditor()
+    public void RequireNativeSimulation()
     {
-        if (Application.platform != RuntimePlatform.WindowsEditor)
+        if (!SimulationDriver.SimulationAvailable)
         {
             Assert.Ignore(
-                "SiliconPlugin is only built for Windows x86_64, so it cannot be " +
-                $"loaded on {Application.platform}. These tests only run in a Windows editor.");
+                $"Native simulation is unsupported on {Application.platform}; Windows and macOS are supported.");
         }
     }
 

@@ -8,9 +8,9 @@
 //
 // Connection rules:
 //
-//   - Wire to wire: use the visible endpoint connection rule. Parallel wires
-//     remain separate; an endpoint meeting a neighbouring wire makes a junction.
-//   - Part to wire: both the part's port and the wire endpoint must face each other.
+//   - Wire to wire: both wires must expose arms facing their shared face.
+//     Touching arms connect; neighboring parallel wires remain separate.
+//   - Part to wire: the wire endpoint must face a matching component port.
 //     Being adjacent to the insulated side of a wire never transfers a signal.
 //
 //   - Part to part, no wire between: an output connects straight to an input
@@ -97,7 +97,7 @@ public static partial class NetlistBuilder
             nodeParts.Add(p);
         }
 
-        // 3. Wire networks: flood fill only over connected wire endpoints.
+        // 3. Wire networks: flood fill only over touching, reciprocal arms.
         var networkOfPart = new int[partCount];
         for (int p = 0; p < partCount; p++) networkOfPart[p] = -1;
 
@@ -121,7 +121,7 @@ public static partial class NetlistBuilder
                 {
                     if (partAt.TryGetValue(parts[wire].Cell + face, out int next) &&
                         parts[next].Kind == PartKind.Wire &&
-                        (WireExposes(parts[wire], face) || WireExposes(parts[next], -face)) &&
+                        WireExposes(parts[wire], face) && WireExposes(parts[next], -face) &&
                         networkOfPart[next] < 0)
                     {
                         networkOfPart[next] = network;
@@ -155,7 +155,8 @@ public static partial class NetlistBuilder
                 int network = networkOfPart[other];
                 if (network >= 0)
                 {
-                    if (!WireExposes(parts[other], port.OnCell - port.FacingCell)) continue;
+                    Vector3Int face = port.OnCell - port.FacingCell;
+                    if (!WireExposes(parts[other], face)) continue;
                     if (port.IsOutput)
                     {
                         drivers[network].Add(node);

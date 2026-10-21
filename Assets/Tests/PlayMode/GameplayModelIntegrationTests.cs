@@ -61,16 +61,19 @@ public class GameplayModelIntegrationTests
     public IEnumerator SourceWireAndLedUseApprovedStateModelsAndDisconnectedFacesStayLow()
     {
 #if UNITY_EDITOR
-        // Signal values come from the native logic engine (#82), which only has a
-        // Windows build. Skip, rather than fail, on the Linux CI runner.
+        // Exercise the real native engine on Windows and macOS; skip Linux.
         if(!SimulationDriver.SimulationAvailable)
-            Assert.Ignore("Needs the native SiliconPlugin (Windows x86_64 only) to evaluate the circuit.");
+            Assert.Ignore("Needs the native SiliconPlugin (Windows or macOS) to evaluate the circuit.");
         var source=Object.Instantiate(Prefab("Voltage Source"),new Vector3(30,1,30),Quaternion.identity);
         var wire=Object.Instantiate(Prefab("Wires"),new Vector3(30,1,31),Quaternion.identity);
         var led=Object.Instantiate(Prefab("Viewer Block"),new Vector3(30,1,32),Quaternion.identity);
         wire.GetComponent<LogicWireBlock>().SetEndpointMask(
             LogicWireBlock.GetDirectionBit(Vector3Int.forward) |
             LogicWireBlock.GetDirectionBit(Vector3Int.back));
+        WireTopology.JoinPin(wire.GetComponent<LogicWireBlock>(), source.GetComponent<LogicSignalSource>(),
+            new Vector3Int(30,1,30), Vector3Int.forward);
+        WireTopology.JoinPin(wire.GetComponent<LogicWireBlock>(), led.GetComponent<StateViewerBlock>(),
+            new Vector3Int(30,1,32), Vector3Int.back);
         try
         {
             yield return null;yield return null;yield return null;
@@ -94,6 +97,56 @@ public class GameplayModelIntegrationTests
     }
 
     [UnityTest]
+    public IEnumerator GeometricContactsCarryNativeSignalsAndOpeningAGapStopsThem()
+    {
+#if UNITY_EDITOR
+        if (!SimulationDriver.SimulationAvailable)
+            Assert.Ignore("Native signal evaluation requires Windows or macOS.");
+        var origin = new Vector3(130, 1, 130);
+        var source = Object.Instantiate(Prefab("Voltage Source"), origin, Quaternion.identity);
+        var first = Object.Instantiate(Prefab("Wires"), origin + Vector3.forward, Quaternion.identity);
+        var second = Object.Instantiate(Prefab("Wires"), origin + Vector3.forward * 2, Quaternion.identity);
+        var parallel = Object.Instantiate(Prefab("Wires"), origin + Vector3.forward * 2 + Vector3.right, Quaternion.identity);
+        var led = Object.Instantiate(Prefab("Viewer Block"), origin + Vector3.forward * 3, Quaternion.identity);
+        int zArms = LogicWireBlock.GetDirectionBit(Vector3Int.forward) | LogicWireBlock.GetDirectionBit(Vector3Int.back);
+        foreach (var wire in new[] { first, second, parallel }) wire.GetComponent<LogicWireBlock>().SetEndpointMask(zArms);
+        source.GetComponent<LogicSignalSource>().SetState(1);
+        try
+        {
+            // No Join or JoinPin calls: the touching geometry alone must conduct.
+            yield return null; yield return null; yield return null;
+            Assert.That(first.GetComponent<LogicWireBlock>().SignalState, Is.EqualTo(1));
+            Assert.That(second.GetComponent<LogicWireBlock>().SignalState, Is.EqualTo(1));
+            Assert.That(led.GetComponent<StateViewerBlock>().SignalState, Is.EqualTo(1));
+            Assert.That(led.GetComponent<BlockModelVisual>().highModel.activeSelf, Is.True);
+            Assert.That(parallel.GetComponent<LogicWireBlock>().SignalState, Is.Zero, "A parallel wire with a gap must stay isolated.");
+
+            second.GetComponent<LogicWireBlock>().SetEndpointMask(
+                LogicWireBlock.GetDirectionBit(Vector3Int.left) | LogicWireBlock.GetDirectionBit(Vector3Int.right));
+            yield return null; yield return null;
+            Assert.That(first.GetComponent<LogicWireBlock>().SignalState, Is.EqualTo(1));
+            Assert.That(second.GetComponent<LogicWireBlock>().SignalState, Is.Zero);
+            Assert.That(led.GetComponent<StateViewerBlock>().SignalState, Is.Zero);
+
+            second.GetComponent<LogicWireBlock>().SetEndpointMask(zArms);
+            yield return null; yield return null;
+            Assert.That(led.GetComponent<StateViewerBlock>().SignalState, Is.EqualTo(1), "Restoring physical contact must restore signal without an explicit join.");
+            source.GetComponent<LogicSignalSource>().SetState(0);
+            yield return null; yield return null;
+            Assert.That(second.GetComponent<LogicWireBlock>().SignalState, Is.Zero);
+            Assert.That(led.GetComponent<BlockModelVisual>().lowModel.activeSelf, Is.True);
+            LogAssert.NoUnexpectedReceived();
+        }
+        finally
+        {
+            foreach (var value in new[] { source, first, second, parallel, led }) Object.Destroy(value);
+        }
+#else
+        Assert.Ignore("Prefab integration requires Editor asset access."); yield break;
+#endif
+    }
+
+    [UnityTest]
     public IEnumerator MultiCellGateRegistersAndClearsAllCellsAndOnlyOutputDrivesWires()
     {
 #if UNITY_EDITOR
@@ -104,6 +157,8 @@ public class GameplayModelIntegrationTests
                      LogicWireBlock.GetDirectionBit(Vector3Int.back);
         outputWire.GetComponent<LogicWireBlock>().SetEndpointMask(zAxisEndpoints);
         blankFaceWire.GetComponent<LogicWireBlock>().SetEndpointMask(zAxisEndpoints);
+        WireTopology.JoinPin(outputWire.GetComponent<LogicWireBlock>(), gate.GetComponent<GateBlock>(),
+            new Vector3Int(40,1,41), Vector3Int.forward);
         try
         {
             yield return null;yield return null;
@@ -116,7 +171,7 @@ public class GameplayModelIntegrationTests
             // Wires no longer pick up a value from a neighbouring gate's display (#82):
             // the simulation driver builds the netlist and only a gate's output pin
             // drives a wire network. Check that wiring directly, so the test does not
-            // need the native plugin (Windows only) and also runs on the Linux CI runner.
+            // need the native plugin (Windows and macOS) and also runs on the Linux CI runner.
             Assert.That(NetworkOf(blankFaceWire).HasNoDriver,Is.True,"A wire on the gate's blank front face must not be driven.");
             outputWire.SetActive(true);blankFaceWire.SetActive(false);
             yield return null;yield return null;
@@ -144,6 +199,8 @@ public class GameplayModelIntegrationTests
             LogicWireBlock.GetDirectionBit(Vector3Int.forward));
         right.GetComponent<LogicWireBlock>().SetEndpointMask(LogicWireBlock.GetDirectionBit(Vector3Int.left));
         forward.GetComponent<LogicWireBlock>().SetEndpointMask(LogicWireBlock.GetDirectionBit(Vector3Int.back));
+        WireTopology.Join(center.GetComponent<LogicWireBlock>(), right.GetComponent<LogicWireBlock>());
+        WireTopology.Join(center.GetComponent<LogicWireBlock>(), forward.GetComponent<LogicWireBlock>());
         GameObject above=null;
         try
         {
@@ -156,6 +213,7 @@ public class GameplayModelIntegrationTests
             CollectionAssert.AreEquivalent(new[]{Vector3Int.right,Vector3Int.forward},ends);
             above=Object.Instantiate(Prefab("Wires"),new Vector3(50,2,50),Quaternion.identity);
             above.GetComponent<LogicWireBlock>().SetEndpointMask(LogicWireBlock.GetDirectionBit(Vector3Int.down));
+            WireTopology.Join(center.GetComponent<LogicWireBlock>(), above.GetComponent<LogicWireBlock>());
             yield return null;yield return null;
             Assert.That(center.GetComponent<LogicWireBlock>().IsJunction,Is.True);
             Assert.That(visual.branches.Count(b=>b.activeSelf),Is.EqualTo(3));
