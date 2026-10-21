@@ -11,7 +11,7 @@
 // registry stays empty. That is why the builder takes its blocks as an argument.
 //
 // The first fixture is pure C# and runs everywhere. The second calls the native
-// plugin and, like LogicEngineTests, only runs in a Windows editor.
+// plugin and, like LogicEngineTests, runs in Windows and macOS editors.
 
 using System.Collections.Generic;
 using System.Linq;
@@ -247,17 +247,16 @@ public class NetlistBuilderBlockTests : PlacedBlockFixture
 }
 
 // Blocks -> netlist -> native engine -> values, as the simulation driver (#82)
-// will do it. Windows editor only.
+// will do it. Windows and macOS editors.
 public class NetlistToEngineTests : PlacedBlockFixture
 {
     [OneTimeSetUp]
-    public void RequireWindowsEditor()
+    public void RequireNativeSimulation()
     {
-        if (Application.platform != RuntimePlatform.WindowsEditor)
+        if (!SimulationDriver.SimulationAvailable)
         {
             Assert.Ignore(
-                "SiliconPlugin is only built for Windows x86_64, so it cannot be " +
-                $"loaded on {Application.platform}. These tests only run in a Windows editor.");
+                $"Native simulation is unsupported on {Application.platform}; Windows and macOS are supported.");
         }
     }
 

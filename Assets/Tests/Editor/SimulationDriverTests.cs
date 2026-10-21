@@ -7,7 +7,7 @@
 // LogicSignalBlock.All whenever CircuitVersion moves.
 //
 // The first fixture is pure C# and runs everywhere. The second goes through the
-// native plugin and, like LogicEngineTests, only runs in a Windows editor. Test
+// native plugin and, like LogicEngineTests, runs in Windows and macOS editors. Test
 // names carry the Verification Test Inventory IDs they provide evidence for.
 
 using NUnit.Framework;
@@ -111,17 +111,16 @@ public class SimulationDisplayTests : DriverFixture
     }
 }
 
-// Blocks -> driver -> engine -> what the blocks show. Windows editor only.
+// Blocks -> driver -> engine -> what the blocks show. Windows and macOS editors.
 public class SimulationDriverEngineTests : DriverFixture
 {
     [OneTimeSetUp]
-    public void RequireWindowsEditor()
+    public void RequireNativeSimulation()
     {
-        if (Application.platform != RuntimePlatform.WindowsEditor)
+        if (!SimulationDriver.SimulationAvailable)
         {
             Assert.Ignore(
-                "SiliconPlugin is only built for Windows x86_64, so it cannot be " +
-                $"loaded on {Application.platform}. These tests only run in a Windows editor.");
+                $"Native simulation is unsupported on {Application.platform}; Windows and macOS are supported.");
         }
     }
 

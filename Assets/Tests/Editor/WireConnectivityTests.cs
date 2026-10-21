@@ -41,10 +41,10 @@ public class WireConnectivityTests : PlacedBlockFixture
 public class WireConnectivitySimulationTests : DriverFixture
 {
     [OneTimeSetUp]
-    public void RequireWindowsEditor()
+    public void RequireNativeSimulation()
     {
-        if (Application.platform != RuntimePlatform.WindowsEditor)
-            Assert.Ignore("Native signal evaluation requires the committed Windows SiliconPlugin.dll.");
+        if (!SimulationDriver.SimulationAvailable)
+            Assert.Ignore("Native signal evaluation requires Windows or macOS.");
     }
 
     [TestCase(GateType.And)] [TestCase(GateType.Nand)]

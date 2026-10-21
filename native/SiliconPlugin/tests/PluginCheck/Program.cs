@@ -1,21 +1,12 @@
-// PluginCheck — verifies the committed SiliconPlugin.dll against LogicEngine.cs.
-//
-// Same checks as Assets/Tests/Editor/LogicEngineTests.cs, but runnable without
-// Unity, so CI can run them on a Windows runner (the Unity job is Linux-only and
-// skips those tests). Catches the 20 Sep 2026 failure: a committed binary built
-// from older gate source than the C# GateType enum.
-//
-// Also checks whole-circuit evaluation through LogicEngine.EvaluateCircuit
-// (#12), and fails if the DLL still carries debug sections, since an unstripped
-// build adds ~460 KB to repo history on every rebuild.
-//
-// Run locally (Windows, from the repo root, needs the .NET 8 SDK):
-//     dotnet run -c Release --project native/SiliconPlugin/tests/PluginCheck
-// Exits 0 when every check passes, 1 otherwise.
+// PluginCheck loads the shipped Windows or macOS library through the same
+// LogicEngine wrapper used by Unity. Tests exports, truth tables, error handling,
+// whole circuits and stripped binaries. Requires .NET 8 (or a newer target override).
+// dotnet run -c Release --project native/SiliconPlugin/tests/PluginCheck
 
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Linq;
 using System.Text;
 
@@ -42,7 +33,7 @@ internal static class Program
 
     private static int Main()
     {
-        CheckDllIsStripped();
+        CheckLibraryIsStripped();
         CheckEveryGateTypeIsCovered();
 
         foreach (KeyValuePair<GateType, int> gate in EvaluableGates)
@@ -78,14 +69,16 @@ internal static class Program
         return 1;
     }
 
-    private static void CheckDllIsStripped()
+    private static void CheckLibraryIsStripped()
     {
-        string path = Path.Combine(AppContext.BaseDirectory, "SiliconPlugin.dll");
+        bool mac = RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
+        string library = mac ? "libSiliconPlugin.dylib" : "SiliconPlugin.dll";
+        string path = Path.Combine(AppContext.BaseDirectory, library);
         byte[] bytes = File.ReadAllBytes(path);
-        bool hasDebug = IndexOf(bytes, Encoding.ASCII.GetBytes(".debug_")) >= 0;
+        bool hasDebug = IndexOf(bytes, Encoding.ASCII.GetBytes(mac ? "__DWARF" : ".debug_")) >= 0;
         Record(!hasDebug,
-               $"SiliconPlugin.dll is stripped ({bytes.Length / 1024} KB)",
-               "contains .debug_* sections. Rebuild with -s, or run: strip --strip-unneeded SiliconPlugin.dll");
+               $"{library} is stripped ({bytes.Length / 1024} KB)",
+               "contains debug sections; rebuild using the documented platform recipe.");
     }
 
     private static void CheckEveryGateTypeIsCovered()
