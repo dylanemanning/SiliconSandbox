@@ -40,7 +40,7 @@ public sealed class WireWorldSnapshot
         private readonly Vector3 position, scale;
         private readonly Quaternion rotation;
         private readonly Vector3Int footprint, footprintSize;
-        private readonly int endpoints, joins;
+        private readonly int endpoints;
         private readonly GateType gateType;
         private readonly Bounds bounds;
         private readonly bool hasCollider;
@@ -49,7 +49,7 @@ public sealed class WireWorldSnapshot
             position = block.transform.position; scale = block.transform.lossyScale;
             rotation = block.transform.rotation; footprint = block.footprint; footprintSize = block.footprintSize;
             var wire = block.GetComponent<LogicWireBlock>();
-            endpoints = wire != null ? wire.EndpointMask : 0; joins = wire != null ? wire.JoinMask : 0;
+            endpoints = wire != null ? wire.EndpointMask : 0;
             var gate = block.GetComponent<GateBlock>(); gateType = gate != null ? gate.GateType : GateType.Invalid;
             var collider = block.GetComponent<Collider>();
             hasCollider = collider != null && collider.enabled;
@@ -63,7 +63,7 @@ public sealed class WireWorldSnapshot
             var gate = block.GetComponent<GateBlock>();
             if (gate != null && gate.GateType != gateType) return false;
             var wire = block.GetComponent<LogicWireBlock>();
-            if (wire != null && (endpoints != wire.EndpointMask || joins != wire.JoinMask)) return false;
+            if (wire != null && endpoints != wire.EndpointMask) return false;
             var collider = block.GetComponent<Collider>();
             bool currentCollider = collider != null && collider.enabled;
             return currentCollider == hasCollider && (!hasCollider || collider.bounds == bounds);
@@ -169,7 +169,7 @@ public sealed class WireWorldSnapshot
 
 public static class WireRouteCommit
 {
-    /// <summary>Validate the complete edit before publishing any objects or joins.</summary>
+    /// <summary>Validate the complete edit before publishing objects or changing endpoint geometry.</summary>
     public static bool TryCommit(WireWorldSnapshot snapshot, IReadOnlyList<Vector3Int> path,
         Block prefab, WireEndpoint start, WireEndpoint end, out string error, Vector3Int manualAxis = default)
     {
@@ -198,7 +198,7 @@ public static class WireRouteCommit
         { error = "Choose a different wire endpoint."; return false; }
         var created = new List<GameObject>();
         var wires = new List<LogicWireBlock>();
-        var saved = new Dictionary<LogicWireBlock, (int endpoints, int joins)>();
+        var saved = new Dictionary<LogicWireBlock, int>();
         var staging = new GameObject("Wire route staging");
         staging.SetActive(false);
         try
@@ -211,9 +211,9 @@ public static class WireRouteCommit
                 {
                     var instance = UnityEngine.Object.Instantiate(prefab.gameObject, path[i], Quaternion.identity, staging.transform);
                     created.Add(instance); wire = instance.GetComponent<LogicWireBlock>();
-                    wire.SetEndpointMask(0); wire.SetJoinMask(0);
+                    wire.SetEndpointMask(0);
                 }
-                else if (!saved.ContainsKey(wire)) saved.Add(wire, (wire.EndpointMask, wire.JoinMask));
+                else if (!saved.ContainsKey(wire)) saved.Add(wire, wire.EndpointMask);
                 wires.Add(wire);
                 int mask = wire.EndpointMask;
                 if (i > 0) mask |= LogicWireBlock.GetDirectionBit(path[i - 1] - path[i]);
@@ -223,8 +223,6 @@ public static class WireRouteCommit
                 // Manual open ends show the complete one-block piece, including quick clicks.
                 if (manualAxis != Vector3Int.zero && !saved.ContainsKey(wire)) mask |= LogicWireBlock.GetDirectionBit(manualAxis) | LogicWireBlock.GetDirectionBit(-manualAxis);
                 wire.SetEndpointMask(mask);
-                if (i == 0 && start.IsPin) wire.SetJoinMask(wire.JoinMask | LogicWireBlock.GetDirectionBit(-start.Outward));
-                if (i == path.Count - 1 && end.IsPin) wire.SetJoinMask(wire.JoinMask | LogicWireBlock.GetDirectionBit(-end.Outward));
             }
             for (int i = 1; i < wires.Count; i++) WireTopology.Join(wires[i - 1], wires[i]);
             foreach (var instance in created)
@@ -237,7 +235,7 @@ public static class WireRouteCommit
         catch (Exception exception)
         {
             foreach (var pair in saved) if (pair.Key != null)
-            { pair.Key.SetEndpointMask(pair.Value.endpoints); pair.Key.SetJoinMask(pair.Value.joins); }
+                pair.Key.SetEndpointMask(pair.Value);
             foreach (var instance in created) if (instance != null)
             { instance.SetActive(false); DestroyObject(instance); }
             Debug.LogException(exception); error = "Wire placement failed. The world was preserved."; return false;

@@ -34,7 +34,6 @@ public class LogicWireBlock : LogicSignalBlock
     private int connectionMask;
     [SerializeField] private int endpointMask;
     [SerializeField] private bool hasCustomEndpointMask;
-    [SerializeField] private int joinMask;
     private MaterialPropertyBlock propertyBlock;
 
     public override int SignalState => signalState;
@@ -46,23 +45,6 @@ public class LogicWireBlock : LogicSignalBlock
     public int ConnectionCount => CountBits(connectionMask);
     public bool IsJunction => ConnectionCount >= 3;
     public int EndpointMask => hasCustomEndpointMask ? endpointMask : GetAxisEndpointMask();
-    /// <summary>Intentional wire and component-pin joins, in world-space face order.</summary>
-    public int JoinMask => joinMask;
-
-    public bool HasJoinTowards(Vector3Int neighborPosition)
-    {
-        int bit = GetDirectionBit(neighborPosition - GridPosition);
-        return bit != 0 && (joinMask & bit) != 0;
-    }
-
-    public void SetJoinMask(int mask)
-    {
-        int next = mask & 0x3f;
-        if (joinMask == next) return;
-        joinMask = next;
-        MarkCircuitChanged();
-    }
-
     public bool HasEndpointTowards(Vector3Int neighborPosition)
     {
         Vector3Int direction = neighborPosition - GridPosition;
@@ -121,10 +103,10 @@ public class LogicWireBlock : LogicSignalBlock
         if (neighbor is LogicWireBlock neighborWire)
         {
             return neighborWire.GridPosition == neighborCell &&
-                   HasJoinTowards(neighborCell) && neighborWire.HasJoinTowards(GridPosition);
+                   HasEndpointTowards(neighborCell) && neighborWire.HasEndpointTowards(GridPosition);
         }
 
-        if (!HasEndpointTowards(neighborCell) || !HasJoinTowards(neighborCell)) return false;
+        if (!HasEndpointTowards(neighborCell)) return false;
         return neighbor.HasConnection(neighborCell, GridPosition - neighborCell);
     }
 
@@ -253,7 +235,7 @@ public class LogicWireBlock : LogicSignalBlock
 
             if (directionVisuals != null && index < directionVisuals.Length && directionVisuals[index] != null)
             {
-                directionVisuals[index].SetActive(((EndpointMask | connectionMask) & (1 << index)) != 0);
+                directionVisuals[index].SetActive((EndpointMask & (1 << index)) != 0);
             }
 
             UpdateConnectionLine(index, position, neighborPosition, neighbor, connected);

@@ -8,9 +8,9 @@
 //
 // Connection rules:
 //
-//   - Wire to wire: both wires must explicitly join their shared face.
-//     Adjacent wires and matching visible endpoints alone remain separate.
-//   - Part to wire: an explicit join and both facing port/endpoint are required.
+//   - Wire to wire: both wires must expose arms facing their shared face.
+//     Touching arms connect; neighboring parallel wires remain separate.
+//   - Part to wire: the wire endpoint must face a matching component port.
 //     Being adjacent to the insulated side of a wire never transfers a signal.
 //
 //   - Part to part, no wire between: an output connects straight to an input
@@ -97,7 +97,7 @@ public static partial class NetlistBuilder
             nodeParts.Add(p);
         }
 
-        // 3. Wire networks: flood fill only over reciprocal intentional joins.
+        // 3. Wire networks: flood fill only over touching, reciprocal arms.
         var networkOfPart = new int[partCount];
         for (int p = 0; p < partCount; p++) networkOfPart[p] = -1;
 
@@ -121,7 +121,7 @@ public static partial class NetlistBuilder
                 {
                     if (partAt.TryGetValue(parts[wire].Cell + face, out int next) &&
                         parts[next].Kind == PartKind.Wire &&
-                        WireJoins(parts[wire], face) && WireJoins(parts[next], -face) &&
+                        WireExposes(parts[wire], face) && WireExposes(parts[next], -face) &&
                         networkOfPart[next] < 0)
                     {
                         networkOfPart[next] = network;
@@ -156,7 +156,7 @@ public static partial class NetlistBuilder
                 if (network >= 0)
                 {
                     Vector3Int face = port.OnCell - port.FacingCell;
-                    if (!WireExposes(parts[other], face) || !WireJoins(parts[other], face)) continue;
+                    if (!WireExposes(parts[other], face)) continue;
                     if (port.IsOutput)
                     {
                         drivers[network].Add(node);
@@ -242,12 +242,6 @@ public static partial class NetlistBuilder
     {
         int face = Array.IndexOf(Faces, direction);
         return face >= 0 && (wire.WireEndpointMask & (1 << face)) != 0;
-    }
-
-    private static bool WireJoins(CircuitPart wire, Vector3Int direction)
-    {
-        int face = Array.IndexOf(Faces, direction);
-        return face >= 0 && (wire.WireJoinMask & (1 << face)) != 0;
     }
 
     private static IReadOnlyList<PartPort> PortsOf(CircuitPart part)

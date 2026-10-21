@@ -68,10 +68,9 @@ public sealed class CircuitPart
 {
     public PartKind Kind;
 
-    // Endpoints describe visible arms. Wire edges require reciprocal explicit
-    // join bits; pin contact requires an explicit bit and a facing endpoint.
+    // Visible endpoint arms are the entire wire geometry. Facing arms touch
+    // each other, or a matching component pin, without a separate join state.
     public int WireEndpointMask = 0x3f;
-    public int WireJoinMask;
 
     /// <summary>
     /// The grid cell the part occupies. One cell per part while every block is

@@ -69,7 +69,6 @@ public class WireRouteCommitTests
         Assert.That(WireRouteCommit.TryCommit(snapshot, path, prefab, start, end, out _), Is.False);
         Assert.That(ActiveWires(), Has.Count.EqualTo(1));
         Assert.That(wire.EndpointMask, Is.EqualTo(oldMask));
-        Assert.That(wire.JoinMask, Is.Zero);
     }
 
     [Test]
@@ -85,7 +84,6 @@ public class WireRouteCommitTests
         Assert.That(error, Does.Contain("obstructed"));
         Assert.That(ActiveWires(), Has.Count.EqualTo(1));
         Assert.That(wire.EndpointMask, Is.EqualTo(Mask(Vector3Int.forward, Vector3Int.back)));
-        Assert.That(wire.JoinMask, Is.Zero);
     }
 
     [Test]
@@ -100,7 +98,7 @@ public class WireRouteCommitTests
     }
 
     [Test]
-    public void ExplicitPinSelectionAllowsItsOwnApproachAndCreatesOnlyTheChosenPinJoin()
+    public void SelectedPinApproachCreatesTheMatchingEndpointGeometry()
     {
         var source = Source(Origin, 90);
         var start = new WireEndpoint(source, Origin, Vector3Int.right, false);
@@ -114,7 +112,7 @@ public class WireRouteCommitTests
         var attached = ActiveWireAt(start.Cell);
         Assert.That(attached, Is.Not.Null);
         Assert.That(attached.ConnectsTo(source, Origin), Is.True);
-        Assert.That(attached.HasJoinTowards(Origin), Is.True);
+        Assert.That(attached.HasEndpointTowards(Origin), Is.True);
         Assert.That(ActiveWireAt(Origin + Vector3Int.left), Is.Null);
     }
 
@@ -146,12 +144,13 @@ public class WireRouteCommitTests
     }
 
     [Test]
-    public void ExplicitExistingWireEndpointKeepsItsPinJoinWhenAnotherRowJoinsIt()
+    public void ExistingTargetWireKeepsItsPinContactWhenAnotherRowJoinsIt()
     {
         Vector3Int targetCell = Origin + Vector3Int.right * 3;
         var source = Source(targetCell + Vector3Int.right, 90);
         var existing = Wire(targetCell, Mask(Vector3Int.right));
-        Assert.That(WireTopology.JoinPin(existing, source, source.GridPosition, Vector3Int.left), Is.True);
+        Assert.That(existing.ConnectsTo(source, source.GridPosition), Is.True,
+            "The matching arm and pin already touch without an additional join operation.");
         var start = new WireEndpoint(Origin);
         var end = new WireEndpoint(targetCell, existing);
         var snapshot = Capture(start, end);
@@ -193,6 +192,63 @@ public class WireRouteCommitTests
         Assert.That(ActiveWires(), Is.Empty);
     }
 
+    [Test]
+    public void ManualRowAutomaticallyConnectsToAnUnselectedNeighborWhoseArmMeetsItsEnd()
+    {
+        Vector3Int neighborCell = Origin + Vector3Int.right * 3;
+        var neighbor = Wire(neighborCell, Mask(Vector3Int.left));
+        var sideNeighbor = Wire(Origin + Vector3Int.right * 2 + Vector3Int.forward, Mask(Vector3Int.back));
+        var start = new WireEndpoint(Origin);
+        var end = new WireEndpoint(Origin + Vector3Int.right * 2);
+        var snapshot = Capture(start, end);
+        var row = Enumerable.Range(0, 3).Select(x => Origin + Vector3Int.right * x).ToList();
+        Assert.That(WireRouteCommit.TryCommit(snapshot, row, prefab, start, end, out var error, Vector3Int.right), Is.True, error);
+        var last = ActiveWireAt(end.Cell);
+        Assert.That(last, Is.Not.Null);
+        Assert.That(last.ConnectsTo(neighbor, neighborCell), Is.True,
+            "A new complete manual piece meets the existing arm even though that neighbor was not a selected endpoint.");
+        Assert.That(neighbor.ConnectsTo(last, end.Cell), Is.True);
+        Assert.That(neighbor.EndpointMask, Is.EqualTo(Mask(Vector3Int.left)), "Connection does not require editing the neighbor.");
+        Assert.That(last.ConnectsTo(sideNeighbor, sideNeighbor.GridPosition), Is.False,
+            "A side neighbor cannot connect where the new piece has no visible arm.");
+        Assert.That(ActiveWires(), Has.Count.EqualTo(5));
+    }
+
+    [Test]
+    public void ComponentPlacedAgainstAnOpenManualWireEndConnectsFromGeometryAlone()
+    {
+        var start = new WireEndpoint(Origin);
+        var end = new WireEndpoint(Origin + Vector3Int.right * 2);
+        var snapshot = Capture(start, end);
+        var row = Enumerable.Range(0, 3).Select(x => Origin + Vector3Int.right * x).ToList();
+        Assert.That(WireRouteCommit.TryCommit(snapshot, row, prefab, start, end, out var error, Vector3Int.right), Is.True, error);
+        var last = ActiveWireAt(end.Cell);
+        Assert.That(last, Is.Not.Null);
+        int endpointsBeforePlacement = last.EndpointMask;
+        var source = Source(end.Cell + Vector3Int.right, 90);
+        Assert.That(last.ConnectsTo(source, source.GridPosition), Is.True,
+            "The pin meets the wire's existing end; no separate join record is necessary.");
+        Assert.That(last.EndpointMask, Is.EqualTo(endpointsBeforePlacement));
+        source.transform.rotation = Quaternion.identity;
+        Assert.That(last.ConnectsTo(source, source.GridPosition), Is.False, "Rotating the pin away removes the geometric contact.");
+    }
+
+    [Test]
+    public void ChangingEndpointGeometryMakesTheSnapshotStale()
+    {
+        var existing = Wire(Origin, Mask(Vector3Int.forward, Vector3Int.back));
+        var start = new WireEndpoint(Origin, existing);
+        var end = new WireEndpoint(Origin + Vector3Int.right * 2);
+        var snapshot = Capture(start, end);
+        existing.AddEndpointTowards(Vector3Int.up);
+        Assert.That(snapshot.IsCurrent(), Is.False);
+        var row = Enumerable.Range(0, 3).Select(x => Origin + Vector3Int.right * x).ToList();
+        Assert.That(WireRouteCommit.TryCommit(snapshot, row, prefab, start, end, out var error), Is.False);
+        Assert.That(error, Does.Contain("World changed"));
+        Assert.That(existing.EndpointMask, Is.EqualTo(Mask(Vector3Int.forward, Vector3Int.back, Vector3Int.up)));
+        Assert.That(ActiveWires(), Has.Count.EqualTo(1));
+    }
+
     private WireWorldSnapshot Capture(WireEndpoint start, WireEndpoint end)
     {
         Assert.That(WireWorldSnapshot.TryCapture(start, end, out var snapshot, out var error), Is.True, error);
@@ -216,7 +272,7 @@ public class WireRouteCommitTests
     {
         var block = Surface(cell);
         var wire = block.gameObject.AddComponent<LogicWireBlock>();
-        wire.SetEndpointMask(mask); wire.SetJoinMask(0);
+        wire.SetEndpointMask(mask);
         return wire;
     }
     private static int Mask(params Vector3Int[] faces)

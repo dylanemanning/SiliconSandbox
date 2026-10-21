@@ -70,7 +70,7 @@ public static partial class NetlistBuilder
                 return new CircuitPart
                 {
                     Kind = PartKind.Wire, Cell = cell,
-                    WireEndpointMask = wire.EndpointMask, WireJoinMask = wire.JoinMask
+                    WireEndpointMask = wire.EndpointMask
                 };
 
             case LogicSignalSource source:

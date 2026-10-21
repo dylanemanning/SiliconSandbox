@@ -19,12 +19,10 @@ public class WireConnectivityTests : PlacedBlockFixture
         int before=LogicSignalBlock.CircuitVersion;
         wire.AddEndpointTowards(Vector3Int.left);
         Assert.That(LogicSignalBlock.CircuitVersion,Is.GreaterThan(before));
-        Assert.That(Network(NetlistBuilder.FromBlocks(AllPlaced()),wire).HasNoDriver,Is.True,"Exposing an arm must not attach a pin by proximity.");
-        WireTopology.JoinPin(wire,source,source.GridPosition,Vector3Int.right);
         Assert.That(Network(NetlistBuilder.FromBlocks(AllPlaced()),wire).HasNoDriver,Is.False);
     }
     [Test]
-    public void ExposedEndpointsStaySeparateUntilAnExplicitJoin()
+    public void ParallelAndOneSidedArmsStaySeparateUntilTheirGeometryMeets()
     {
         var a=Wire(0,0,0);a.SetEndpointMask(ZMask);
         var b=Wire(1,0,0);b.SetEndpointMask(ZMask);
@@ -32,7 +30,7 @@ public class WireConnectivityTests : PlacedBlockFixture
         a.AddEndpointTowards(Vector3Int.right);
         Assert.That(a.ConnectsTo(b,b.GridPosition),Is.False);
         Assert.That(NetlistBuilder.FromBlocks(AllPlaced()).Networks.Length,Is.EqualTo(2));
-        WireTopology.Join(a,b);
+        b.AddEndpointTowards(Vector3Int.left);
         Assert.That(a.ConnectsTo(b,b.GridPosition),Is.True);
         Assert.That(NetlistBuilder.FromBlocks(AllPlaced()).Networks.Length,Is.EqualTo(1));
         WireTopology.Disconnect(a,b);

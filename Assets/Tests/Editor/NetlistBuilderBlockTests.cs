@@ -39,26 +39,6 @@ public abstract class PlacedBlockFixture
     // pick up whatever is in the scene open in the editor.
     protected IEnumerable<LogicSignalBlock> AllPlaced() => placed.Where(b => b != null);
 
-    // Older circuit/evaluation fixtures describe completed pin wiring. Apply
-    // those intentional attachments explicitly without joining adjacent wires.
-    protected IEnumerable<LogicSignalBlock> WithFixturePinJoins()
-    {
-        LogicSignalBlock[] blocks = AllPlaced().ToArray();
-        foreach (LogicWireBlock wire in blocks.OfType<LogicWireBlock>())
-        foreach (LogicSignalBlock pin in blocks)
-        {
-            if (!(pin is LogicSignalSource) && !(pin is StateViewerBlock) &&
-                !(pin is GateBlock gate && gate.GateType != GateType.Invalid &&
-                  gate.GateType != GateType.Source && gate.GateType != GateType.Output)) continue;
-            foreach (Vector3Int cell in LogicSignalBlock.Neighbors(wire.GridPosition))
-            {
-                if (wire.HasEndpointTowards(cell))
-                    WireTopology.JoinPin(wire, pin, cell, wire.GridPosition - cell);
-            }
-        }
-        return blocks;
-    }
-
     protected T Place<T>(int x, int y, int z, float yaw = 0f) where T : LogicSignalBlock
     {
         var go = new GameObject($"Test {typeof(T).Name} ({x},{y},{z})");
@@ -69,8 +49,8 @@ public abstract class PlacedBlockFixture
         return block;
     }
 
-    // Circuit fixtures expose all six faces to pins, but adjacent wires remain
-    // independent until the test explicitly joins them.
+    // Abstract circuit fixtures expose all six arms. Touching neighbors connect;
+    // endpoint-specific tests replace this mask with their actual geometry.
     protected LogicWireBlock Wire(int x, int y, int z)
     {
         var wire = Place<LogicWireBlock>(x, y, z);
@@ -104,7 +84,7 @@ public abstract class PlacedBlockFixture
     //
     // At yaw 90 both inputs are on the gate's -X face: A on the anchor cell,
     // B on the cell at -Z. This fixture retains a BUFFER on A to exercise direct
-    // component-to-component input wiring as well as B's explicit wire joins.
+    // component-to-component input wiring as well as B's wire geometry.
     // WireConnectivitySimulationTests separately covers two parallel input wires.
     protected struct TwoInputCircuit
     {
@@ -159,7 +139,7 @@ public class NetlistBuilderBlockTests : PlacedBlockFixture
         GateBlock gate = Gate(GateType.Nand, 5, 0, 5, 0f);
         StateViewerBlock led = Led(9, 0, 9);
 
-        Netlist netlist = NetlistBuilder.FromBlocks(WithFixturePinJoins());
+        Netlist netlist = NetlistBuilder.FromBlocks(AllPlaced());
 
         Assert.AreEqual(3, netlist.NodeCount, "wires are not nodes");
         Assert.AreEqual(GateType.Source, (GateType)netlist.Nodes[NodeOf(netlist, source)].Type);
@@ -176,7 +156,7 @@ public class NetlistBuilderBlockTests : PlacedBlockFixture
     {
         TwoInputCircuit c = PlaceTwoInputCircuit(GateType.And);
 
-        Netlist netlist = NetlistBuilder.FromBlocks(WithFixturePinJoins());
+        Netlist netlist = NetlistBuilder.FromBlocks(AllPlaced());
 
         Assert.IsTrue(HasConnection(netlist, c.A, c.Buffer, 0), "source A feeds the buffer directly");
         Assert.IsTrue(HasConnection(netlist, c.Buffer, c.Gate, 0), "buffer on the anchor cell feeds pin 0 (A)");
@@ -197,7 +177,7 @@ public class NetlistBuilderBlockTests : PlacedBlockFixture
         WireTopology.Join(w1, w2);
         Led(3, 0, 0);
 
-        Netlist netlist = NetlistBuilder.FromBlocks(WithFixturePinJoins());
+        Netlist netlist = NetlistBuilder.FromBlocks(AllPlaced());
 
         WireNetwork network = netlist.Networks.Single();
         CollectionAssert.AreEquivalent(new LogicSignalBlock[] { w1, w2 }, network.WireParts.Select(p => netlist.Blocks[p]));
@@ -211,7 +191,7 @@ public class NetlistBuilderBlockTests : PlacedBlockFixture
         LogicWireBlock sideWire = Wire(1, 0, 0);
         LogicWireBlock forwardWire = Wire(0, 0, 1);
 
-        Netlist netlist = NetlistBuilder.FromBlocks(WithFixturePinJoins());
+        Netlist netlist = NetlistBuilder.FromBlocks(AllPlaced());
 
         Assert.IsTrue(NetworkFor(netlist, sideWire).HasNoDriver);
         Assert.AreSame(source, netlist.NodeBlock(NetworkFor(netlist, forwardWire).DriverNode));
@@ -228,7 +208,7 @@ public class NetlistBuilderBlockTests : PlacedBlockFixture
         Wire(3, 0, 0);
         Led(4, 0, 0);
 
-        List<LogicSignalBlock> blocks = WithFixturePinJoins().ToList();
+        List<LogicSignalBlock> blocks = AllPlaced().ToList();
         Netlist forward = NetlistBuilder.FromBlocks(blocks);
         blocks.Reverse();
         Netlist backward = NetlistBuilder.FromBlocks(blocks);
@@ -244,7 +224,7 @@ public class NetlistBuilderBlockTests : PlacedBlockFixture
         Gate(GateType.Invalid, 1, 0, 0, 0f);
 
         Netlist netlist = null;
-        Assert.DoesNotThrow(() => netlist = NetlistBuilder.FromBlocks(WithFixturePinJoins()));
+        Assert.DoesNotThrow(() => netlist = NetlistBuilder.FromBlocks(AllPlaced()));
         Assert.AreEqual(1, netlist.NodeCount);
         Assert.AreEqual(1, netlist.Warnings.Count);
         StringAssert.Contains("Invalid", netlist.Warnings[0]);
@@ -284,7 +264,7 @@ public class NetlistToEngineTests : PlacedBlockFixture
     // Evaluates the placed world and returns each block's value.
     private Dictionary<LogicSignalBlock, int> Evaluate(out Netlist netlist, out CircuitResult result)
     {
-        netlist = NetlistBuilder.FromBlocks(WithFixturePinJoins());
+        netlist = NetlistBuilder.FromBlocks(AllPlaced());
 
         var states = new int[netlist.NodeCount];
         for (int node = 0; node < netlist.NodeCount; node++)

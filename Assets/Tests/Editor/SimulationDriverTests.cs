@@ -33,7 +33,7 @@ public abstract class DriverFixture : PlacedBlockFixture
         if (driverObject != null) Object.DestroyImmediate(driverObject);
     }
 
-    protected Netlist Simulate() => Driver.Simulate(WithFixturePinJoins());
+    protected Netlist Simulate() => Driver.Simulate(AllPlaced());
 }
 
 // Runs everywhere: change tracking and the display-only setters.

@@ -74,7 +74,7 @@ public class WireRoutingIntegrationTests : InputTestFixture
     {
         var value = Own(GameObject.CreatePrimitive(PrimitiveType.Cube)); value.name = Prefix + "existing";
         value.transform.position = cell; value.AddComponent<Block>();
-        var wire = value.AddComponent<LogicWireBlock>(); wire.SetEndpointMask(mask); wire.SetJoinMask(0); return wire;
+        var wire = value.AddComponent<LogicWireBlock>(); wire.SetEndpointMask(mask); return wire;
     }
     private void Aim(Block block, Vector3Int normal)
     {
@@ -186,7 +186,7 @@ public class WireRoutingIntegrationTests : InputTestFixture
     }
 
     [UnityTest]
-    public IEnumerator SecondClickFindsAndPublishesOneExplicitlyJoinedRoute()
+    public IEnumerator SecondClickFindsAndPublishesOnePhysicallyConnectedRoute()
     {
         var first = Surface(Origin); var second = Surface(Origin + Vector3Int.right * 4);
         Aim(first, Vector3Int.up); Call("HandleAutomaticWireClick", prefab);
@@ -233,7 +233,7 @@ public class WireRoutingIntegrationTests : InputTestFixture
         var wire = LogicSignalBlock.At(Origin + Vector3Int.up) as LogicWireBlock;
         Assert.That(wire, Is.Not.Null);
         Assert.That(wire.EndpointMask, Is.EqualTo(LogicWireBlock.GetDirectionBit(Vector3Int.up) | LogicWireBlock.GetDirectionBit(Vector3Int.down)));
-        Assert.That(wire.JoinMask, Is.Zero, "A construction surface supplies an open end.");
+        Assert.That(wire.ConnectsTo(null, Origin), Is.False, "A construction surface supplies an open end.");
     }
 
     [Test]
@@ -285,11 +285,11 @@ public class WireRoutingIntegrationTests : InputTestFixture
         Assert.That(result.Status, Is.EqualTo(WireRouteStatus.Success));
         CollectionAssert.DoesNotContain(result.Path, obstacle.GridPosition);
         Assert.That(WireRouteCommit.TryCommit(snapshot, result.Path, prefab, start, end, out _), Is.True);
-        Assert.That(obstacle.JoinMask, Is.Zero);
+        Assert.That(obstacle.EndpointMask, Is.Zero, "Routing must not grow arms on an unrelated wire.");
     }
 
     [Test]
-    public void PinAttachmentIsExplicitAndStaleSnapshotRejectsRotation()
+    public void PinAttachmentUsesFacingGeometryAndStaleSnapshotRejectsRotation()
     {
         var sourceBlock = Surface(Origin); sourceBlock.transform.rotation = Quaternion.Euler(0, 90, 0);
         var source = sourceBlock.gameObject.AddComponent<LogicSignalSource>();
@@ -306,7 +306,7 @@ public class WireRoutingIntegrationTests : InputTestFixture
         result = WireRouteSolver.Find(snapshot.Request, default);
         Assert.That(WireRouteCommit.TryCommit(snapshot, result.Path, prefab, start, end, out _), Is.True);
         var wire = LogicSignalBlock.At(start.Cell) as LogicWireBlock;
-        Assert.That(wire.JoinMask & LogicWireBlock.GetDirectionBit(Vector3Int.left), Is.Not.Zero);
+        Assert.That(wire.HasEndpointTowards(Origin), Is.True);
         Assert.That(wire.ConnectsTo(source, Origin), Is.True);
     }
 
@@ -318,6 +318,77 @@ public class WireRoutingIntegrationTests : InputTestFixture
         var endpoint = Get<WireEndpoint>("wireStart");
         Assert.That(endpoint.IsPin, Is.False);
         Assert.That(endpoint.Cell, Is.EqualTo(Origin + Vector3Int.up));
+    }
+
+    [UnityTest]
+    public IEnumerator SelectingFreePinBesideExistingWireAddsTheMissingVisibleArmOnCommit()
+    {
+        int z = LogicWireBlock.GetDirectionBit(Vector3Int.forward) | LogicWireBlock.GetDirectionBit(Vector3Int.back);
+        var wire = Wire(Origin, z);
+        var sourceBlock = Surface(Origin + Vector3Int.right);
+        sourceBlock.transform.rotation = Quaternion.Euler(0, 90, 0);
+        var source = sourceBlock.gameObject.AddComponent<LogicSignalSource>();
+        Aim(wire.GetComponent<Block>(), Vector3Int.up);
+        Call("HandleAutomaticWireClick", prefab);
+        Assert.That(wire.ConnectsTo(source, source.GridPosition), Is.False);
+        Assert.That(wire.EndpointMask, Is.EqualTo(z), "First selection must leave the visible shape unchanged.");
+        Aim(sourceBlock, Vector3Int.left);
+        Call("HandleAutomaticWireClick", prefab);
+        yield return AwaitRoute();
+        Assert.That(ActiveWires(), Is.EqualTo(1), "One wire structure still occupies the cell.");
+        Assert.That(wire.HasEndpointTowards(source.GridPosition), Is.True);
+        Assert.That(wire.ConnectsTo(source, source.GridPosition), Is.True);
+    }
+
+    [Test]
+    public void ManualExtensionFromAnOpenArmRemainsAvailable()
+    {
+        var first = Wire(Origin, LogicWireBlock.GetDirectionBit(Vector3Int.right));
+        Aim(first.GetComponent<Block>(), Vector3Int.right);
+        Call("BeginManualWire", prefab);
+        Assert.That(player.HasWireGesture, Is.True, "An open arm is extendable even though its geometry already faces outward.");
+        Call("FinishManualWire");
+        var next = LogicSignalBlock.At(Origin + Vector3Int.right) as LogicWireBlock;
+        Assert.That(next, Is.Not.Null);
+        Assert.That(first.ConnectsTo(next, next.GridPosition), Is.True);
+    }
+
+    [UnityTest]
+    public IEnumerator ComponentReplacementAutomaticallyReconnectsToThePreservedTouchingArm()
+    {
+        var wire = Wire(Origin + Vector3Int.right, LogicWireBlock.GetDirectionBit(Vector3Int.left));
+        var oldBlock = Surface(Origin); oldBlock.transform.rotation = Quaternion.Euler(0, 90, 0);
+        var oldSource = oldBlock.gameObject.AddComponent<LogicSignalSource>();
+        yield return null;
+        Assert.That(wire.ConnectsTo(oldSource, Origin), Is.True, "Facing geometry connects without a separate join action.");
+        oldBlock.Break();
+        yield return null;
+        Assert.That(wire.HasEndpointTowards(Origin), Is.True, "Deleting the component leaves the wire's open arm intact.");
+        var replacement = Surface(Origin); replacement.transform.rotation = Quaternion.Euler(0, 90, 0);
+        var newSource = replacement.gameObject.AddComponent<LogicSignalSource>();
+        yield return null;
+        Assert.That(wire.ConnectsTo(newSource, Origin), Is.True);
+        replacement.transform.rotation = Quaternion.identity;
+        yield return null;
+        Assert.That(wire.ConnectsTo(newSource, Origin), Is.False, "A component face without a pin must not connect.");
+    }
+
+    [UnityTest]
+    public IEnumerator RunDeletionFollowsAutomaticTouchingContactsAndPreservesParallelWire()
+    {
+        int x = LogicWireBlock.GetDirectionBit(Vector3Int.right) | LogicWireBlock.GetDirectionBit(Vector3Int.left);
+        var first = Wire(Origin, x);
+        var middle = Wire(Origin + Vector3Int.right, x);
+        var last = Wire(Origin + Vector3Int.right * 2, x);
+        var parallel = Wire(Origin + Vector3Int.forward, x);
+        yield return null;
+        Assert.That(first.ConnectsTo(middle, middle.GridPosition), Is.True);
+        Assert.That(middle.ConnectsTo(last, last.GridPosition), Is.True);
+        Assert.That(first.ConnectsTo(parallel, parallel.GridPosition), Is.False);
+        Assert.That(WireTopology.DeleteRun(middle), Is.EqualTo(3), "Automatic physical contacts form one deletable run.");
+        yield return null;
+        Assert.That(parallel != null && parallel.isActiveAndEnabled, Is.True);
+        Assert.That(ActiveWires(), Is.EqualTo(1));
     }
 
     [Test]

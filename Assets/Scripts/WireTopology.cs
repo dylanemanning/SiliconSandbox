@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// Authored wire edges. Visible arms alone never join two wire cells.
+/// Physical wire geometry. Facing arms touch and form one electrical network.
 /// All mutations happen on Unity's main thread before simulation's next update.
 /// </summary>
 public static class WireTopology
@@ -17,20 +17,18 @@ public static class WireTopology
 
         first.SetEndpointMask(first.EndpointMask | firstBit);
         second.SetEndpointMask(second.EndpointMask | secondBit);
-        first.SetJoinMask(first.JoinMask | firstBit);
-        second.SetJoinMask(second.JoinMask | secondBit);
         return true;
     }
 
-    public static void Disconnect(LogicWireBlock first, LogicWireBlock second, bool removeEndpoints = true)
+    public static void Disconnect(LogicWireBlock first, LogicWireBlock second)
     {
         if (first == null || second == null) return;
         Vector3Int direction = second.GridPosition - first.GridPosition;
-        RemoveArm(first, LogicWireBlock.GetDirectionBit(direction), removeEndpoints);
-        RemoveArm(second, LogicWireBlock.GetDirectionBit(-direction), removeEndpoints);
+        RemoveArm(first, LogicWireBlock.GetDirectionBit(direction));
+        RemoveArm(second, LogicWireBlock.GetDirectionBit(-direction));
     }
 
-    /// <summary>Intentionally attach a wire to one selected, outward-facing component pin.</summary>
+    /// <summary>Extend visible geometry to one selected, outward-facing component pin.</summary>
     public static bool JoinPin(LogicWireBlock wire, LogicSignalBlock pin, Vector3Int pinCell, Vector3Int face)
     {
         if (wire == null || pin == null || pin is LogicWireBlock ||
@@ -38,26 +36,10 @@ public static class WireTopology
             !pin.HasConnection(pinCell, face)) return false;
         int bit = LogicWireBlock.GetDirectionBit(-face);
         wire.SetEndpointMask(wire.EndpointMask | bit);
-        wire.SetJoinMask(wire.JoinMask | bit);
         return true;
     }
 
-    /// <summary>Deleting a component leaves its wires open; a replacement must be deliberately attached.</summary>
-    public static void DetachPorts(LogicSignalBlock component)
-    {
-        if (component == null || component is LogicWireBlock) return;
-        foreach (LogicSignalBlock candidate in LogicSignalBlock.All)
-        {
-            if (!(candidate is LogicWireBlock wire)) continue;
-            foreach (Vector3Int cell in LogicSignalBlock.Neighbors(wire.GridPosition))
-            {
-                if (LogicSignalBlock.At(cell) != component) continue;
-                RemoveArm(wire, LogicWireBlock.GetDirectionBit(cell - wire.GridPosition), false);
-            }
-        }
-    }
-
-    /// <summary>Remove joins into a cell before deleting that one wire.</summary>
+    /// <summary>Trim touching neighbor arms before deleting that one wire.</summary>
     public static void Detach(LogicWireBlock wire)
     {
         if (wire == null) return;
@@ -65,47 +47,37 @@ public static class WireTopology
         {
             if (!(LogicSignalBlock.At(cell) is LogicWireBlock neighbor)) continue;
             int bit = LogicWireBlock.GetDirectionBit(wire.GridPosition - cell);
-            if ((neighbor.JoinMask & bit) != 0) RemoveArm(neighbor, bit, true);
+            if (wire.ConnectsTo(neighbor, cell))
+            {
+                RemoveArm(neighbor, bit);
+                PruneEmptyWire(neighbor);
+            }
         }
-        wire.SetJoinMask(0);
     }
 
     /// <summary>
-    /// Reconstruct the old OR rule once, after every legacy wire is loaded.
-    /// Do not add endpoint arms: this preserves the authored pin contacts and
-    /// avoids introducing extra connections while migrating neighboring bends.
-    /// Connected visual arms also include ConnectionMask at render time.
+    /// Preserve legacy OR connections by materializing their previously rendered
+    /// reciprocal arms. Read every original mask before applying any edits.
     /// </summary>
-    public static void MigrateLegacyJoins(IEnumerable<LogicWireBlock> legacyWires)
+    public static void MigrateLegacyGeometry(IEnumerable<LogicWireBlock> legacyWires)
     {
         var byCell = new Dictionary<Vector3Int, LogicWireBlock>();
         foreach (LogicWireBlock wire in legacyWires)
-        {
             if (wire != null) byCell[wire.GridPosition] = wire;
-        }
 
         var masks = new Dictionary<LogicWireBlock, int>();
         foreach (LogicWireBlock wire in byCell.Values)
         {
-            int mask = 0;
+            int mask = wire.EndpointMask;
             foreach (Vector3Int cell in LogicSignalBlock.Neighbors(wire.GridPosition))
             {
                 if (byCell.TryGetValue(cell, out LogicWireBlock neighbor) &&
                     (wire.HasEndpointTowards(cell) || neighbor.HasEndpointTowards(wire.GridPosition)))
-                {
                     mask |= LogicWireBlock.GetDirectionBit(cell - wire.GridPosition);
-                }
-                else
-                {
-                    LogicSignalBlock pin = LogicSignalBlock.At(cell);
-                    if (pin != null && !(pin is LogicWireBlock) && wire.HasEndpointTowards(cell) &&
-                        pin.HasConnection(cell, wire.GridPosition - cell))
-                        mask |= LogicWireBlock.GetDirectionBit(cell - wire.GridPosition);
-                }
             }
             masks.Add(wire, mask);
         }
-        foreach (var entry in masks) entry.Key.SetJoinMask(entry.Value);
+        foreach (var entry in masks) entry.Key.SetEndpointMask(entry.Value);
     }
 
     /// <summary>
@@ -153,29 +125,43 @@ public static class WireTopology
             {
                 if (!(LogicSignalBlock.At(cell) is LogicWireBlock neighbor) || removed.Contains(neighbor)) continue;
                 int bit = LogicWireBlock.GetDirectionBit(wire.GridPosition - cell);
-                if ((neighbor.JoinMask & bit) != 0) RemoveArm(neighbor, bit, true);
+                if (wire.ConnectsTo(neighbor, cell))
+                {
+                    RemoveArm(neighbor, bit);
+                    PruneEmptyWire(neighbor);
+                }
             }
         }
 
         foreach (LogicWireBlock wire in run)
         {
-            wire.SetJoinMask(0);
-            wire.GetComponent<Block>()?.UnregisterCells();
-            // Remove registry entries now; deferred Destroy must not let the
-            // simulation or another placement see half of the deleted run.
-            wire.gameObject.SetActive(false);
-            if (Application.isPlaying) Object.Destroy(wire.gameObject);
-            else Object.DestroyImmediate(wire.gameObject);
+            DestroyWire(wire);
         }
         LogicSignalBlock.MarkCircuitChanged();
         WorldSaveSystem.Instance?.MarkDirty();
         return run.Count;
     }
 
-    private static void RemoveArm(LogicWireBlock wire, int bit, bool removeEndpoint)
+    private static void RemoveArm(LogicWireBlock wire, int bit)
     {
-        wire.SetJoinMask(wire.JoinMask & ~bit);
-        if (removeEndpoint) wire.SetEndpointMask(wire.EndpointMask & ~bit);
+        wire.SetEndpointMask(wire.EndpointMask & ~bit);
+    }
+
+    private static void PruneEmptyWire(LogicWireBlock wire)
+    {
+        if (wire.EndpointMask != 0) return;
+        Block block = wire.GetComponent<Block>();
+        if (block == null || block.breakable) DestroyWire(wire);
+    }
+
+    private static void DestroyWire(LogicWireBlock wire)
+    {
+        wire.GetComponent<Block>()?.UnregisterCells();
+        // Deferred Destroy must not leave invisible geometry in the placement
+        // registry or expose a partially removed run to simulation.
+        wire.gameObject.SetActive(false);
+        if (Application.isPlaying) Object.Destroy(wire.gameObject);
+        else Object.DestroyImmediate(wire.gameObject);
     }
 
     private static bool IsProtectedBoundary(LogicWireBlock wire)
@@ -184,11 +170,6 @@ public static class WireTopology
         if (block != null && !block.breakable) return true;
 
         int physicalMask = wire.EndpointMask;
-        foreach (Vector3Int cell in LogicSignalBlock.Neighbors(wire.GridPosition))
-        {
-            if (wire.ConnectsTo(LogicSignalBlock.At(cell), cell))
-                physicalMask |= LogicWireBlock.GetDirectionBit(cell - wire.GridPosition);
-        }
         int count = 0;
         for (; physicalMask != 0; physicalMask &= physicalMask - 1) count++;
         return count >= 3;

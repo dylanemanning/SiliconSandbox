@@ -25,9 +25,9 @@ public class NetlistBuilderTests
 
     private static Vector3Int C(int x, int y, int z) => new Vector3Int(x, y, z);
 
-    // These abstract circuit fixtures intentionally join every neighboring wire.
+    // These abstract circuit fixtures expose arms toward every neighboring cell.
     private static CircuitPart Wire(int x, int y, int z)
-        => new CircuitPart { Kind = PartKind.Wire, Cell = C(x, y, z), WireJoinMask = 0x3f };
+        => new CircuitPart { Kind = PartKind.Wire, Cell = C(x, y, z) };
 
     private static CircuitPart Source(int x, int y, int z)
     {

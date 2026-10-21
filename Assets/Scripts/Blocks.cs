@@ -156,9 +156,7 @@ public class Block : MonoBehaviour
         if (!breakable) return;
 
         if (breakingParticles) { Destroy(breakingParticles); }
-        LogicSignalBlock signal = GetComponent<LogicSignalBlock>();
-        if (signal is LogicWireBlock wire) WireTopology.Detach(wire);
-        else WireTopology.DetachPorts(signal);
+        WireTopology.Detach(GetComponent<LogicWireBlock>());
         UnregisterCells();
         WorldSaveSystem.Instance?.MarkDirty();
        

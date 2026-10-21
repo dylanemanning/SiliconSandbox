@@ -139,8 +139,8 @@ public partial class Player
         {
             axis = face;
             var existing = LogicSignalBlock.At(pinCell + face) as LogicWireBlock;
-            // An occupied pin branches from precisely its attached cell; unrelated nearby wires stay blocked.
-            if (existing != null && !existing.HasEndpointTowards(pinCell)) return false;
+            // A pin may extend its adjacent wire with a visible arm on commit.
+            // The first selection changes neither geometry nor electrical contact.
             endpoint = new WireEndpoint(pin, pinCell, face, input, existing);
             return true;
         }
@@ -207,7 +207,8 @@ public partial class Player
         { SetWireStatus(error, true); return; }
         gesturePrefab = prefab; manualBinding = KeybindSettings.ManualWireBinding;
         if (wireStart.IsPin) manualAxis = wireStart.Outward;
-        if (wireStart.Wire != null && (wireStart.Wire.JoinMask & LogicWireBlock.GetDirectionBit(manualAxis)) != 0)
+        if (wireStart.Wire != null && wireStart.Wire.ConnectsTo(
+            LogicSignalBlock.At(wireStart.Cell + manualAxis), wireStart.Cell + manualAxis))
         { CancelWireRoute(); SetWireStatus("A wire already leaves that face.", true); return; }
         manualOrigin = wireStart.IsPin ? (Vector3)wireStart.PinCell + (Vector3)wireStart.Outward * .5f
             : wireStart.Wire != null ? (Vector3)wireStart.Cell : (Vector3)wireStart.Cell - (Vector3)manualAxis * .5f;
@@ -235,12 +236,12 @@ public partial class Player
         int extra = wireStart.Wire != null ? count : count - 1;
         for (int i = 1; i <= extra; i++) path.Add(wireStart.Cell + direction * i);
         Vector3Int last = path[path.Count - 1];
-        // Ending the authored row exactly on this cell deliberately joins it; intermediate wires remain obstacles.
+        // Ending the row on this cell extends the two shapes to meet; intermediate wires remain obstacles.
         var aimed = LogicSignalBlock.At(last) as LogicWireBlock;
         if (aimed != null && aimed != wireStart.Wire && aimed.GridPosition == last)
             end = new WireEndpoint(last, aimed);
         else end = new WireEndpoint(last);
-        // A coaxial terminal exactly at the row's end is a deliberate manual attachment.
+        // A coaxial terminal exactly at the row's end meets the new arm.
         var pin = LogicSignalBlock.At(last + direction);
         if (aimed == null && pin != null && !(pin is LogicWireBlock) && pin.HasConnection(last + direction, -direction))
             end = new WireEndpoint(pin, last + direction, -direction, !pin.CanDrive(last + direction, -direction));

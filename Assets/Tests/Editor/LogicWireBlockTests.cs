@@ -5,7 +5,7 @@ using UnityEngine;
 public class LogicWireBlockTests
 {
     [Test]
-    public void AdjacentWiresRequireReciprocalJoinsEvenWhenEndpointsFace()
+    public void AdjacentWiresConnectExactlyWhenTheirArmsFaceEachOther()
     {
         var firstObject = new GameObject("First Wire");
         var alignedObject = new GameObject("Aligned Wire");
@@ -23,16 +23,12 @@ public class LogicWireBlockTests
             aligned.SetEndpointMask(LogicWireBlock.GetDirectionBit(Vector3Int.back));
             parallel.SetEndpointMask(LogicWireBlock.GetDirectionBit(Vector3Int.up));
 
-            Assert.IsFalse(first.ConnectsTo(aligned, Vector3Int.forward));
-            Assert.IsFalse(first.ConnectsTo(parallel, Vector3Int.right));
-            first.SetJoinMask(LogicWireBlock.GetDirectionBit(Vector3Int.right));
-            Assert.IsFalse(first.ConnectsTo(parallel, Vector3Int.right), "One-sided intent is insufficient.");
+            Assert.IsTrue(first.ConnectsTo(aligned, Vector3Int.forward));
+            Assert.IsTrue(aligned.ConnectsTo(first, Vector3Int.zero));
+            Assert.IsFalse(first.ConnectsTo(parallel, Vector3Int.right), "A one-sided arm does not reach the neighbor center.");
             Assert.IsFalse(parallel.ConnectsTo(first, Vector3Int.zero));
 
-            Assert.IsTrue(WireTopology.Join(first, aligned));
-            Assert.IsTrue(first.ConnectsTo(aligned, Vector3Int.forward));
-            Assert.IsFalse(first.ConnectsTo(parallel, Vector3Int.right));
-            Assert.IsTrue(WireTopology.Join(first, parallel));
+            parallel.AddEndpointTowards(Vector3Int.left);
             Assert.IsTrue(first.ConnectsTo(parallel, Vector3Int.right));
             Assert.IsTrue(parallel.ConnectsTo(first, Vector3Int.zero));
         }
@@ -90,7 +86,6 @@ public class LogicWireBlockTests
                 LogicWireBlock.GetDirectionBit(new Vector3Int(0, 0, 1)));
             next.SetEndpointMask(LogicWireBlock.GetDirectionBit(Vector3Int.back));
 
-            WireTopology.Join(first, next);
             Assert.IsTrue(first.ConnectsTo(next, Vector3Int.forward));
             Assert.IsTrue(first.HasEndpointTowards(Vector3Int.right));
             Assert.IsTrue(first.HasEndpointTowards(Vector3Int.forward));
@@ -104,7 +99,7 @@ public class LogicWireBlockTests
     }
 
     [Test]
-    public void ConnectionMasksTrackExplicitJoinRemoval()
+    public void ConnectionMasksTrackVisibleGeometryChanges()
     {
         Vector3Int firstPosition = new Vector3Int(10000, 10000, 10000);
         Vector3Int nextPosition = firstPosition + Vector3Int.right;
@@ -123,21 +118,15 @@ public class LogicWireBlockTests
             next.SetEndpointMask(LogicWireBlock.GetDirectionBit(Vector3Int.left));
             RefreshConnections(first);
             RefreshConnections(next);
-            Assert.AreEqual(0, first.ConnectionCount);
-            Assert.AreEqual(0, next.ConnectionCount);
-
-            WireTopology.Join(first, next);
-            RefreshConnections(first);
-            RefreshConnections(next);
             Assert.AreEqual(1, first.ConnectionMask);
             Assert.AreEqual(1 << 1, next.ConnectionMask);
 
-            WireTopology.Disconnect(first, next, removeEndpoints: false);
+            next.SetEndpointMask(0);
             RefreshConnections(first);
             RefreshConnections(next);
             Assert.AreEqual(0, first.ConnectionCount);
             Assert.AreEqual(0, next.ConnectionCount);
-            Assert.IsTrue(first.HasEndpointTowards(nextPosition), "An open arm can remain visible without a join.");
+            Assert.IsTrue(first.HasEndpointTowards(nextPosition), "The untouched open arm remains visible when the facing arm is removed.");
         }
         finally
         {
@@ -224,6 +213,11 @@ public class LogicWireBlockTests
             Assert.IsTrue(visual.branches[2].activeSelf);
             Assert.IsTrue(visual.branches[4].activeSelf);
             Assert.AreEqual(3, System.Array.FindAll(visual.branches, branch => branch.activeSelf).Length);
+
+            visual.RefreshForConnections(0);
+            Assert.IsFalse(visual.straightModel.activeSelf, "No arms must not draw a full straight wire.");
+            Assert.IsFalse(visual.elbowModel.activeSelf);
+            Assert.IsFalse(System.Array.Exists(visual.branches, branch => branch.activeSelf));
         }
         finally
         {

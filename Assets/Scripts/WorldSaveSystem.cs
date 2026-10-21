@@ -6,7 +6,7 @@ using UnityEngine;
 
 public class WorldSaveSystem : MonoBehaviour
 {
-    public const int CurrentSaveVersion = 2;
+    public const int CurrentSaveVersion = 3;
 
     [Serializable]
     public class SavedBlock
@@ -19,6 +19,13 @@ public class WorldSaveSystem : MonoBehaviour
         public bool isGround;
         public bool hasWireEndpointMask;
         public int wireEndpointMask;
+    }
+
+    // Read-only compatibility fields. New saves serialize SavedBlock instead,
+    // so hidden connection state never survives in the geometry-only format.
+    [Serializable]
+    public class LegacySavedBlock : SavedBlock
+    {
         public bool hasWireJoinMask;
         public int wireJoinMask;
     }
@@ -29,6 +36,14 @@ public class WorldSaveSystem : MonoBehaviour
         public int version;
         public string worldName;
         public List<SavedBlock> blocks = new List<SavedBlock>();
+    }
+
+    [Serializable]
+    private class LoadedWorld
+    {
+        public int version;
+        public string worldName;
+        public List<LegacySavedBlock> blocks = new List<LegacySavedBlock>();
     }
 
     public static WorldSaveSystem Instance { get; private set; }
@@ -152,9 +167,7 @@ public class WorldSaveSystem : MonoBehaviour
             footprintSize = block.GetFootprintSize(),
             isGround = block.isGround,
             hasWireEndpointMask = wire != null,
-            wireEndpointMask = wire != null ? wire.EndpointMask : 0,
-            hasWireJoinMask = wire != null,
-            wireJoinMask = wire != null ? wire.JoinMask : 0
+            wireEndpointMask = wire != null ? wire.EndpointMask : 0
         };
     }
 
@@ -208,10 +221,10 @@ public class WorldSaveSystem : MonoBehaviour
     {
         yield return null;
 
-        SavedWorld save;
+        LoadedWorld save;
         try
         {
-            save = JsonUtility.FromJson<SavedWorld>(File.ReadAllText(filePath));
+            save = JsonUtility.FromJson<LoadedWorld>(File.ReadAllText(filePath));
         }
         catch (Exception exception)
         {
@@ -245,8 +258,8 @@ public class WorldSaveSystem : MonoBehaviour
         }
 
         yield return null;
-        var restoredWires = new Dictionary<LogicWireBlock, SavedBlock>();
-        foreach (SavedBlock savedBlock in save.blocks)
+        var restoredWires = new Dictionary<LogicWireBlock, LegacySavedBlock>();
+        foreach (LegacySavedBlock savedBlock in save.blocks)
         {
             GameObject prefab = FindPrefab(savedBlock.prefabName);
             if (prefab == null)
@@ -275,25 +288,76 @@ public class WorldSaveSystem : MonoBehaviour
             if (savedWire != null) restoredWires.Add(savedWire, savedBlock);
         }
 
-        RestoreWireTopology(restoredWires);
+        RestoreWireTopology(restoredWires, save.version);
         savePending = false;
         isLoading = false;
     }
 
-    private static void RestoreWireTopology(Dictionary<LogicWireBlock, SavedBlock> restoredWires)
+    private static void RestoreWireTopology(Dictionary<LogicWireBlock, LegacySavedBlock> restoredWires, int version)
     {
-        var legacyWires = new List<LogicWireBlock>();
         foreach (var entry in restoredWires)
         {
             LogicWireBlock wire = entry.Key;
-            SavedBlock saved = entry.Value;
+            LegacySavedBlock saved = entry.Value;
             if (saved.hasWireEndpointMask) wire.SetEndpointMask(saved.wireEndpointMask);
-            wire.SetJoinMask(saved.hasWireJoinMask ? saved.wireJoinMask : 0);
-            if (!saved.hasWireJoinMask) legacyWires.Add(wire);
         }
-        // Legacy OR adjacency is evaluated from the original endpoint masks
-        // after all placements exist. New explicit zero masks stay isolated.
-        WireTopology.MigrateLegacyJoins(legacyWires);
+
+        if (version < 2)
+        {
+            WireTopology.MigrateLegacyGeometry(restoredWires.Keys);
+            RestoreLegacyZeroMaskVisuals(restoredWires.Keys);
+            return;
+        }
+        if (version >= CurrentSaveVersion) return;
+
+        // Version 2 rendered EndpointMask | ConnectionMask. Only reciprocal
+        // stored wire joins contributed extra visible arms; a unilateral stale
+        // flag must not grow geometry. Pin contact already required an endpoint.
+        var byCell = new Dictionary<Vector3Int, LogicWireBlock>();
+        var legacyWires = new List<LogicWireBlock>();
+        foreach (var entry in restoredWires)
+        {
+            byCell[entry.Key.GridPosition] = entry.Key;
+            if (!entry.Value.hasWireJoinMask) legacyWires.Add(entry.Key);
+        }
+        var normalized = new Dictionary<LogicWireBlock, int>();
+        foreach (var entry in restoredWires)
+        {
+            LogicWireBlock wire = entry.Key;
+            LegacySavedBlock saved = entry.Value;
+            int mask = wire.EndpointMask;
+            if (saved.hasWireJoinMask)
+            foreach (Vector3Int cell in LogicSignalBlock.Neighbors(wire.GridPosition))
+            {
+                int face = LogicWireBlock.GetDirectionBit(cell - wire.GridPosition);
+                if ((saved.wireJoinMask & face) == 0 || !byCell.TryGetValue(cell, out LogicWireBlock neighbor)) continue;
+                LegacySavedBlock neighborSaved = restoredWires[neighbor];
+                int back = LogicWireBlock.GetDirectionBit(wire.GridPosition - cell);
+                if (neighborSaved.hasWireJoinMask && (neighborSaved.wireJoinMask & back) != 0) mask |= face;
+            }
+            normalized.Add(wire, mask);
+        }
+        foreach (var entry in normalized) entry.Key.SetEndpointMask(entry.Value);
+        // Version 2 also accepted records predating its join fields.
+        WireTopology.MigrateLegacyGeometry(legacyWires);
+        RestoreLegacyZeroMaskVisuals(restoredWires.Keys);
+    }
+
+    private static void RestoreLegacyZeroMaskVisuals(IEnumerable<LogicWireBlock> wires)
+    {
+        foreach (LogicWireBlock wire in wires)
+        {
+            if (wire.EndpointMask != 0) continue;
+            WireModelVisual visual = wire.GetComponent<WireModelVisual>();
+            if (visual == null || visual.straightModel == null) continue;
+
+            // Before version 3 a zero visible mask displayed the straight
+            // model at identity local rotation. Its authored axis is local Z,
+            // so preserve its parent's world forward, not the wire's local Y.
+            Transform parent = visual.straightModel.transform.parent;
+            Vector3Int axis = Vector3Int.RoundToInt(parent != null ? parent.forward : Vector3.forward);
+            wire.SetEndpointMask(LogicWireBlock.GetDirectionBit(axis) | LogicWireBlock.GetDirectionBit(-axis));
+        }
     }
 
     private GameObject FindPrefab(string prefabName)
