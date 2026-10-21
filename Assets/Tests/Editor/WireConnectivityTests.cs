@@ -14,23 +14,28 @@ public class WireConnectivityTests : PlacedBlockFixture
     [Test]
     public void SourceMustFaceAnExposedWireEndpointAndEndpointEditsDirtyTheCircuit()
     {
-        Source(0,0,0,1,90);var wire=Wire(1,0,0);wire.SetEndpointMask(ZMask);
+        var source=Source(0,0,0,1,90);var wire=Wire(1,0,0);wire.SetEndpointMask(ZMask);
         Assert.That(Network(NetlistBuilder.FromBlocks(AllPlaced()),wire).HasNoDriver,Is.True,"A source beside a wire's insulated side must not drive it.");
         int before=LogicSignalBlock.CircuitVersion;
         wire.AddEndpointTowards(Vector3Int.left);
         Assert.That(LogicSignalBlock.CircuitVersion,Is.GreaterThan(before));
+        Assert.That(Network(NetlistBuilder.FromBlocks(AllPlaced()),wire).HasNoDriver,Is.True,"Exposing an arm must not attach a pin by proximity.");
+        WireTopology.JoinPin(wire,source,source.GridPosition,Vector3Int.right);
         Assert.That(Network(NetlistBuilder.FromBlocks(AllPlaced()),wire).HasNoDriver,Is.False);
     }
     [Test]
-    public void ExplicitEndToSideJunctionMatchesVisibleConnectionRule()
+    public void ExposedEndpointsStaySeparateUntilAnExplicitJoin()
     {
         var a=Wire(0,0,0);a.SetEndpointMask(ZMask);
         var b=Wire(1,0,0);b.SetEndpointMask(ZMask);
         Assert.That(NetlistBuilder.FromBlocks(AllPlaced()).Networks.Length,Is.EqualTo(2));
         a.AddEndpointTowards(Vector3Int.right);
+        Assert.That(a.ConnectsTo(b,b.GridPosition),Is.False);
+        Assert.That(NetlistBuilder.FromBlocks(AllPlaced()).Networks.Length,Is.EqualTo(2));
+        WireTopology.Join(a,b);
         Assert.That(a.ConnectsTo(b,b.GridPosition),Is.True);
         Assert.That(NetlistBuilder.FromBlocks(AllPlaced()).Networks.Length,Is.EqualTo(1));
-        a.SetEndpointMask(ZMask);
+        WireTopology.Disconnect(a,b);
         Assert.That(NetlistBuilder.FromBlocks(AllPlaced()).Networks.Length,Is.EqualTo(2));
     }
 }

@@ -5,46 +5,42 @@ using UnityEngine;
 public class LogicWireBlockTests
 {
     [Test]
-    public void AdjacentWiresConnectWhenEitherEndpointFacesTheOther()
+    public void AdjacentWiresRequireReciprocalJoinsEvenWhenEndpointsFace()
     {
         var firstObject = new GameObject("First Wire");
         var alignedObject = new GameObject("Aligned Wire");
         var parallelObject = new GameObject("Parallel Wire");
-        var junctionObject = new GameObject("Junction Wire");
         try
         {
-            Quaternion rotation = Quaternion.Euler(0f, 90f, 90f);
-            firstObject.transform.SetPositionAndRotation(Vector3.zero, rotation);
-            alignedObject.transform.SetPositionAndRotation(Vector3.forward, rotation);
-            parallelObject.transform.SetPositionAndRotation(Vector3.right, rotation);
-            junctionObject.transform.SetPositionAndRotation(
-                Vector3.right,
-                Quaternion.Euler(0f, 0f, 90f));
-
+            alignedObject.transform.position = Vector3.forward;
+            parallelObject.transform.position = Vector3.right;
             LogicWireBlock first = firstObject.AddComponent<LogicWireBlock>();
             LogicWireBlock aligned = alignedObject.AddComponent<LogicWireBlock>();
             LogicWireBlock parallel = parallelObject.AddComponent<LogicWireBlock>();
-            LogicWireBlock junction = junctionObject.AddComponent<LogicWireBlock>();
             first.SetEndpointMask(
                 LogicWireBlock.GetDirectionBit(Vector3Int.forward) |
                 LogicWireBlock.GetDirectionBit(Vector3Int.right));
             aligned.SetEndpointMask(LogicWireBlock.GetDirectionBit(Vector3Int.back));
-            parallel.SetEndpointMask(
-                LogicWireBlock.GetDirectionBit(Vector3Int.up) |
-                LogicWireBlock.GetDirectionBit(Vector3Int.down));
+            parallel.SetEndpointMask(LogicWireBlock.GetDirectionBit(Vector3Int.up));
 
+            Assert.IsFalse(first.ConnectsTo(aligned, Vector3Int.forward));
+            Assert.IsFalse(first.ConnectsTo(parallel, Vector3Int.right));
+            first.SetJoinMask(LogicWireBlock.GetDirectionBit(Vector3Int.right));
+            Assert.IsFalse(first.ConnectsTo(parallel, Vector3Int.right), "One-sided intent is insufficient.");
+            Assert.IsFalse(parallel.ConnectsTo(first, Vector3Int.zero));
+
+            Assert.IsTrue(WireTopology.Join(first, aligned));
             Assert.IsTrue(first.ConnectsTo(aligned, Vector3Int.forward));
+            Assert.IsFalse(first.ConnectsTo(parallel, Vector3Int.right));
+            Assert.IsTrue(WireTopology.Join(first, parallel));
             Assert.IsTrue(first.ConnectsTo(parallel, Vector3Int.right));
             Assert.IsTrue(parallel.ConnectsTo(first, Vector3Int.zero));
-            Assert.IsTrue(first.ConnectsTo(junction, Vector3Int.right));
-            Assert.IsTrue(junction.ConnectsTo(first, Vector3Int.zero));
         }
         finally
         {
             Object.DestroyImmediate(firstObject);
             Object.DestroyImmediate(alignedObject);
             Object.DestroyImmediate(parallelObject);
-            Object.DestroyImmediate(junctionObject);
         }
     }
 
@@ -94,6 +90,7 @@ public class LogicWireBlockTests
                 LogicWireBlock.GetDirectionBit(new Vector3Int(0, 0, 1)));
             next.SetEndpointMask(LogicWireBlock.GetDirectionBit(Vector3Int.back));
 
+            WireTopology.Join(first, next);
             Assert.IsTrue(first.ConnectsTo(next, Vector3Int.forward));
             Assert.IsTrue(first.HasEndpointTowards(Vector3Int.right));
             Assert.IsTrue(first.HasEndpointTowards(Vector3Int.forward));
@@ -107,56 +104,56 @@ public class LogicWireBlockTests
     }
 
     [Test]
-    public void AdjacentParallelWiresConnectOnlyWhenEitherEndpointFacesTheOther()
+    public void ConnectionMasksTrackExplicitJoinRemoval()
     {
         Vector3Int firstPosition = new Vector3Int(10000, 10000, 10000);
         Vector3Int nextPosition = firstPosition + Vector3Int.right;
         var firstObject = new GameObject("First Wire");
         var nextObject = new GameObject("Next Wire");
+        LogicWireBlock first = null, next = null;
         try
         {
             firstObject.transform.position = firstPosition;
             nextObject.transform.position = nextPosition;
-            LogicWireBlock first = firstObject.AddComponent<LogicWireBlock>();
-            LogicWireBlock next = nextObject.AddComponent<LogicWireBlock>();
+            first = firstObject.AddComponent<LogicWireBlock>();
+            next = nextObject.AddComponent<LogicWireBlock>();
             RegisterBlock(first);
             RegisterBlock(next);
-            Assert.That(LogicSignalBlock.At(firstPosition), Is.SameAs(first));
-            Assert.That(LogicSignalBlock.At(nextPosition), Is.SameAs(next));
-            first.SetEndpointMask(
-                LogicWireBlock.GetDirectionBit(Vector3Int.up) |
-                LogicWireBlock.GetDirectionBit(Vector3Int.down));
-            next.SetEndpointMask(
-                LogicWireBlock.GetDirectionBit(Vector3Int.up) |
-                LogicWireBlock.GetDirectionBit(Vector3Int.down));
-
-            Assert.IsFalse(first.ConnectsTo(next, firstPosition + Vector3Int.right));
+            first.SetEndpointMask(LogicWireBlock.GetDirectionBit(Vector3Int.right));
+            next.SetEndpointMask(LogicWireBlock.GetDirectionBit(Vector3Int.left));
             RefreshConnections(first);
             RefreshConnections(next);
             Assert.AreEqual(0, first.ConnectionCount);
             Assert.AreEqual(0, next.ConnectionCount);
 
-            first.AddEndpointTowards(Vector3Int.right);
-            Assert.IsTrue(first.ConnectsTo(next, firstPosition + Vector3Int.right));
-            Assert.IsTrue(next.ConnectsTo(first, firstPosition));
+            WireTopology.Join(first, next);
             RefreshConnections(first);
             RefreshConnections(next);
-            Assert.AreEqual(1, first.ConnectionMask & 1);
-            Assert.AreEqual(1 << 1, next.ConnectionMask & (1 << 1));
+            Assert.AreEqual(1, first.ConnectionMask);
+            Assert.AreEqual(1 << 1, next.ConnectionMask);
 
-            first.SetEndpointMask(LogicWireBlock.GetDirectionBit(Vector3Int.up));
-            next.SetEndpointMask(LogicWireBlock.GetDirectionBit(Vector3Int.left));
-            Assert.IsTrue(next.ConnectsTo(first, firstPosition));
+            WireTopology.Disconnect(first, next, removeEndpoints: false);
             RefreshConnections(first);
             RefreshConnections(next);
-            Assert.AreEqual(1, first.ConnectionMask & 1);
-            Assert.AreEqual(1 << 1, next.ConnectionMask & (1 << 1));
+            Assert.AreEqual(0, first.ConnectionCount);
+            Assert.AreEqual(0, next.ConnectionCount);
+            Assert.IsTrue(first.HasEndpointTowards(nextPosition), "An open arm can remain visible without a join.");
         }
         finally
         {
+            if (first != null) UnregisterBlock(first);
+            if (next != null) UnregisterBlock(next);
             Object.DestroyImmediate(firstObject);
             Object.DestroyImmediate(nextObject);
         }
+    }
+
+    private static void UnregisterBlock(LogicSignalBlock block)
+    {
+        typeof(LogicSignalBlock)
+            .GetMethod("Unregister", System.Reflection.BindingFlags.Instance |
+                System.Reflection.BindingFlags.NonPublic)
+            .Invoke(block, null);
     }
 
     private static void RefreshConnections(LogicWireBlock wire)
@@ -270,7 +267,7 @@ public class LogicWireBlockTests
     }
 
     [Test]
-    public void PathFinderMinimizesTurnsBeforeDistance()
+    public void PathFinderChoosesTheLowerWeightedCostDetour()
     {
         var allowed = new HashSet<Vector3Int>
         {

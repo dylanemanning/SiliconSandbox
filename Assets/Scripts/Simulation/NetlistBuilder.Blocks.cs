@@ -67,7 +67,11 @@ public static partial class NetlistBuilder
         switch (block)
         {
             case LogicWireBlock wire:
-                return new CircuitPart { Kind = PartKind.Wire, Cell = cell, WireEndpointMask = wire.EndpointMask };
+                return new CircuitPart
+                {
+                    Kind = PartKind.Wire, Cell = cell,
+                    WireEndpointMask = wire.EndpointMask, WireJoinMask = wire.JoinMask
+                };
 
             case LogicSignalSource source:
                 Vector3Int forward = Vector3Int.RoundToInt(source.transform.forward);

@@ -33,7 +33,7 @@ public abstract class DriverFixture : PlacedBlockFixture
         if (driverObject != null) Object.DestroyImmediate(driverObject);
     }
 
-    protected Netlist Simulate() => Driver.Simulate(AllPlaced());
+    protected Netlist Simulate() => Driver.Simulate(WithFixturePinJoins());
 }
 
 // Runs everywhere: change tracking and the display-only setters.
@@ -132,6 +132,7 @@ public class SimulationDriverEngineTests : DriverFixture
         Source(0, 0, 0, 1, 90f);
         LogicWireBlock w1 = Wire(1, 0, 0);
         LogicWireBlock w2 = Wire(2, 0, 0);
+        WireTopology.Join(w1, w2);
         StateViewerBlock led = Led(3, 0, 0);
 
         Simulate();
@@ -186,6 +187,7 @@ public class SimulationDriverEngineTests : DriverFixture
         Source(0, 0, 0, 1, 90f);
         LogicWireBlock w1 = Wire(1, 0, 0);
         LogicWireBlock w2 = Wire(2, 0, 0);
+        WireTopology.Join(w1, w2);
         LogicSignalSource second = Source(3, 0, 0, 1, 270f);
         StateViewerBlock led = Led(1, 0, 1);
 
@@ -210,6 +212,8 @@ public class SimulationDriverEngineTests : DriverFixture
         LogicWireBlock near = Wire(1, 0, 0);
         LogicWireBlock middle = Wire(2, 0, 0);
         LogicWireBlock far = Wire(3, 0, 0);
+        WireTopology.Join(near, middle);
+        WireTopology.Join(middle, far);
         StateViewerBlock led = Led(4, 0, 0);
 
         Simulate();
@@ -227,7 +231,8 @@ public class SimulationDriverEngineTests : DriverFixture
     {
         // NOT facing +X with its output wired round to its own input.
         GateBlock not = Gate(GateType.Not, 0, 0, 0, 90f);
-        Wire(1, 0, 0); Wire(1, 0, 1); Wire(0, 0, 1); Wire(-1, 0, 1); Wire(-1, 0, 0);
+        var wires = new[] { Wire(1, 0, 0), Wire(1, 0, 1), Wire(0, 0, 1), Wire(-1, 0, 1), Wire(-1, 0, 0) };
+        for (int i = 1; i < wires.Length; i++) WireTopology.Join(wires[i - 1], wires[i]);
 
         LogAssert.Expect(LogType.Warning, new System.Text.RegularExpressions.Regex("feedback loop"));
         Simulate();

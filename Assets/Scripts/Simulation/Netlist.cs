@@ -68,8 +68,10 @@ public sealed class CircuitPart
 {
     public PartKind Kind;
 
-    // Abstract parts default to a six-way junction; placed wires supply their actual world-space endpoints.
+    // Endpoints describe visible arms. Wire edges require reciprocal explicit
+    // join bits; pin contact requires an explicit bit and a facing endpoint.
     public int WireEndpointMask = 0x3f;
+    public int WireJoinMask;
 
     /// <summary>
     /// The grid cell the part occupies. One cell per part while every block is

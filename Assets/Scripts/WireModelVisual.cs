@@ -18,7 +18,7 @@ public class WireModelVisual : MonoBehaviour
     {
         if (wire == null) wire = GetComponent<LogicWireBlock>();
         if (wire == null) return;
-        RefreshForConnections(wire.ConnectionMask, wire.SignalState);
+        RefreshForConnections(wire.EndpointMask | wire.ConnectionMask, wire.SignalState);
     }
 
     public void RefreshForConnections(int mask)

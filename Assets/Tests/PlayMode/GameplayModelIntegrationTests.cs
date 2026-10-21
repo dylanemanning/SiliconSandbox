@@ -71,6 +71,10 @@ public class GameplayModelIntegrationTests
         wire.GetComponent<LogicWireBlock>().SetEndpointMask(
             LogicWireBlock.GetDirectionBit(Vector3Int.forward) |
             LogicWireBlock.GetDirectionBit(Vector3Int.back));
+        WireTopology.JoinPin(wire.GetComponent<LogicWireBlock>(), source.GetComponent<LogicSignalSource>(),
+            new Vector3Int(30,1,30), Vector3Int.forward);
+        WireTopology.JoinPin(wire.GetComponent<LogicWireBlock>(), led.GetComponent<StateViewerBlock>(),
+            new Vector3Int(30,1,32), Vector3Int.back);
         try
         {
             yield return null;yield return null;yield return null;
@@ -104,6 +108,8 @@ public class GameplayModelIntegrationTests
                      LogicWireBlock.GetDirectionBit(Vector3Int.back);
         outputWire.GetComponent<LogicWireBlock>().SetEndpointMask(zAxisEndpoints);
         blankFaceWire.GetComponent<LogicWireBlock>().SetEndpointMask(zAxisEndpoints);
+        WireTopology.JoinPin(outputWire.GetComponent<LogicWireBlock>(), gate.GetComponent<GateBlock>(),
+            new Vector3Int(40,1,41), Vector3Int.forward);
         try
         {
             yield return null;yield return null;
@@ -144,6 +150,8 @@ public class GameplayModelIntegrationTests
             LogicWireBlock.GetDirectionBit(Vector3Int.forward));
         right.GetComponent<LogicWireBlock>().SetEndpointMask(LogicWireBlock.GetDirectionBit(Vector3Int.left));
         forward.GetComponent<LogicWireBlock>().SetEndpointMask(LogicWireBlock.GetDirectionBit(Vector3Int.back));
+        WireTopology.Join(center.GetComponent<LogicWireBlock>(), right.GetComponent<LogicWireBlock>());
+        WireTopology.Join(center.GetComponent<LogicWireBlock>(), forward.GetComponent<LogicWireBlock>());
         GameObject above=null;
         try
         {
@@ -156,6 +164,7 @@ public class GameplayModelIntegrationTests
             CollectionAssert.AreEquivalent(new[]{Vector3Int.right,Vector3Int.forward},ends);
             above=Object.Instantiate(Prefab("Wires"),new Vector3(50,2,50),Quaternion.identity);
             above.GetComponent<LogicWireBlock>().SetEndpointMask(LogicWireBlock.GetDirectionBit(Vector3Int.down));
+            WireTopology.Join(center.GetComponent<LogicWireBlock>(), above.GetComponent<LogicWireBlock>());
             yield return null;yield return null;
             Assert.That(center.GetComponent<LogicWireBlock>().IsJunction,Is.True);
             Assert.That(visual.branches.Count(b=>b.activeSelf),Is.EqualTo(3));

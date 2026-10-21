@@ -16,7 +16,9 @@ public class ControlsKeybindsMenu : MonoBehaviour
         Break,
         Pause,
         Jump,
-        FlyDown
+        FlyDown,
+        ManualWire,
+        DeleteWireRun
     }
 
     private Button moveForwardButton;
@@ -28,6 +30,9 @@ public class ControlsKeybindsMenu : MonoBehaviour
     private Button pauseButton;
     private Button jumpButton;
     private Button downButton;
+    private Button manualWireButton;
+    private Button deleteWireRunButton;
+    private TMP_Text bindingFeedback;
     private Button saveButton;
     private Button exitButton;
     private MenuTraversal menuTraversal;
@@ -67,23 +72,43 @@ public class ControlsKeybindsMenu : MonoBehaviour
             return;
         }
 
+        if (IsWireRebinding() && KeybindSettings.WasPressedThisFrame(Key.Escape))
+        {
+            FinishRebinding();
+            return;
+        }
+
         if (TryGetPressedMouseButton(out int mouseButton))
         {
-            if (rebinding == BindingType.Place)
+            if (IsWireRebinding())
             {
-                KeybindSettings.SetMouseButton("Keybind.PlaceMouseButton", mouseButton);
-                FinishRebinding();
+                CaptureWireBinding(new WireMouseChord { MouseButton = mouseButton });
+            }
+            else if (rebinding == BindingType.Place)
+            {
+                if (KeybindSettings.TrySetMouseButton("Keybind.PlaceMouseButton", mouseButton, out string error)) FinishRebinding();
+                else ShowBindingFeedback(error);
             }
             else if (rebinding == BindingType.Break)
             {
-                KeybindSettings.SetMouseButton("Keybind.BreakMouseButton", mouseButton);
-                FinishRebinding();
+                if (KeybindSettings.TrySetMouseButton("Keybind.BreakMouseButton", mouseButton, out string error)) FinishRebinding();
+                else ShowBindingFeedback(error);
             }
 
             return;
         }
 
-        if (!TryGetPressedKey(out Key key)) return;
+        if (!TryGetPressedKey(out Key key, IsWireRebinding())) return;
+        if (IsWireRebinding())
+        {
+            if (!KeybindSettings.IsModifier(key)) CaptureWireBinding(new WireMouseChord { Key = key });
+            return;
+        }
+        if (KeybindSettings.IsWirePrimaryKey(key))
+        {
+            ShowBindingFeedback("That key is assigned to a wire action.");
+            return;
+        }
 
         switch (rebinding.Value)
         {
@@ -131,6 +156,18 @@ public class ControlsKeybindsMenu : MonoBehaviour
         pauseButton = FindButton("PauseRow/EscapeButton");
         jumpButton = FindButton("JumpRow/SpaceButton");
         downButton = FindButton("FlyDownRow/ShiftButton");
+        manualWireButton = AddWireRow("ManualWireRow", "Manual wire (click or drag)", "ManualWireButton");
+        deleteWireRunButton = AddWireRow("DeleteWireRunRow", "Delete wire run", "DeleteWireRunButton");
+        Button resetWireButton = AddWireRow("ResetWireBindingsRow", "Wire controls", "ResetWireBindingsButton");
+        foreach (Button bindingButton in new[] { moveForwardButton, moveBackwardButton, moveLeftButton,
+            moveRightButton, placeButton, breakButton, pauseButton, jumpButton, downButton,
+            manualWireButton, deleteWireRunButton, resetWireButton })
+            FitRowCaption(bindingButton);
+        SetLabel(resetWireButton, "Restore defaults");
+        AddListener(resetWireButton, () => { KeybindSettings.ResetWireBindings(); FinishRebinding(); });
+        AddListener(manualWireButton, () => BeginRebinding(BindingType.ManualWire));
+        AddListener(deleteWireRunButton, () => BeginRebinding(BindingType.DeleteWireRun));
+        CreateBindingFeedback();
         saveButton = FindButton("SaveButton");
         exitButton = FindButton("ExitButton");
         menuTraversal = FindFirstObjectByType<MenuTraversal>();
@@ -182,11 +219,17 @@ public class ControlsKeybindsMenu : MonoBehaviour
     {
         rebinding = bindingType;
         ignoreInputThisFrame = true;
+        ShowBindingFeedback(IsWireRebinding()
+            ? "Press a key or mouse button; hold modifiers. Escape cancels."
+            : "Press a key or mouse button to assign this control.");
+        if (bindingType == BindingType.ManualWire) SetLabel(manualWireButton, "Press a binding...");
+        if (bindingType == BindingType.DeleteWireRun) SetLabel(deleteWireRunButton, "Press a binding...");
     }
 
     private void FinishRebinding()
     {
         rebinding = null;
+        ShowBindingFeedback("");
         RefreshLabels();
     }
 
@@ -201,6 +244,100 @@ public class ControlsKeybindsMenu : MonoBehaviour
         SetLabel(pauseButton, FormatKey(KeybindSettings.Pause));
         SetLabel(jumpButton, FormatKey(KeybindSettings.Jump));
         SetLabel(downButton, FormatKey(KeybindSettings.FlyDown));
+        SetLabel(manualWireButton, KeybindSettings.ManualWireBinding.ToString());
+        SetLabel(deleteWireRunButton, KeybindSettings.DeleteWireRunBinding.ToString());
+    }
+
+    private bool IsWireRebinding() => rebinding == BindingType.ManualWire || rebinding == BindingType.DeleteWireRun;
+
+    private void CaptureWireBinding(WireMouseChord binding)
+    {
+        binding.Control = WireMouseChord.ControlHeld;
+        binding.Shift = WireMouseChord.ShiftHeld;
+        binding.Alt = WireMouseChord.AltHeld;
+        if (KeybindSettings.TrySetWireBinding(rebinding == BindingType.ManualWire, binding, out string error))
+            FinishRebinding();
+        else ShowBindingFeedback(error);
+    }
+
+    private void OnDisable()
+    {
+        rebinding = null;
+        ignoreInputThisFrame = false;
+        ShowBindingFeedback("");
+        if (visualsBound) RefreshLabels();
+    }
+
+    private Button AddWireRow(string rowName, string caption, string buttonName)
+    {
+        if (downButton == null) return null;
+        Transform template = downButton.transform.parent;
+        Transform row = template.parent.Find(rowName);
+        if (row == null)
+        {
+            row = Instantiate(template.gameObject, template.parent).transform;
+            row.name = rowName;
+        }
+        Button button = row.GetComponentInChildren<Button>(true);
+        if (button == null) return null;
+        button.name = buttonName;
+        button.onClick = new Button.ButtonClickedEvent();
+        foreach (TMP_Text label in row.GetComponentsInChildren<TMP_Text>(true))
+        {
+            if (!label.transform.IsChildOf(button.transform)) label.text = caption;
+        }
+        TMP_Text buttonLabel = button.GetComponentInChildren<TMP_Text>(true);
+        if (buttonLabel != null)
+        {
+            buttonLabel.enableAutoSizing = true;
+            buttonLabel.fontSizeMin = 16;
+            buttonLabel.fontSizeMax = 32;
+        }
+        return button;
+    }
+
+    private void CreateBindingFeedback()
+    {
+        Transform parent = transform.Find("RuntimeKeybindsPrototype");
+        if (parent == null) parent = transform;
+        var feedbackObject = new GameObject("WireBindingFeedback", typeof(RectTransform), typeof(TextMeshProUGUI));
+        feedbackObject.transform.SetParent(parent, false);
+        bindingFeedback = feedbackObject.GetComponent<TMP_Text>();
+        TMP_Text source = downButton == null ? null : downButton.GetComponentInChildren<TMP_Text>(true);
+        if (source != null) bindingFeedback.font = source.font;
+        bindingFeedback.fontSize = 24;
+        bindingFeedback.alignment = TextAlignmentOptions.Center;
+        bindingFeedback.color = Color.white;
+        bindingFeedback.raycastTarget = false;
+        RectTransform rect = bindingFeedback.rectTransform;
+        rect.anchorMin = new Vector2(.05f, .07f);
+        rect.anchorMax = new Vector2(.95f, .12f);
+        rect.offsetMin = rect.offsetMax = Vector2.zero;
+    }
+
+    private static void FitRowCaption(Button button)
+    {
+        if (button == null) return;
+        foreach (TMP_Text label in button.transform.parent.GetComponentsInChildren<TMP_Text>(true))
+        {
+            if (label.transform.IsChildOf(button.transform)) continue;
+            // Use the available left column so additional rows do not wrap into one another.
+            RectTransform rect = label.rectTransform;
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = new Vector2(.56f, 1);
+            rect.offsetMin = new Vector2(12, 0);
+            rect.offsetMax = new Vector2(-12, 0);
+            label.alignment = TextAlignmentOptions.MidlineLeft;
+            label.textWrappingMode = TextWrappingModes.NoWrap;
+            label.enableAutoSizing = true;
+            label.fontSizeMin = 16;
+            label.fontSizeMax = 24;
+        }
+    }
+
+    private void ShowBindingFeedback(string message)
+    {
+        if (bindingFeedback != null) bindingFeedback.text = message;
     }
 
     private static void SetLabel(Button button, string value)
@@ -232,13 +369,14 @@ public class ControlsKeybindsMenu : MonoBehaviour
         return button >= 0;
     }
 
-    private static bool TryGetPressedKey(out Key key)
+    private static bool TryGetPressedKey(out Key key, bool skipModifiers = false)
     {
         key = Key.None;
         if (Keyboard.current == null) return false;
 
         foreach (var keyControl in Keyboard.current.allKeys)
         {
+            if (skipModifiers && KeybindSettings.IsModifier(keyControl.keyCode)) continue;
             if (keyControl.wasPressedThisFrame)
             {
                 key = keyControl.keyCode;
