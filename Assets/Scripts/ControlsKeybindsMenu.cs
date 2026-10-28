@@ -18,7 +18,8 @@ public class ControlsKeybindsMenu : MonoBehaviour
         Jump,
         FlyDown,
         ManualWire,
-        DeleteWireRun
+        DeleteWireRun,
+        Interact
     }
 
     private Button moveForwardButton;
@@ -33,6 +34,7 @@ public class ControlsKeybindsMenu : MonoBehaviour
     private Button manualWireButton;
     private Button deleteWireRunButton;
     private TMP_Text bindingFeedback;
+    private Button interactButton;
     private Button saveButton;
     private Button exitButton;
     private MenuTraversal menuTraversal;
@@ -136,6 +138,10 @@ public class ControlsKeybindsMenu : MonoBehaviour
                 KeybindSettings.SetKey("Keybind.Jump", key);
                 FinishRebinding();
                 break;
+            case BindingType.Interact:
+                KeybindSettings.SetKey("Keybind.Interact", key);
+                FinishRebinding();
+                break;
             case BindingType.FlyDown:
                 KeybindSettings.SetKey("Keybind.FlyDown", key);
                 FinishRebinding();
@@ -156,11 +162,13 @@ public class ControlsKeybindsMenu : MonoBehaviour
         pauseButton = FindButton("PauseRow/EscapeButton");
         jumpButton = FindButton("JumpRow/SpaceButton");
         downButton = FindButton("FlyDownRow/ShiftButton");
+        interactButton = FindButton("InteractRow/InteractButton");
+        if (interactButton == null) interactButton = CreateInteractRow();
         manualWireButton = AddWireRow("ManualWireRow", "Manual wire (click or drag)", "ManualWireButton");
         deleteWireRunButton = AddWireRow("DeleteWireRunRow", "Delete wire run", "DeleteWireRunButton");
         Button resetWireButton = AddWireRow("ResetWireBindingsRow", "Wire controls", "ResetWireBindingsButton");
         foreach (Button bindingButton in new[] { moveForwardButton, moveBackwardButton, moveLeftButton,
-            moveRightButton, placeButton, breakButton, pauseButton, jumpButton, downButton,
+            moveRightButton, placeButton, breakButton, pauseButton, jumpButton, downButton, interactButton,
             manualWireButton, deleteWireRunButton, resetWireButton })
             FitRowCaption(bindingButton);
         SetLabel(resetWireButton, "Restore defaults");
@@ -181,8 +189,28 @@ public class ControlsKeybindsMenu : MonoBehaviour
         AddListener(pauseButton, () => BeginRebinding(BindingType.Pause));
         AddListener(jumpButton, () => BeginRebinding(BindingType.Jump));
         AddListener(downButton, () => BeginRebinding(BindingType.FlyDown));
+        AddListener(interactButton, () => BeginRebinding(BindingType.Interact));
         AddListener(saveButton, SaveBindings);
         AddListener(exitButton, ExitControls);
+    }
+
+    private Button CreateInteractRow()
+    {
+        if (downButton == null) return null;
+
+        // Reuse the existing row styling and vertical layout in the Controls page.
+        Transform template = downButton.transform.parent;
+        GameObject row = Instantiate(template.gameObject, template.parent);
+        row.name = "InteractRow";
+        row.transform.SetSiblingIndex(template.GetSiblingIndex() + 1);
+        Button button = row.GetComponentInChildren<Button>(true);
+        button.name = "InteractButton";
+        button.onClick = new Button.ButtonClickedEvent();
+        foreach (TMP_Text label in row.GetComponentsInChildren<TMP_Text>(true))
+        {
+            if (!label.transform.IsChildOf(button.transform)) label.text = "Interact";
+        }
+        return button;
     }
 
     private Button FindButton(string path)
@@ -244,6 +272,7 @@ public class ControlsKeybindsMenu : MonoBehaviour
         SetLabel(pauseButton, FormatKey(KeybindSettings.Pause));
         SetLabel(jumpButton, FormatKey(KeybindSettings.Jump));
         SetLabel(downButton, FormatKey(KeybindSettings.FlyDown));
+        SetLabel(interactButton, FormatKey(KeybindSettings.Interact));
         SetLabel(manualWireButton, KeybindSettings.ManualWireBinding.ToString());
         SetLabel(deleteWireRunButton, KeybindSettings.DeleteWireRunBinding.ToString());
     }

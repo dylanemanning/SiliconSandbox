@@ -53,14 +53,30 @@ public class WireBindingsTests
     }
 
     [Test]
+    public void InteractKeyIsReservedAndOldSourceMouseChordIsAvailable()
+    {
+        bool hadInteract = PlayerPrefs.HasKey("Keybind.Interact");
+        int previous = PlayerPrefs.GetInt("Keybind.Interact");
+        try
+        {
+            KeybindSettings.SetKey("Keybind.Interact", UnityEngine.InputSystem.Key.F9);
+            Assert.That(KeybindSettings.TrySetWireBinding(true, new WireMouseChord { Key = UnityEngine.InputSystem.Key.F9 }, out _), Is.False);
+            Assert.That(KeybindSettings.TrySetWireBinding(true, new WireMouseChord { MouseButton = 1, Shift = true }, out _), Is.True);
+        }
+        finally
+        {
+            if (hadInteract) PlayerPrefs.SetInt("Keybind.Interact", previous);
+            else PlayerPrefs.DeleteKey("Keybind.Interact");
+            PlayerPrefs.Save();
+        }
+    }
+
+    [Test]
     public void ExistingControlsAndBareModifiersAreReserved()
     {
         var reserved = new[] {
             new WireMouseChord { MouseButton = KeybindSettings.PlaceMouseButton },
             new WireMouseChord { MouseButton = KeybindSettings.BreakMouseButton },
-            new WireMouseChord { MouseButton = 1, Shift = true },
-            new WireMouseChord { MouseButton = 1, Shift = true, Control = true },
-            new WireMouseChord { MouseButton = 1, Shift = true, Alt = true },
             new WireMouseChord { Key = KeybindSettings.MoveForward, Control = true },
             new WireMouseChord { Key = Key.E },
             new WireMouseChord { Key = Key.Escape },

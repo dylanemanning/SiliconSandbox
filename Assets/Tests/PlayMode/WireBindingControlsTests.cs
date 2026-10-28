@@ -81,7 +81,7 @@ public class WireBindingControlsTests : InputTestFixture
         Find("ResetWireBindingsButton").onClick.Invoke();
         Assert.That(KeybindSettings.ManualWireBinding.Equals(KeybindSettings.DefaultManualWire), Is.True);
         Canvas.ForceUpdateCanvases();
-        foreach (string name in new[] { "ManualWireButton", "DeleteWireRunButton", "ResetWireBindingsButton" })
+        foreach (string name in new[] { "InteractButton", "ManualWireButton", "DeleteWireRunButton", "ResetWireBindingsButton" })
         {
             var rect = (RectTransform)Find(name).transform;
             Assert.That(rect.rect.height, Is.GreaterThan(20), name + " must remain usable.");

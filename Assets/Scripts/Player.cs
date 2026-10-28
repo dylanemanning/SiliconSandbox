@@ -221,14 +221,12 @@ public partial class Player : MonoBehaviour
 
     private bool TryToggleSource()
     {
-        var keyboard = Keyboard.current;
-        var mouse = Mouse.current;
-        if (keyboard == null || mouse == null || !mouse.rightButton.wasPressedThisFrame ||
-            !(keyboard.leftShiftKey.isPressed || keyboard.rightShiftKey.isPressed)) return false;
+        if (!KeybindSettings.WasPressedThisFrame(KeybindSettings.Interact)) return false;
         if (targetBlock == null || !targetBlock.TryGetComponent<LogicSignalSource>(out var source) ||
             source is LogicClockSource) return false;
 
-        // Consume the interaction so this click cannot also place a block or finish a wire route.
+        // Consume the interaction so a simultaneous placement click cannot also
+        // place a block or finish a wire route.
         source.ToggleState();
         WorldSaveSystem.Instance?.MarkDirty();
         return true;
