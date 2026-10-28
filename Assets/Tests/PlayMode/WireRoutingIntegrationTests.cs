@@ -158,16 +158,14 @@ public class WireRoutingIntegrationTests : InputTestFixture
     }
 
     [UnityTest]
-    public IEnumerator ActivePlayerManualModifierPressAndReleasePlacesOneCell()
+    public IEnumerator ActivePlayerManualKeyPressAndReleasePlacesOneCell()
     {
         Surface(Origin); ActivatePlayer(Origin + Vector3.up * 5);
         yield return null; yield return null;
-        Press(keyboard.leftCtrlKey); Press(mouse.rightButton); yield return WaitForGesture();
+        Press(keyboard.rKey); yield return WaitForGesture();
         Assert.That(player.HasWireGesture, Is.True);
         Assert.That(ActiveWires(), Is.Zero, "Held manual gesture stays provisional.");
-        Release(keyboard.leftCtrlKey); yield return null;
-        Assert.That(player.HasWireGesture, Is.True, "Releasing a modifier does not publish or strand the gesture.");
-        Release(mouse.rightButton); yield return null; yield return null;
+        Release(keyboard.rKey); yield return null; yield return null;
         Assert.That(player.HasWireGesture, Is.False);
         Assert.That(ActiveWires(), Is.EqualTo(1));
     }

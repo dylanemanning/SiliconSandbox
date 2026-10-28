@@ -65,8 +65,9 @@ public static class KeybindSettings
     public static int BreakMouseButton => PlayerPrefs.GetInt(BreakMouseButtonKey, 0);
     public static WireMouseChord ManualWireBinding => LoadWireBinding(ManualWirePreference, DefaultManualWire);
     public static WireMouseChord DeleteWireRunBinding => LoadWireBinding(DeleteWireRunPreference, DefaultDeleteWireRun);
-    public static WireMouseChord DefaultManualWire => new WireMouseChord { MouseButton = 1, Control = true };
-    public static WireMouseChord DefaultDeleteWireRun => new WireMouseChord { MouseButton = 0, Shift = true };
+    // Temporary single-key defaults until the combination-binding UI is improved.
+    public static WireMouseChord DefaultManualWire => new WireMouseChord { Key = Key.R };
+    public static WireMouseChord DefaultDeleteWireRun => new WireMouseChord { Key = Key.T };
 
     public static bool IsModifier(Key key) => key == Key.LeftCtrl || key == Key.RightCtrl ||
         key == Key.LeftShift || key == Key.RightShift || key == Key.LeftAlt || key == Key.RightAlt ||

@@ -42,6 +42,7 @@ public class WireBindingControlsTests : InputTestFixture
     [Test]
     public void ReleasingModifierDoesNotReleaseTheGesturePrimary()
     {
+        Assert.That(KeybindSettings.TrySetWireBinding(true, new WireMouseChord { MouseButton = 1, Control = true }, out _), Is.True);
         Press(keyboard.leftCtrlKey);
         Press(mouse.rightButton);
         var held = KeybindSettings.ManualWireBinding;

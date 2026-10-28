@@ -27,10 +27,10 @@ public class WireBindingsTests
     }
 
     [Test]
-    public void DefaultsUseModifiedMouseControls()
+    public void DefaultsUseTemporarySingleKeyControls()
     {
-        Assert.That(KeybindSettings.ManualWireBinding.Equals(new WireMouseChord { MouseButton = 1, Control = true }), Is.True);
-        Assert.That(KeybindSettings.DeleteWireRunBinding.Equals(new WireMouseChord { MouseButton = 0, Shift = true }), Is.True);
+        Assert.That(KeybindSettings.ManualWireBinding.Equals(new WireMouseChord { Key = Key.R }), Is.True);
+        Assert.That(KeybindSettings.DeleteWireRunBinding.Equals(new WireMouseChord { Key = Key.T }), Is.True);
     }
 
     [Test]
