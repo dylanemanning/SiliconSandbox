@@ -156,6 +156,7 @@ public class Block : MonoBehaviour
         if (!breakable) return;
 
         if (breakingParticles) { Destroy(breakingParticles); }
+        WireTopology.Detach(GetComponent<LogicWireBlock>());
         UnregisterCells();
         WorldSaveSystem.Instance?.MarkDirty();
        

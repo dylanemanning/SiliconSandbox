@@ -45,7 +45,6 @@ public class LogicWireBlock : LogicSignalBlock
     public int ConnectionCount => CountBits(connectionMask);
     public bool IsJunction => ConnectionCount >= 3;
     public int EndpointMask => hasCustomEndpointMask ? endpointMask : GetAxisEndpointMask();
-
     public bool HasEndpointTowards(Vector3Int neighborPosition)
     {
         Vector3Int direction = neighborPosition - GridPosition;
@@ -103,7 +102,8 @@ public class LogicWireBlock : LogicSignalBlock
 
         if (neighbor is LogicWireBlock neighborWire)
         {
-            return HasEndpointTowards(neighborCell) || neighborWire.HasEndpointTowards(GridPosition);
+            return neighborWire.GridPosition == neighborCell &&
+                   HasEndpointTowards(neighborCell) && neighborWire.HasEndpointTowards(GridPosition);
         }
 
         if (!HasEndpointTowards(neighborCell)) return false;
@@ -235,7 +235,7 @@ public class LogicWireBlock : LogicSignalBlock
 
             if (directionVisuals != null && index < directionVisuals.Length && directionVisuals[index] != null)
             {
-                directionVisuals[index].SetActive((connectionMask & (1 << index)) != 0);
+                directionVisuals[index].SetActive((EndpointMask & (1 << index)) != 0);
             }
 
             UpdateConnectionLine(index, position, neighborPosition, neighbor, connected);

@@ -184,7 +184,7 @@ public static class LogicEngine
     //
     // Cdecl is the convention a C export uses. On x64 Windows there is only one
     // convention so this is currently cosmetic, but it is the correct declaration
-    // and it matters if a macOS or Linux build is ever added.
+    // and also matches the C exports in the macOS library.
     //
     // int[] is blittable, so the marshaler pins the array and passes a pointer to
     // its first element with no copy. [In] documents that the native side only
@@ -303,13 +303,13 @@ public static class LogicEngine
         throw new LogicEngineException(DescribeCircuitFailure(status), status);
     }
 
-    // Most likely cause is running on a platform with no native build. A native
-    // library exists for Windows x86_64 only; macOS needs a separately compiled
-    // SiliconPlugin.bundle.
+    // The supported desktop builds ship separate Windows and universal Mac
+    // libraries. A missing or incompatible plugin is an installation/import issue.
     private static LogicEngineException PluginMissing(Exception inner)
         => new LogicEngineException(
-            "SiliconPlugin could not be loaded on this platform. The committed " +
-            "native library is Windows x86_64 only.", inner);
+            "SiliconPlugin could not be loaded. Windows requires the x86_64 DLL; " +
+            "macOS requires libSiliconPlugin.dylib. Check the native plugin files " +
+            "and their Unity platform import settings.", inner);
 
     // The library loaded but lacks the export. Almost always means the committed
     // binary is older than the C++ sources.
