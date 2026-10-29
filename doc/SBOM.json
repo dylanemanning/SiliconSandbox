@@ -1,0 +1,1525 @@
+{
+  "spdxVersion": "SPDX-2.3",
+  "dataLicense": "CC0-1.0",
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "name": "Silicon Sandbox - Unity Package Dependency SBOM",
+  "documentNamespace": "https://example.invalid/spdxdocs/silicon-sandbox-714018c2-eb10-4448-b644-80ac7e4aeee1",
+  "creationInfo": {
+    "created": "2026-10-29T14:20:29Z",
+    "creators": [
+      "Tool: generate_unity_sbom.py"
+    ]
+  },
+  "packages": [
+    {
+      "SPDXID": "SPDXRef-SiliconSandbox",
+      "name": "Silicon Sandbox (Unity project dependency inventory)",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "comment": "Project dependency SBOM, not an inventory of files included in the shipped Windows player."
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.2d.sprite",
+      "name": "com.unity.2d.sprite",
+      "versionInfo": "1.0.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-0a17bbd475505efe",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=builtin; depth=0; License text from /mnt/c/Users/dylan/Silicon Sandbox/Library/PackageCache/com.unity.2d.sprite@08e067ec1643/LICENSE.md (not classified as an SPDX standard license)"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.ai.navigation",
+      "name": "com.unity.ai.navigation",
+      "versionInfo": "2.0.10",
+      "downloadLocation": "https://packages.unity.com",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-2b2113e0522b3eaa",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=registry; depth=0; License text from /mnt/c/Users/dylan/Silicon Sandbox/Library/PackageCache/com.unity.ai.navigation@c33a115e9883/LICENSE.md (not classified as an SPDX standard license)"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.burst",
+      "name": "com.unity.burst",
+      "versionInfo": "1.8.27",
+      "downloadLocation": "https://packages.unity.com",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-9bd567d6de754ab7",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=registry; depth=2; License text from /mnt/c/Users/dylan/Silicon Sandbox/Library/PackageCache/com.unity.burst@973857688024/LICENSE.md (not classified as an SPDX standard license)"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.collab-proxy",
+      "name": "com.unity.collab-proxy",
+      "versionInfo": "2.11.3",
+      "downloadLocation": "https://packages.unity.com",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-5df34c3570740990",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=registry; depth=0; License text from /mnt/c/Users/dylan/Silicon Sandbox/Library/PackageCache/com.unity.collab-proxy@e566cd3e7623/LICENSE.md (not classified as an SPDX standard license)"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.collections",
+      "name": "com.unity.collections",
+      "versionInfo": "2.6.2",
+      "downloadLocation": "https://packages.unity.com",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-4947f647c031b0fe",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=registry; depth=2; License text from /mnt/c/Users/dylan/Silicon Sandbox/Library/PackageCache/com.unity.collections@aea9d3bd5e19/LICENSE.md (not classified as an SPDX standard license)"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.ext.nunit",
+      "name": "com.unity.ext.nunit",
+      "versionInfo": "2.0.5",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-ea14f98ba99afcc0",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=builtin; depth=1; License text from /mnt/c/Users/dylan/Silicon Sandbox/Library/PackageCache/com.unity.ext.nunit@d8c07649098d/LICENSE.md (not classified as an SPDX standard license)"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.ide.rider",
+      "name": "com.unity.ide.rider",
+      "versionInfo": "3.0.39",
+      "downloadLocation": "https://packages.unity.com",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-49d8e39c5ba9fa2e",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=registry; depth=0; License text from /mnt/c/Users/dylan/Silicon Sandbox/Library/PackageCache/com.unity.ide.rider@4504839d03f7/LICENSE.md (not classified as an SPDX standard license)"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.ide.visualstudio",
+      "name": "com.unity.ide.visualstudio",
+      "versionInfo": "2.0.28",
+      "downloadLocation": "https://packages.unity.com",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-af294e2812515c35",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=registry; depth=0; License text from /mnt/c/Users/dylan/Silicon Sandbox/Library/PackageCache/com.unity.ide.visualstudio@b5edea5f33f4/LICENSE.md (not classified as an SPDX standard license)"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.inputsystem",
+      "name": "com.unity.inputsystem",
+      "versionInfo": "1.18.0",
+      "downloadLocation": "https://packages.unity.com",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-419718e59cd6c1f9",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=registry; depth=0; License text from /mnt/c/Users/dylan/Silicon Sandbox/Library/PackageCache/com.unity.inputsystem@57d0e36f6123/LICENSE.md (not classified as an SPDX standard license)"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.mathematics",
+      "name": "com.unity.mathematics",
+      "versionInfo": "1.3.3",
+      "downloadLocation": "https://packages.unity.com",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-5b1a26ff2ca6e6e7",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=registry; depth=2; License text from /mnt/c/Users/dylan/Silicon Sandbox/Library/PackageCache/com.unity.mathematics@19a9377c4ffa/LICENSE.md (not classified as an SPDX standard license)"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.modules.accessibility",
+      "name": "com.unity.modules.accessibility",
+      "versionInfo": "1.0.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.modules.adaptiveperformance",
+      "name": "com.unity.modules.adaptiveperformance",
+      "versionInfo": "1.0.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.modules.ai",
+      "name": "com.unity.modules.ai",
+      "versionInfo": "1.0.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.modules.androidjni",
+      "name": "com.unity.modules.androidjni",
+      "versionInfo": "1.0.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.modules.animation",
+      "name": "com.unity.modules.animation",
+      "versionInfo": "1.0.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.modules.assetbundle",
+      "name": "com.unity.modules.assetbundle",
+      "versionInfo": "1.0.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.modules.audio",
+      "name": "com.unity.modules.audio",
+      "versionInfo": "1.0.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.modules.cloth",
+      "name": "com.unity.modules.cloth",
+      "versionInfo": "1.0.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.modules.director",
+      "name": "com.unity.modules.director",
+      "versionInfo": "1.0.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.modules.hierarchycore",
+      "name": "com.unity.modules.hierarchycore",
+      "versionInfo": "1.0.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=builtin; depth=1; No cached package directory available"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.modules.imageconversion",
+      "name": "com.unity.modules.imageconversion",
+      "versionInfo": "1.0.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.modules.imgui",
+      "name": "com.unity.modules.imgui",
+      "versionInfo": "1.0.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.modules.jsonserialize",
+      "name": "com.unity.modules.jsonserialize",
+      "versionInfo": "1.0.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.modules.particlesystem",
+      "name": "com.unity.modules.particlesystem",
+      "versionInfo": "1.0.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.modules.physics",
+      "name": "com.unity.modules.physics",
+      "versionInfo": "1.0.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.modules.physics2d",
+      "name": "com.unity.modules.physics2d",
+      "versionInfo": "1.0.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.modules.screencapture",
+      "name": "com.unity.modules.screencapture",
+      "versionInfo": "1.0.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.modules.subsystems",
+      "name": "com.unity.modules.subsystems",
+      "versionInfo": "1.0.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=builtin; depth=1; No cached package directory available"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.modules.terrain",
+      "name": "com.unity.modules.terrain",
+      "versionInfo": "1.0.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.modules.terrainphysics",
+      "name": "com.unity.modules.terrainphysics",
+      "versionInfo": "1.0.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.modules.tilemap",
+      "name": "com.unity.modules.tilemap",
+      "versionInfo": "1.0.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.modules.ui",
+      "name": "com.unity.modules.ui",
+      "versionInfo": "1.0.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.modules.uielements",
+      "name": "com.unity.modules.uielements",
+      "versionInfo": "1.0.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.modules.umbra",
+      "name": "com.unity.modules.umbra",
+      "versionInfo": "1.0.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.modules.unityanalytics",
+      "name": "com.unity.modules.unityanalytics",
+      "versionInfo": "1.0.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.modules.unitywebrequest",
+      "name": "com.unity.modules.unitywebrequest",
+      "versionInfo": "1.0.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.modules.unitywebrequestassetbundle",
+      "name": "com.unity.modules.unitywebrequestassetbundle",
+      "versionInfo": "1.0.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.modules.unitywebrequestaudio",
+      "name": "com.unity.modules.unitywebrequestaudio",
+      "versionInfo": "1.0.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.modules.unitywebrequesttexture",
+      "name": "com.unity.modules.unitywebrequesttexture",
+      "versionInfo": "1.0.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.modules.unitywebrequestwww",
+      "name": "com.unity.modules.unitywebrequestwww",
+      "versionInfo": "1.0.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.modules.vectorgraphics",
+      "name": "com.unity.modules.vectorgraphics",
+      "versionInfo": "1.0.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.modules.vehicles",
+      "name": "com.unity.modules.vehicles",
+      "versionInfo": "1.0.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.modules.video",
+      "name": "com.unity.modules.video",
+      "versionInfo": "1.0.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.modules.vr",
+      "name": "com.unity.modules.vr",
+      "versionInfo": "1.0.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.modules.wind",
+      "name": "com.unity.modules.wind",
+      "versionInfo": "1.0.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.modules.xr",
+      "name": "com.unity.modules.xr",
+      "versionInfo": "1.0.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.multiplayer.center",
+      "name": "com.unity.multiplayer.center",
+      "versionInfo": "1.0.1",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-e6522fc3e87017b4",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=builtin; depth=0; License text from /mnt/c/Users/dylan/Silicon Sandbox/Library/PackageCache/com.unity.multiplayer.center@f01f4ba8d00a/LICENSE.md (not classified as an SPDX standard license)"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.nuget.mono-cecil",
+      "name": "com.unity.nuget.mono-cecil",
+      "versionInfo": "1.11.6",
+      "downloadLocation": "https://packages.unity.com",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-76101254034fbea9",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=registry; depth=3; License text from /mnt/c/Users/dylan/Silicon Sandbox/Library/PackageCache/com.unity.nuget.mono-cecil@ecb9724e46ff/LICENSE.md (not classified as an SPDX standard license)"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.render-pipelines.core",
+      "name": "com.unity.render-pipelines.core",
+      "versionInfo": "17.3.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-39691adc5fdaf614",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=builtin; depth=1; License text from /mnt/c/Users/dylan/Silicon Sandbox/Library/PackageCache/com.unity.render-pipelines.core@d6dfd1e235d5/LICENSE.md (not classified as an SPDX standard license)"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.render-pipelines.universal",
+      "name": "com.unity.render-pipelines.universal",
+      "versionInfo": "17.3.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-4be520a425e06c8d",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=builtin; depth=0; License text from /mnt/c/Users/dylan/Silicon Sandbox/Library/PackageCache/com.unity.render-pipelines.universal@a6e30d1f59f5/LICENSE.md (not classified as an SPDX standard license)"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.render-pipelines.universal-config",
+      "name": "com.unity.render-pipelines.universal-config",
+      "versionInfo": "17.0.3",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-fa2dcbc8ff967f49",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=builtin; depth=1; License text from /mnt/c/Users/dylan/Silicon Sandbox/Library/PackageCache/com.unity.render-pipelines.universal-config@8dc1aab4af1d/LICENSE.md (not classified as an SPDX standard license)"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.searcher",
+      "name": "com.unity.searcher",
+      "versionInfo": "4.9.4",
+      "downloadLocation": "https://packages.unity.com",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-9086cf20ede8c45e",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=registry; depth=2; License text from /mnt/c/Users/dylan/Silicon Sandbox/Library/PackageCache/com.unity.searcher@d45a78918735/LICENSE.md (not classified as an SPDX standard license)"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.shadergraph",
+      "name": "com.unity.shadergraph",
+      "versionInfo": "17.3.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-364b0c08b7fe15b7",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=builtin; depth=1; License text from /mnt/c/Users/dylan/Silicon Sandbox/Library/PackageCache/com.unity.shadergraph@d44b48771ebb/LICENSE.md (not classified as an SPDX standard license)"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.test-framework",
+      "name": "com.unity.test-framework",
+      "versionInfo": "1.6.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-d3b09e9683afbc8d",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=builtin; depth=0; License text from /mnt/c/Users/dylan/Silicon Sandbox/Library/PackageCache/com.unity.test-framework@0b7a23ab2e1d/LICENSE.md (not classified as an SPDX standard license)"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.test-framework.performance",
+      "name": "com.unity.test-framework.performance",
+      "versionInfo": "3.2.0",
+      "downloadLocation": "https://packages.unity.com",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-202adffac8b9d21d",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=registry; depth=3; License text from /mnt/c/Users/dylan/Silicon Sandbox/Library/PackageCache/com.unity.test-framework.performance@0840f58e4562/LICENSE.md (not classified as an SPDX standard license)"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.timeline",
+      "name": "com.unity.timeline",
+      "versionInfo": "1.8.10",
+      "downloadLocation": "https://packages.unity.com",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-73111ef76bd8a502",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=registry; depth=0; License text from /mnt/c/Users/dylan/Silicon Sandbox/Library/PackageCache/com.unity.timeline@7f8b2fb101b6/LICENSE.md (not classified as an SPDX standard license)"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.ugui",
+      "name": "com.unity.ugui",
+      "versionInfo": "2.0.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-a8e0cae87b2edb8c",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=builtin; depth=0; License text from /mnt/c/Users/dylan/Silicon Sandbox/Library/PackageCache/com.unity.ugui@bb329a87fcdc/LICENSE.md (not classified as an SPDX standard license)"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-com.unity.visualscripting",
+      "name": "com.unity.visualscripting",
+      "versionInfo": "1.9.9",
+      "downloadLocation": "https://packages.unity.com",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-38110f8f09a9b782",
+      "copyrightText": "NOASSERTION",
+      "supplier": "Organization: Unity Technologies",
+      "comment": "Unity source=registry; depth=0; License text from /mnt/c/Users/dylan/Silicon Sandbox/Library/PackageCache/com.unity.visualscripting@191c0d7e3b69/LICENSE.md (not classified as an SPDX standard license)"
+    }
+  ],
+  "relationships": [
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relatedSpdxElement": "SPDXRef-SiliconSandbox",
+      "relationshipType": "DESCRIBES"
+    },
+    {
+      "spdxElementId": "SPDXRef-SiliconSandbox",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.2d.sprite",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-SiliconSandbox",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.ai.navigation",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.ai.navigation",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.ai",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.burst",
+      "relationshipType": "DESCRIBES"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.burst",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.mathematics",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.burst",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.jsonserialize",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-SiliconSandbox",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.collab-proxy",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.collections",
+      "relationshipType": "DESCRIBES"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.collections",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.burst",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.collections",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.mathematics",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.collections",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.test-framework",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.collections",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.nuget.mono-cecil",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.collections",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.test-framework.performance",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.ext.nunit",
+      "relationshipType": "DESCRIBES"
+    },
+    {
+      "spdxElementId": "SPDXRef-SiliconSandbox",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.ide.rider",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.ide.rider",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.ext.nunit",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-SiliconSandbox",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.ide.visualstudio",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.ide.visualstudio",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.test-framework",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-SiliconSandbox",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.inputsystem",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.inputsystem",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.uielements",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.mathematics",
+      "relationshipType": "DESCRIBES"
+    },
+    {
+      "spdxElementId": "SPDXRef-SiliconSandbox",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.accessibility",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-SiliconSandbox",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.adaptiveperformance",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.modules.adaptiveperformance",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.subsystems",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-SiliconSandbox",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.ai",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-SiliconSandbox",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.androidjni",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-SiliconSandbox",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.animation",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-SiliconSandbox",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.assetbundle",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-SiliconSandbox",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.audio",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-SiliconSandbox",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.cloth",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.modules.cloth",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.physics",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-SiliconSandbox",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.director",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.modules.director",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.audio",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.modules.director",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.animation",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.hierarchycore",
+      "relationshipType": "DESCRIBES"
+    },
+    {
+      "spdxElementId": "SPDXRef-SiliconSandbox",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.imageconversion",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-SiliconSandbox",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.imgui",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-SiliconSandbox",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.jsonserialize",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-SiliconSandbox",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.particlesystem",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-SiliconSandbox",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.physics",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-SiliconSandbox",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.physics2d",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-SiliconSandbox",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.screencapture",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.modules.screencapture",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.imageconversion",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.subsystems",
+      "relationshipType": "DESCRIBES"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.modules.subsystems",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.jsonserialize",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-SiliconSandbox",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.terrain",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-SiliconSandbox",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.terrainphysics",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.modules.terrainphysics",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.physics",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.modules.terrainphysics",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.terrain",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-SiliconSandbox",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.tilemap",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.modules.tilemap",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.physics2d",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-SiliconSandbox",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.ui",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-SiliconSandbox",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.uielements",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.modules.uielements",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.ui",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.modules.uielements",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.imgui",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.modules.uielements",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.jsonserialize",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.modules.uielements",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.hierarchycore",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.modules.uielements",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.physics",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-SiliconSandbox",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.umbra",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-SiliconSandbox",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.unityanalytics",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.modules.unityanalytics",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.unitywebrequest",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.modules.unityanalytics",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.jsonserialize",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-SiliconSandbox",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.unitywebrequest",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-SiliconSandbox",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.unitywebrequestassetbundle",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.modules.unitywebrequestassetbundle",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.assetbundle",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.modules.unitywebrequestassetbundle",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.unitywebrequest",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-SiliconSandbox",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.unitywebrequestaudio",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.modules.unitywebrequestaudio",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.unitywebrequest",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.modules.unitywebrequestaudio",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.audio",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-SiliconSandbox",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.unitywebrequesttexture",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.modules.unitywebrequesttexture",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.unitywebrequest",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.modules.unitywebrequesttexture",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.imageconversion",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-SiliconSandbox",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.unitywebrequestwww",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.modules.unitywebrequestwww",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.unitywebrequest",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.modules.unitywebrequestwww",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.unitywebrequestassetbundle",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.modules.unitywebrequestwww",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.unitywebrequestaudio",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.modules.unitywebrequestwww",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.audio",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.modules.unitywebrequestwww",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.assetbundle",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.modules.unitywebrequestwww",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.imageconversion",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-SiliconSandbox",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.vectorgraphics",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.modules.vectorgraphics",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.uielements",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.modules.vectorgraphics",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.imageconversion",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.modules.vectorgraphics",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.imgui",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-SiliconSandbox",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.vehicles",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.modules.vehicles",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.physics",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-SiliconSandbox",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.video",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.modules.video",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.audio",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.modules.video",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.ui",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.modules.video",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.unitywebrequest",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-SiliconSandbox",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.vr",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.modules.vr",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.jsonserialize",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.modules.vr",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.physics",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.modules.vr",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.xr",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-SiliconSandbox",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.wind",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-SiliconSandbox",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.xr",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.modules.xr",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.physics",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.modules.xr",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.jsonserialize",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.modules.xr",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.subsystems",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-SiliconSandbox",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.multiplayer.center",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.multiplayer.center",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.uielements",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.nuget.mono-cecil",
+      "relationshipType": "DESCRIBES"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.render-pipelines.core",
+      "relationshipType": "DESCRIBES"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.render-pipelines.core",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.burst",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.render-pipelines.core",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.mathematics",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.render-pipelines.core",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.ugui",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.render-pipelines.core",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.collections",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.render-pipelines.core",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.physics",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.render-pipelines.core",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.terrain",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.render-pipelines.core",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.jsonserialize",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-SiliconSandbox",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.render-pipelines.universal",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.render-pipelines.universal",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.render-pipelines.core",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.render-pipelines.universal",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.shadergraph",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.render-pipelines.universal",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.render-pipelines.universal-config",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.render-pipelines.universal-config",
+      "relationshipType": "DESCRIBES"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.render-pipelines.universal-config",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.render-pipelines.core",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.searcher",
+      "relationshipType": "DESCRIBES"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.shadergraph",
+      "relationshipType": "DESCRIBES"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.shadergraph",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.render-pipelines.core",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.shadergraph",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.searcher",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-SiliconSandbox",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.test-framework",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.test-framework",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.ext.nunit",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.test-framework",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.imgui",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.test-framework",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.jsonserialize",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.test-framework.performance",
+      "relationshipType": "DESCRIBES"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.test-framework.performance",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.test-framework",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.test-framework.performance",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.jsonserialize",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-SiliconSandbox",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.timeline",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.timeline",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.audio",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.timeline",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.director",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.timeline",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.animation",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.timeline",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.particlesystem",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-SiliconSandbox",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.ugui",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.ugui",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.ui",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.ugui",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.imgui",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-SiliconSandbox",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.visualscripting",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.visualscripting",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.ugui",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-com.unity.visualscripting",
+      "relatedSpdxElement": "SPDXRef-Package-com.unity.modules.jsonserialize",
+      "relationshipType": "DEPENDS_ON"
+    }
+  ],
+  "hasExtractedLicensingInfos": [
+    {
+      "licenseId": "LicenseRef-Unity-0a17bbd475505efe",
+      "extractedText": "com.unity.2d.sprite copyright \u00a9 2019 Unity Technologies\n\nLicensed under the Unity Package Distribution License (see https://unity3d.com/legal/licenses/Unity_Package_Distribution_License ).\n\nUnless expressly provided otherwise, the software under this license is made available strictly on an \u201cAS IS\u201d BASIS WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED. Please review the license for details on these and other terms and conditions.\n",
+      "name": "License text supplied with com.unity.2d.sprite"
+    },
+    {
+      "licenseId": "LicenseRef-Unity-2b2113e0522b3eaa",
+      "extractedText": "com.unity.ai.navigation copyright \u00a9 2016 Unity Technologies ApS\n\nLicensed under the Unity Companion License for Unity-dependent projects (see https://unity3d.com/legal/licenses/unity_companion_license).\n\nUnless expressly provided otherwise, the Software under this license is made available strictly on an \u201cAS IS\u201d BASIS WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED. Please review the license for details on these and other terms and conditions.",
+      "name": "License text supplied with com.unity.ai.navigation"
+    },
+    {
+      "licenseId": "LicenseRef-Unity-9bd567d6de754ab7",
+      "extractedText": "Burst copyright \u00a9 2022 Unity Technologies\nSource code of the package is licensed under the Unity Companion License (see https://unity3d.com/legal/licenses/unity_companion_license); otherwise licensed under the Unity Package Distribution License (see https://unity3d.com/legal/licenses/Unity_Package_Distribution_License ).\n\nUnless expressly provided otherwise, the software under this license is made available strictly on an \u201cAS IS\u201d BASIS WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED. Please review the license for details on these and other terms and conditions.\n",
+      "name": "License text supplied with com.unity.burst"
+    },
+    {
+      "licenseId": "LicenseRef-Unity-5df34c3570740990",
+      "extractedText": "Unity Version Control copyright \u00a9 2025 Unity Technologies\n\nLicensed under the Unity Package Distribution License (see https://unity.com/legal/licenses/unity-package-distribution-license).\n\nUnless expressly provided otherwise, the software under this license is made available strictly on an \u201cAS IS\u201d BASIS WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED. Please review the license for details on these and other terms and conditions.",
+      "name": "License text supplied with com.unity.collab-proxy"
+    },
+    {
+      "licenseId": "LicenseRef-Unity-4947f647c031b0fe",
+      "extractedText": "com.unity.collections copyright \u00a9 2024 Unity Technologies\n\nLicensed under the Unity Companion License for Unity-dependent projects (see https://unity3d.com/legal/licenses/unity_companion_license).\n\nUnless expressly provided otherwise, the Software under this license is made available strictly on an \u201cAS IS\u201d BASIS WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED. Please review the license for details on these and other terms and conditions.\n",
+      "name": "License text supplied with com.unity.collections"
+    },
+    {
+      "licenseId": "LicenseRef-Unity-ea14f98ba99afcc0",
+      "extractedText": "Custom Nunit copyright \u00a9 2019 Unity Technologies\n\nLicensed under the Unity Package Distribution License (see https://unity3d.com/legal/licenses/Unity_Package_Distribution_License ).\n\nUnless expressly provided otherwise, the software under this license is made available strictly on an \u201cAS IS\u201d BASIS WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED. Please review the license for details on these and other terms and conditions.\n",
+      "name": "License text supplied with com.unity.ext.nunit"
+    },
+    {
+      "licenseId": "LicenseRef-Unity-49d8e39c5ba9fa2e",
+      "extractedText": "JetBrains Rider Editor copyright \u00a9 2025 Unity Technologies\n\nMIT License\n\nCopyright (c) 2019 Unity Technologies Copyright (c) 2019 JetBrains s.r.o. All rights reserved.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n",
+      "name": "License text supplied with com.unity.ide.rider"
+    },
+    {
+      "licenseId": "LicenseRef-Unity-af294e2812515c35",
+      "extractedText": "Visual Studio Editor copyright \u00a9 2019 Unity Technologies\nVisual Studio Editor copyright \u00a9 2019 Microsoft Corporation. All rights reserved.\n\nMIT License\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n",
+      "name": "License text supplied with com.unity.ide.visualstudio"
+    },
+    {
+      "licenseId": "LicenseRef-Unity-419718e59cd6c1f9",
+      "extractedText": "com.unity.inputsystem copyright \u00a9 2024 Unity Technologies\n\nLicensed under the Unity Companion License for Unity-dependent projects (see [https://unity3d.com/legal/licenses/unity_companion_license](https://unity3d.com/legal/licenses/unity_companion_license)).\n\nUnless expressly provided otherwise, the Software under this license is made available strictly on an \u201cAS IS\u201d BASIS WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED. Please review the license for details on these and other terms and conditions.\n",
+      "name": "License text supplied with com.unity.inputsystem"
+    },
+    {
+      "licenseId": "LicenseRef-Unity-5b1a26ff2ca6e6e7",
+      "extractedText": "com.unity.mathematics copyright \u00a9 2023 Unity Technologies ApS\n\nLicensed under the Unity Companion License for Unity-dependent projects (see https://unity3d.com/legal/licenses/unity_companion_license).\nUnless expressly provided otherwise, the Software under this license is made available strictly on an \u201cAS IS\u201d BASIS WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED. Please review the license for details on these and other terms and conditions.",
+      "name": "License text supplied with com.unity.mathematics"
+    },
+    {
+      "licenseId": "LicenseRef-Unity-e6522fc3e87017b4",
+      "extractedText": "com.unity.multiplayer.center copyright \u00a9 2023 Unity Technologies\n\nLicensed under the Unity Package Distribution License (see https://unity3d.com/legal/licenses/Unity_Package_Distribution_License ).\n\nUnless expressly provided otherwise, the software under this license is made available strictly on an \u201cAS IS\u201d BASIS WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED. Please review the license for details on these and other terms and conditions.\u201d\n\n",
+      "name": "License text supplied with com.unity.multiplayer.center"
+    },
+    {
+      "licenseId": "LicenseRef-Unity-76101254034fbea9",
+      "extractedText": "com.unity.nuget.mono-cecil copyright \u00a9 2020 Unity Technologies ApS\n\nLicensed under the Unity Companion License for Unity-dependent projects--see [Unity Companion License](http://www.unity3d.com/legal/licenses/Unity_Companion_License).\n\nUnless expressly provided otherwise, the Software under this license is made available strictly on an \u201cAS IS\u201d BASIS WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED. Please review the license for details on these and other terms and conditions.\n",
+      "name": "License text supplied with com.unity.nuget.mono-cecil"
+    },
+    {
+      "licenseId": "LicenseRef-Unity-39691adc5fdaf614",
+      "extractedText": "com.unity.render-pipelines.core copyright \u00a9 2020 Unity Technologies ApS\n\nLicensed under the Unity Companion License for Unity-dependent projects--see [Unity Companion License](http://www.unity3d.com/legal/licenses/Unity_Companion_License).\n\nUnless expressly provided otherwise, the Software under this license is made available strictly on an \u201cAS IS\u201d BASIS WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED. Please review the license for details on these and other terms and conditions.\n",
+      "name": "License text supplied with com.unity.render-pipelines.core"
+    },
+    {
+      "licenseId": "LicenseRef-Unity-4be520a425e06c8d",
+      "extractedText": "com.unity.render-pipelines.universal copyright \u00a9 2020 Unity Technologies ApS\n\nLicensed under the Unity Companion License for Unity-dependent projects--see [Unity Companion License](http://www.unity3d.com/legal/licenses/Unity_Companion_License).\n\nUnless expressly provided otherwise, the Software under this license is made available strictly on an \u201cAS IS\u201d BASIS WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED. Please review the license for details on these and other terms and conditions.\n",
+      "name": "License text supplied with com.unity.render-pipelines.universal"
+    },
+    {
+      "licenseId": "LicenseRef-Unity-fa2dcbc8ff967f49",
+      "extractedText": "com.unity.render-pipelines.universal-config copyright \u00a9 2020 Unity Technologies ApS\n\nLicensed under the Unity Companion License for Unity-dependent projects--see [Unity Companion License](http://www.unity3d.com/legal/licenses/Unity_Companion_License).\n\nUnless expressly provided otherwise, the Software under this license is made available strictly on an \u201cAS IS\u201d BASIS WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED. Please review the license for details on these and other terms and conditions.\n",
+      "name": "License text supplied with com.unity.render-pipelines.universal-config"
+    },
+    {
+      "licenseId": "LicenseRef-Unity-9086cf20ede8c45e",
+      "extractedText": "**Unity Companion Package License v1.0 (\"_License_\")**\n\ncom.unity.searcher copyright \u00a9 2019 Unity Technologies ApS\n\nUnity hereby grants to you a worldwide, non-exclusive, no-charge, and royalty-free copyright license to reproduce, prepare derivative works of, publicly display, publicly perform, sublicense, and distribute the software that is made available with this License (\"**_Software_**\"), subject to the following terms and conditions:\n\n1. *Unity Companion Use Only*. Exercise of the license granted herein is limited to exercise for the creation, use, and/or distribution of applications, software, or other content pursuant to a valid Unity development engine software license (\"**_Engine License_**\"). That means while use of the Software is not limited to use in the software licensed under the Engine License, the Software may not be used for any purpose other than the creation, use, and/or distribution of Engine License-dependent applications, software, or other content. No other exercise of the license granted herein is permitted.\n\n1. *No Modification of Engine License*. Neither this License nor any exercise of the license granted herein modifies the Engine License in any way.\n\n1. *Ownership & Grant Back to You*. \n\n    3.1. You own your content. In this License, \"derivative works\" means derivatives of the Software itself--works derived only from the Software by you under this License (for example, modifying the code of the Software itself to improve its efficacy); \u201cderivative works\u201d of the Software do not include, for example, games, apps, or content that you create using the Software. You keep all right, title, and interest to your own content.\n\n    3.2. Unity owns its content. While you keep all right, title, and interest to your own content per the above, as between Unity and you, Unity will own all right, title, and interest to all intellectual property rights (including patent, trademark, and copyright) in the Software and derivative works of the Software, and you hereby assign and agree to assign all such rights in those derivative works to Unity. \n\n    3.3. You have a license to those derivative works. Subject to this License, Unity grants to you the same worldwide, non-exclusive, no-charge, and royalty-free copyright license to derivative works of the Software you create as is granted to you for the Software under this License.\n\n1. *Trademarks*. You are not granted any right or license under this License to use any trademarks, service marks, trade names, products names, or branding of Unity or its affiliates (\"**_Trademarks_**\"). Descriptive uses of Trademarks are permitted; see, for example, Unity\u2019s Branding Usage Guidelines at [https://unity3d.com/public-relations/brand](https://unity3d.com/public-relations/brand).\n\n1. *Notices & Third-Party Rights*. This License, including the copyright notice above, must be provided in all substantial portions of the Software and derivative works thereof (or, if that is impracticable, in any other location where such notices are customarily placed). Further, if the Software is accompanied by a Unity \"third-party notices\" or similar file, you acknowledge and agree that software identified in that file is governed by those separate license terms.\n\n1. *DISCLAIMER, LIMITATION OF LIABILITY*. THE SOFTWARE AND ANY DERIVATIVE WORKS THEREOF IS PROVIDED ON AN \"AS IS\" BASIS, AND IS PROVIDED WITHOUT WARRANTY OF ANY KIND, WHETHER EXPRESS OR IMPLIED, INCLUDING ANY WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND/OR NONINFRINGEMENT. IN NO EVENT SHALL ANY COPYRIGHT HOLDER OR AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES (WHETHER DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL, INCLUDING PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES, LOSS OF USE, DATA, OR PROFITS, AND BUSINESS INTERRUPTION), OR OTHER LIABILITY WHATSOEVER, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM OR OUT OF, OR IN CONNECTION WITH, THE SOFTWARE OR ANY DERIVATIVE WORKS THEREOF OR THE USE OF OR OTHER DEALINGS IN SAME, EVEN WHERE ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n\n1. *USE IS ACCEPTANCE and License Versions*. Your receipt and use of the Software constitutes your acceptance of this License and its terms and conditions. Software released by Unity under this License may be modified or updated and the License with it; upon any such modification or update, you will comply with the terms of the updated License for any use of any of the Software under the updated License. \n\n1. *Use in Compliance with Law and Termination*. Your exercise of the license granted herein will at all times be in compliance with applicable law and will not infringe any proprietary rights (including intellectual property rights); this License will terminate immediately on any breach by you of this License.\n\n1. *Severability*. If any provision of this License is held to be unenforceable or invalid, that provision will be enforced to the maximum extent possible and the other provisions will remain in full force and effect.\n\n1. *Governing Law and Venue*. This License is governed by and construed in accordance with the laws of Denmark, except for its conflict of laws rules; the United Nations Convention on Contracts for the International Sale of Goods will not apply. If you reside (or your principal place of business is) within the United States, you and Unity agree to submit to the personal and exclusive jurisdiction of and venue in the state and federal courts located in San Francisco County, California concerning any dispute arising out of this License (\"**_Dispute_**\"). If you reside (or your principal place of business is) outside the United States, you and Unity agree to submit to the personal and exclusive jurisdiction of and venue in the courts located in Copenhagen, Denmark concerning any Dispute.",
+      "name": "License text supplied with com.unity.searcher"
+    },
+    {
+      "licenseId": "LicenseRef-Unity-364b0c08b7fe15b7",
+      "extractedText": "com.unity.shadergraph copyright \u00a9 2020 Unity Technologies ApS\n\nLicensed under the Unity Companion License for Unity-dependent projects--see [Unity Companion License](http://www.unity3d.com/legal/licenses/Unity_Companion_License).\n\nUnless expressly provided otherwise, the Software under this license is made available strictly on an \u201cAS IS\u201d BASIS WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED. Please review the license for details on these and other terms and conditions.\n",
+      "name": "License text supplied with com.unity.shadergraph"
+    },
+    {
+      "licenseId": "LicenseRef-Unity-d3b09e9683afbc8d",
+      "extractedText": "Test Framework copyright \u00a9 2024 Unity Technologies ApS\n\nLicensed under the Unity Companion License for Unity-dependent projects--see [Unity Companion License](http://www.unity3d.com/legal/licenses/Unity_Companion_License). \n\nUnless expressly provided otherwise, the Software under this license is made available strictly on an \u201cAS IS\u201d BASIS WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED. Please review the license for details on these and other terms and conditions.\n",
+      "name": "License text supplied with com.unity.test-framework"
+    },
+    {
+      "licenseId": "LicenseRef-Unity-202adffac8b9d21d",
+      "extractedText": "com.unity.test-framework.performance copyright \u00a9 2020 Unity Technologies ApS\n\nLicensed under the Unity Companion License for Unity-dependent projects--see [Unity Companion License](http://www.unity3d.com/legal/licenses/Unity_Companion_License).\n\nUnless expressly provided otherwise, the Software under this license is made available strictly on an \u201cAS IS\u201d BASIS WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED. Please review the license for details on these and other terms and conditions.\n",
+      "name": "License text supplied with com.unity.test-framework.performance"
+    },
+    {
+      "licenseId": "LicenseRef-Unity-73111ef76bd8a502",
+      "extractedText": "Timeline copyright \u00a9 2023 Unity Technologies\n\nLicensed under the Unity Companion License for Unity-dependent projects--see [Unity Companion License](http://www.unity3d.com/legal/licenses/Unity_Companion_License).\n\nUnless expressly provided otherwise, the Software under this license is made available strictly on an \u201cAS IS\u201d BASIS WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED. Please review the license for details on these and other terms and conditions.\n",
+      "name": "License text supplied with com.unity.timeline"
+    },
+    {
+      "licenseId": "LicenseRef-Unity-a8e0cae87b2edb8c",
+      "extractedText": "uGUI Copyright \u00a9 2015-2020 Unity Technologies ApS (\"**_Unity_**\")\n\nLicensed under the Unity Companion License for Unity-dependent projects (see https://unity3d.com/legal/licenses/unity_companion_license).\n\n_Unless expressly provided otherwise, the Software under this license is made available strictly on an \u201cAS IS\u201d BASIS WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED. Please review the license for details on these and other terms and conditions.\n",
+      "name": "License text supplied with com.unity.ugui"
+    },
+    {
+      "licenseId": "LicenseRef-Unity-38110f8f09a9b782",
+      "extractedText": "com.unity.visualscripting copyright \u00a9 2020 Unity Technologies\n\nLicensed under the Unity Package Distribution License (see https://unity3d.com/legal/licenses/Unity_Package_Distribution_License ).\n\nUnless expressly provided otherwise, the software under this license is made available strictly on an \u201cAS IS\u201d BASIS WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED. Please review the license for details on these and other terms and conditions.\n",
+      "name": "License text supplied with com.unity.visualscripting"
+    }
+  ]
+}
