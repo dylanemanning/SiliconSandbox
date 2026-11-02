@@ -1,9 +1,10 @@
+
 name: BuildSystem
 
 on:
   push:
     branches: ["main", "dev"]
-    tags: 
+    tags:
       - "v*.*.*"
   pull_request:
     branches: ["main", "dev"]
@@ -21,7 +22,7 @@ jobs:
     permissions:
       contents: read
       checks: write
-  
+
     name: Run Unity Tests
     runs-on: ubuntu-latest
 
@@ -124,19 +125,65 @@ jobs:
           buildName: Game
           buildPath: build
 
-      - name: Generate Unity SBOM
-        run: |
-          mkdir -p doc
-          python3 scripts/generate_unity_sbom.py
+      # NEW: Install Syft for dependency scanning
+      - name: Install Syft
+        uses: anchore/sbom-action/download-syft@v0
 
+      # NEW: Confirm the build directory exists
+      - name: Verify Windows build output
+        run: |
+          find build -maxdepth 5 -type f \( -name 'Game.exe' -o -name 'UnityPlayer.dll' \) -print
+          test -d build/StandaloneWindows64 || {
+            echo "Expected build directory not found"
+            find build -maxdepth 3 -type d
+            exit 1
+          }
+
+      # MODIFIED: Generate the Unity SBOM as an intermediate file
+      - name: Generate Unity package SBOM
+        run: |
+          mkdir -p doc/sbom-parts
+          python3 Assets/scripts/generate_unity_sbom.py --output doc/sbom-parts/unity.json
+
+      # NEW: Scan the compiled Windows game
+      - name: Scan built Windows game
+        run: |
+          syft dir:build/StandaloneWindows64 \
+            -o spdx-json=doc/sbom-parts/windows.json
+
+      # NEW: Scan additional plugins and native source
+      - name: Scan project plugins and native source
+        run: |
+          if [ -d Assets/Plugins ]; then
+            syft dir:Assets/Plugins \
+              -o spdx-json=doc/sbom-parts/plugins.json
+          fi
+
+          if [ -d native ]; then
+            syft dir:native \
+              -o spdx-json=doc/sbom-parts/native.json
+          fi
+
+      # NEW: Merge the scans into one final SPDX SBOM
+      - name: Merge SPDX package inventories
+        run: |
+          python3 Assets/scripts/merge_sboms.py \
+            --unity doc/sbom-parts/unity.json \
+            --scans doc/sbom-parts/windows.json doc/sbom-parts/plugins.json doc/sbom-parts/native.json \
+            --output doc/SBOM.json
+
+      # MODIFIED: Upload final and intermediate SBOM files
       - name: Upload SBOM artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Unity-SBOM
-          path: doc/SBOM.json
+          name: SiliconSandbox-SBOM
+          path: |
+            doc/SBOM.json
+            doc/sbom-parts/*.json
 
+      # MODIFIED: Commit only on main/dev branch pushes
       - name: Commit and push updated SBOM
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev')
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

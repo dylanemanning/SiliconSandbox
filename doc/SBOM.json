@@ -3,9 +3,9 @@
   "dataLicense": "CC0-1.0",
   "SPDXID": "SPDXRef-DOCUMENT",
   "name": "Silicon Sandbox - Unity Package Dependency SBOM",
-  "documentNamespace": "https://example.invalid/spdxdocs/silicon-sandbox-714018c2-eb10-4448-b644-80ac7e4aeee1",
+  "documentNamespace": "https://spdx.org/spdxdocs/silicon-sandbox-372a0bdf-34e1-4737-ac3b-51269d5e0292",
   "creationInfo": {
-    "created": "2026-10-29T14:20:29Z",
+    "created": "2026-10-31T22:09:30Z",
     "creators": [
       "Tool: generate_unity_sbom.py"
     ]
@@ -31,7 +31,7 @@
       "licenseDeclared": "LicenseRef-Unity-0a17bbd475505efe",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=builtin; depth=0; License text from /mnt/c/Users/dylan/Silicon Sandbox/Library/PackageCache/com.unity.2d.sprite@08e067ec1643/LICENSE.md (not classified as an SPDX standard license)"
+      "comment": "Unity source=builtin; depth=0; License text from Library/PackageCache/com.unity.2d.sprite@08e067ec1643/LICENSE.md (not classified as an SPDX standard license)"
     },
     {
       "SPDXID": "SPDXRef-Package-com.unity.ai.navigation",
@@ -43,7 +43,7 @@
       "licenseDeclared": "LicenseRef-Unity-2b2113e0522b3eaa",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=registry; depth=0; License text from /mnt/c/Users/dylan/Silicon Sandbox/Library/PackageCache/com.unity.ai.navigation@c33a115e9883/LICENSE.md (not classified as an SPDX standard license)"
+      "comment": "Unity source=registry; depth=0; License text from Library/PackageCache/com.unity.ai.navigation@c33a115e9883/LICENSE.md (not classified as an SPDX standard license)"
     },
     {
       "SPDXID": "SPDXRef-Package-com.unity.burst",
@@ -55,7 +55,7 @@
       "licenseDeclared": "LicenseRef-Unity-9bd567d6de754ab7",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=registry; depth=2; License text from /mnt/c/Users/dylan/Silicon Sandbox/Library/PackageCache/com.unity.burst@973857688024/LICENSE.md (not classified as an SPDX standard license)"
+      "comment": "Unity source=registry; depth=2; License text from Library/PackageCache/com.unity.burst@973857688024/LICENSE.md (not classified as an SPDX standard license)"
     },
     {
       "SPDXID": "SPDXRef-Package-com.unity.collab-proxy",
@@ -67,7 +67,7 @@
       "licenseDeclared": "LicenseRef-Unity-5df34c3570740990",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=registry; depth=0; License text from /mnt/c/Users/dylan/Silicon Sandbox/Library/PackageCache/com.unity.collab-proxy@e566cd3e7623/LICENSE.md (not classified as an SPDX standard license)"
+      "comment": "Unity source=registry; depth=0; License text from Library/PackageCache/com.unity.collab-proxy@e566cd3e7623/LICENSE.md (not classified as an SPDX standard license)"
     },
     {
       "SPDXID": "SPDXRef-Package-com.unity.collections",
@@ -79,7 +79,7 @@
       "licenseDeclared": "LicenseRef-Unity-4947f647c031b0fe",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=registry; depth=2; License text from /mnt/c/Users/dylan/Silicon Sandbox/Library/PackageCache/com.unity.collections@aea9d3bd5e19/LICENSE.md (not classified as an SPDX standard license)"
+      "comment": "Unity source=registry; depth=2; License text from Library/PackageCache/com.unity.collections@aea9d3bd5e19/LICENSE.md (not classified as an SPDX standard license)"
     },
     {
       "SPDXID": "SPDXRef-Package-com.unity.ext.nunit",
@@ -91,7 +91,7 @@
       "licenseDeclared": "LicenseRef-Unity-ea14f98ba99afcc0",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=builtin; depth=1; License text from /mnt/c/Users/dylan/Silicon Sandbox/Library/PackageCache/com.unity.ext.nunit@d8c07649098d/LICENSE.md (not classified as an SPDX standard license)"
+      "comment": "Unity source=builtin; depth=1; License text from Library/PackageCache/com.unity.ext.nunit@d8c07649098d/LICENSE.md (not classified as an SPDX standard license)"
     },
     {
       "SPDXID": "SPDXRef-Package-com.unity.ide.rider",
@@ -103,7 +103,7 @@
       "licenseDeclared": "LicenseRef-Unity-49d8e39c5ba9fa2e",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=registry; depth=0; License text from /mnt/c/Users/dylan/Silicon Sandbox/Library/PackageCache/com.unity.ide.rider@4504839d03f7/LICENSE.md (not classified as an SPDX standard license)"
+      "comment": "Unity source=registry; depth=0; License text from Library/PackageCache/com.unity.ide.rider@4504839d03f7/LICENSE.md (not classified as an SPDX standard license)"
     },
     {
       "SPDXID": "SPDXRef-Package-com.unity.ide.visualstudio",
@@ -115,7 +115,7 @@
       "licenseDeclared": "LicenseRef-Unity-af294e2812515c35",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=registry; depth=0; License text from /mnt/c/Users/dylan/Silicon Sandbox/Library/PackageCache/com.unity.ide.visualstudio@b5edea5f33f4/LICENSE.md (not classified as an SPDX standard license)"
+      "comment": "Unity source=registry; depth=0; License text from Library/PackageCache/com.unity.ide.visualstudio@b5edea5f33f4/LICENSE.md (not classified as an SPDX standard license)"
     },
     {
       "SPDXID": "SPDXRef-Package-com.unity.inputsystem",
@@ -127,7 +127,7 @@
       "licenseDeclared": "LicenseRef-Unity-419718e59cd6c1f9",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=registry; depth=0; License text from /mnt/c/Users/dylan/Silicon Sandbox/Library/PackageCache/com.unity.inputsystem@57d0e36f6123/LICENSE.md (not classified as an SPDX standard license)"
+      "comment": "Unity source=registry; depth=0; License text from Library/PackageCache/com.unity.inputsystem@57d0e36f6123/LICENSE.md (not classified as an SPDX standard license)"
     },
     {
       "SPDXID": "SPDXRef-Package-com.unity.mathematics",
@@ -139,7 +139,7 @@
       "licenseDeclared": "LicenseRef-Unity-5b1a26ff2ca6e6e7",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=registry; depth=2; License text from /mnt/c/Users/dylan/Silicon Sandbox/Library/PackageCache/com.unity.mathematics@19a9377c4ffa/LICENSE.md (not classified as an SPDX standard license)"
+      "comment": "Unity source=registry; depth=2; License text from Library/PackageCache/com.unity.mathematics@19a9377c4ffa/LICENSE.md (not classified as an SPDX standard license)"
     },
     {
       "SPDXID": "SPDXRef-Package-com.unity.modules.accessibility",
@@ -148,10 +148,10 @@
       "downloadLocation": "NOASSERTION",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
-      "licenseDeclared": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-Editor-Software-Terms",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+      "comment": "Unity source=builtin; depth=0; Built-in Unity engine module; see the official Unity Editor Software Terms"
     },
     {
       "SPDXID": "SPDXRef-Package-com.unity.modules.adaptiveperformance",
@@ -160,10 +160,10 @@
       "downloadLocation": "NOASSERTION",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
-      "licenseDeclared": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-Editor-Software-Terms",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+      "comment": "Unity source=builtin; depth=0; Built-in Unity engine module; see the official Unity Editor Software Terms"
     },
     {
       "SPDXID": "SPDXRef-Package-com.unity.modules.ai",
@@ -172,10 +172,10 @@
       "downloadLocation": "NOASSERTION",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
-      "licenseDeclared": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-Editor-Software-Terms",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+      "comment": "Unity source=builtin; depth=0; Built-in Unity engine module; see the official Unity Editor Software Terms"
     },
     {
       "SPDXID": "SPDXRef-Package-com.unity.modules.androidjni",
@@ -184,10 +184,10 @@
       "downloadLocation": "NOASSERTION",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
-      "licenseDeclared": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-Editor-Software-Terms",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+      "comment": "Unity source=builtin; depth=0; Built-in Unity engine module; see the official Unity Editor Software Terms"
     },
     {
       "SPDXID": "SPDXRef-Package-com.unity.modules.animation",
@@ -196,10 +196,10 @@
       "downloadLocation": "NOASSERTION",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
-      "licenseDeclared": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-Editor-Software-Terms",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+      "comment": "Unity source=builtin; depth=0; Built-in Unity engine module; see the official Unity Editor Software Terms"
     },
     {
       "SPDXID": "SPDXRef-Package-com.unity.modules.assetbundle",
@@ -208,10 +208,10 @@
       "downloadLocation": "NOASSERTION",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
-      "licenseDeclared": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-Editor-Software-Terms",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+      "comment": "Unity source=builtin; depth=0; Built-in Unity engine module; see the official Unity Editor Software Terms"
     },
     {
       "SPDXID": "SPDXRef-Package-com.unity.modules.audio",
@@ -220,10 +220,10 @@
       "downloadLocation": "NOASSERTION",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
-      "licenseDeclared": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-Editor-Software-Terms",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+      "comment": "Unity source=builtin; depth=0; Built-in Unity engine module; see the official Unity Editor Software Terms"
     },
     {
       "SPDXID": "SPDXRef-Package-com.unity.modules.cloth",
@@ -232,10 +232,10 @@
       "downloadLocation": "NOASSERTION",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
-      "licenseDeclared": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-Editor-Software-Terms",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+      "comment": "Unity source=builtin; depth=0; Built-in Unity engine module; see the official Unity Editor Software Terms"
     },
     {
       "SPDXID": "SPDXRef-Package-com.unity.modules.director",
@@ -244,10 +244,10 @@
       "downloadLocation": "NOASSERTION",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
-      "licenseDeclared": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-Editor-Software-Terms",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+      "comment": "Unity source=builtin; depth=0; Built-in Unity engine module; see the official Unity Editor Software Terms"
     },
     {
       "SPDXID": "SPDXRef-Package-com.unity.modules.hierarchycore",
@@ -256,10 +256,10 @@
       "downloadLocation": "NOASSERTION",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
-      "licenseDeclared": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-Editor-Software-Terms",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=builtin; depth=1; No cached package directory available"
+      "comment": "Unity source=builtin; depth=1; Built-in Unity engine module; see the official Unity Editor Software Terms"
     },
     {
       "SPDXID": "SPDXRef-Package-com.unity.modules.imageconversion",
@@ -268,10 +268,10 @@
       "downloadLocation": "NOASSERTION",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
-      "licenseDeclared": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-Editor-Software-Terms",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+      "comment": "Unity source=builtin; depth=0; Built-in Unity engine module; see the official Unity Editor Software Terms"
     },
     {
       "SPDXID": "SPDXRef-Package-com.unity.modules.imgui",
@@ -280,10 +280,10 @@
       "downloadLocation": "NOASSERTION",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
-      "licenseDeclared": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-Editor-Software-Terms",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+      "comment": "Unity source=builtin; depth=0; Built-in Unity engine module; see the official Unity Editor Software Terms"
     },
     {
       "SPDXID": "SPDXRef-Package-com.unity.modules.jsonserialize",
@@ -292,10 +292,10 @@
       "downloadLocation": "NOASSERTION",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
-      "licenseDeclared": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-Editor-Software-Terms",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+      "comment": "Unity source=builtin; depth=0; Built-in Unity engine module; see the official Unity Editor Software Terms"
     },
     {
       "SPDXID": "SPDXRef-Package-com.unity.modules.particlesystem",
@@ -304,10 +304,10 @@
       "downloadLocation": "NOASSERTION",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
-      "licenseDeclared": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-Editor-Software-Terms",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+      "comment": "Unity source=builtin; depth=0; Built-in Unity engine module; see the official Unity Editor Software Terms"
     },
     {
       "SPDXID": "SPDXRef-Package-com.unity.modules.physics",
@@ -316,10 +316,10 @@
       "downloadLocation": "NOASSERTION",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
-      "licenseDeclared": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-Editor-Software-Terms",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+      "comment": "Unity source=builtin; depth=0; Built-in Unity engine module; see the official Unity Editor Software Terms"
     },
     {
       "SPDXID": "SPDXRef-Package-com.unity.modules.physics2d",
@@ -328,10 +328,10 @@
       "downloadLocation": "NOASSERTION",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
-      "licenseDeclared": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-Editor-Software-Terms",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+      "comment": "Unity source=builtin; depth=0; Built-in Unity engine module; see the official Unity Editor Software Terms"
     },
     {
       "SPDXID": "SPDXRef-Package-com.unity.modules.screencapture",
@@ -340,10 +340,10 @@
       "downloadLocation": "NOASSERTION",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
-      "licenseDeclared": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-Editor-Software-Terms",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+      "comment": "Unity source=builtin; depth=0; Built-in Unity engine module; see the official Unity Editor Software Terms"
     },
     {
       "SPDXID": "SPDXRef-Package-com.unity.modules.subsystems",
@@ -352,10 +352,10 @@
       "downloadLocation": "NOASSERTION",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
-      "licenseDeclared": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-Editor-Software-Terms",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=builtin; depth=1; No cached package directory available"
+      "comment": "Unity source=builtin; depth=1; Built-in Unity engine module; see the official Unity Editor Software Terms"
     },
     {
       "SPDXID": "SPDXRef-Package-com.unity.modules.terrain",
@@ -364,10 +364,10 @@
       "downloadLocation": "NOASSERTION",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
-      "licenseDeclared": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-Editor-Software-Terms",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+      "comment": "Unity source=builtin; depth=0; Built-in Unity engine module; see the official Unity Editor Software Terms"
     },
     {
       "SPDXID": "SPDXRef-Package-com.unity.modules.terrainphysics",
@@ -376,10 +376,10 @@
       "downloadLocation": "NOASSERTION",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
-      "licenseDeclared": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-Editor-Software-Terms",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+      "comment": "Unity source=builtin; depth=0; Built-in Unity engine module; see the official Unity Editor Software Terms"
     },
     {
       "SPDXID": "SPDXRef-Package-com.unity.modules.tilemap",
@@ -388,10 +388,10 @@
       "downloadLocation": "NOASSERTION",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
-      "licenseDeclared": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-Editor-Software-Terms",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+      "comment": "Unity source=builtin; depth=0; Built-in Unity engine module; see the official Unity Editor Software Terms"
     },
     {
       "SPDXID": "SPDXRef-Package-com.unity.modules.ui",
@@ -400,10 +400,10 @@
       "downloadLocation": "NOASSERTION",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
-      "licenseDeclared": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-Editor-Software-Terms",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+      "comment": "Unity source=builtin; depth=0; Built-in Unity engine module; see the official Unity Editor Software Terms"
     },
     {
       "SPDXID": "SPDXRef-Package-com.unity.modules.uielements",
@@ -412,10 +412,10 @@
       "downloadLocation": "NOASSERTION",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
-      "licenseDeclared": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-Editor-Software-Terms",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+      "comment": "Unity source=builtin; depth=0; Built-in Unity engine module; see the official Unity Editor Software Terms"
     },
     {
       "SPDXID": "SPDXRef-Package-com.unity.modules.umbra",
@@ -424,10 +424,10 @@
       "downloadLocation": "NOASSERTION",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
-      "licenseDeclared": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-Editor-Software-Terms",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+      "comment": "Unity source=builtin; depth=0; Built-in Unity engine module; see the official Unity Editor Software Terms"
     },
     {
       "SPDXID": "SPDXRef-Package-com.unity.modules.unityanalytics",
@@ -436,10 +436,10 @@
       "downloadLocation": "NOASSERTION",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
-      "licenseDeclared": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-Editor-Software-Terms",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+      "comment": "Unity source=builtin; depth=0; Built-in Unity engine module; see the official Unity Editor Software Terms"
     },
     {
       "SPDXID": "SPDXRef-Package-com.unity.modules.unitywebrequest",
@@ -448,10 +448,10 @@
       "downloadLocation": "NOASSERTION",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
-      "licenseDeclared": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-Editor-Software-Terms",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+      "comment": "Unity source=builtin; depth=0; Built-in Unity engine module; see the official Unity Editor Software Terms"
     },
     {
       "SPDXID": "SPDXRef-Package-com.unity.modules.unitywebrequestassetbundle",
@@ -460,10 +460,10 @@
       "downloadLocation": "NOASSERTION",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
-      "licenseDeclared": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-Editor-Software-Terms",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+      "comment": "Unity source=builtin; depth=0; Built-in Unity engine module; see the official Unity Editor Software Terms"
     },
     {
       "SPDXID": "SPDXRef-Package-com.unity.modules.unitywebrequestaudio",
@@ -472,10 +472,10 @@
       "downloadLocation": "NOASSERTION",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
-      "licenseDeclared": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-Editor-Software-Terms",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+      "comment": "Unity source=builtin; depth=0; Built-in Unity engine module; see the official Unity Editor Software Terms"
     },
     {
       "SPDXID": "SPDXRef-Package-com.unity.modules.unitywebrequesttexture",
@@ -484,10 +484,10 @@
       "downloadLocation": "NOASSERTION",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
-      "licenseDeclared": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-Editor-Software-Terms",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+      "comment": "Unity source=builtin; depth=0; Built-in Unity engine module; see the official Unity Editor Software Terms"
     },
     {
       "SPDXID": "SPDXRef-Package-com.unity.modules.unitywebrequestwww",
@@ -496,10 +496,10 @@
       "downloadLocation": "NOASSERTION",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
-      "licenseDeclared": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-Editor-Software-Terms",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+      "comment": "Unity source=builtin; depth=0; Built-in Unity engine module; see the official Unity Editor Software Terms"
     },
     {
       "SPDXID": "SPDXRef-Package-com.unity.modules.vectorgraphics",
@@ -508,10 +508,10 @@
       "downloadLocation": "NOASSERTION",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
-      "licenseDeclared": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-Editor-Software-Terms",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+      "comment": "Unity source=builtin; depth=0; Built-in Unity engine module; see the official Unity Editor Software Terms"
     },
     {
       "SPDXID": "SPDXRef-Package-com.unity.modules.vehicles",
@@ -520,10 +520,10 @@
       "downloadLocation": "NOASSERTION",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
-      "licenseDeclared": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-Editor-Software-Terms",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+      "comment": "Unity source=builtin; depth=0; Built-in Unity engine module; see the official Unity Editor Software Terms"
     },
     {
       "SPDXID": "SPDXRef-Package-com.unity.modules.video",
@@ -532,10 +532,10 @@
       "downloadLocation": "NOASSERTION",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
-      "licenseDeclared": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-Editor-Software-Terms",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+      "comment": "Unity source=builtin; depth=0; Built-in Unity engine module; see the official Unity Editor Software Terms"
     },
     {
       "SPDXID": "SPDXRef-Package-com.unity.modules.vr",
@@ -544,10 +544,10 @@
       "downloadLocation": "NOASSERTION",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
-      "licenseDeclared": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-Editor-Software-Terms",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+      "comment": "Unity source=builtin; depth=0; Built-in Unity engine module; see the official Unity Editor Software Terms"
     },
     {
       "SPDXID": "SPDXRef-Package-com.unity.modules.wind",
@@ -556,10 +556,10 @@
       "downloadLocation": "NOASSERTION",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
-      "licenseDeclared": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-Editor-Software-Terms",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+      "comment": "Unity source=builtin; depth=0; Built-in Unity engine module; see the official Unity Editor Software Terms"
     },
     {
       "SPDXID": "SPDXRef-Package-com.unity.modules.xr",
@@ -568,10 +568,10 @@
       "downloadLocation": "NOASSERTION",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
-      "licenseDeclared": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-Unity-Editor-Software-Terms",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=builtin; depth=0; No cached package directory available"
+      "comment": "Unity source=builtin; depth=0; Built-in Unity engine module; see the official Unity Editor Software Terms"
     },
     {
       "SPDXID": "SPDXRef-Package-com.unity.multiplayer.center",
@@ -583,7 +583,7 @@
       "licenseDeclared": "LicenseRef-Unity-e6522fc3e87017b4",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=builtin; depth=0; License text from /mnt/c/Users/dylan/Silicon Sandbox/Library/PackageCache/com.unity.multiplayer.center@f01f4ba8d00a/LICENSE.md (not classified as an SPDX standard license)"
+      "comment": "Unity source=builtin; depth=0; License text from Library/PackageCache/com.unity.multiplayer.center@f01f4ba8d00a/LICENSE.md (not classified as an SPDX standard license)"
     },
     {
       "SPDXID": "SPDXRef-Package-com.unity.nuget.mono-cecil",
@@ -595,7 +595,7 @@
       "licenseDeclared": "LicenseRef-Unity-76101254034fbea9",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=registry; depth=3; License text from /mnt/c/Users/dylan/Silicon Sandbox/Library/PackageCache/com.unity.nuget.mono-cecil@ecb9724e46ff/LICENSE.md (not classified as an SPDX standard license)"
+      "comment": "Unity source=registry; depth=3; License text from Library/PackageCache/com.unity.nuget.mono-cecil@ecb9724e46ff/LICENSE.md (not classified as an SPDX standard license)"
     },
     {
       "SPDXID": "SPDXRef-Package-com.unity.render-pipelines.core",
@@ -607,7 +607,7 @@
       "licenseDeclared": "LicenseRef-Unity-39691adc5fdaf614",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=builtin; depth=1; License text from /mnt/c/Users/dylan/Silicon Sandbox/Library/PackageCache/com.unity.render-pipelines.core@d6dfd1e235d5/LICENSE.md (not classified as an SPDX standard license)"
+      "comment": "Unity source=builtin; depth=1; License text from Library/PackageCache/com.unity.render-pipelines.core@d6dfd1e235d5/LICENSE.md (not classified as an SPDX standard license)"
     },
     {
       "SPDXID": "SPDXRef-Package-com.unity.render-pipelines.universal",
@@ -619,7 +619,7 @@
       "licenseDeclared": "LicenseRef-Unity-4be520a425e06c8d",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=builtin; depth=0; License text from /mnt/c/Users/dylan/Silicon Sandbox/Library/PackageCache/com.unity.render-pipelines.universal@a6e30d1f59f5/LICENSE.md (not classified as an SPDX standard license)"
+      "comment": "Unity source=builtin; depth=0; License text from Library/PackageCache/com.unity.render-pipelines.universal@a6e30d1f59f5/LICENSE.md (not classified as an SPDX standard license)"
     },
     {
       "SPDXID": "SPDXRef-Package-com.unity.render-pipelines.universal-config",
@@ -631,7 +631,7 @@
       "licenseDeclared": "LicenseRef-Unity-fa2dcbc8ff967f49",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=builtin; depth=1; License text from /mnt/c/Users/dylan/Silicon Sandbox/Library/PackageCache/com.unity.render-pipelines.universal-config@8dc1aab4af1d/LICENSE.md (not classified as an SPDX standard license)"
+      "comment": "Unity source=builtin; depth=1; License text from Library/PackageCache/com.unity.render-pipelines.universal-config@8dc1aab4af1d/LICENSE.md (not classified as an SPDX standard license)"
     },
     {
       "SPDXID": "SPDXRef-Package-com.unity.searcher",
@@ -643,7 +643,7 @@
       "licenseDeclared": "LicenseRef-Unity-9086cf20ede8c45e",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=registry; depth=2; License text from /mnt/c/Users/dylan/Silicon Sandbox/Library/PackageCache/com.unity.searcher@d45a78918735/LICENSE.md (not classified as an SPDX standard license)"
+      "comment": "Unity source=registry; depth=2; License text from Library/PackageCache/com.unity.searcher@d45a78918735/LICENSE.md (not classified as an SPDX standard license)"
     },
     {
       "SPDXID": "SPDXRef-Package-com.unity.shadergraph",
@@ -655,7 +655,7 @@
       "licenseDeclared": "LicenseRef-Unity-364b0c08b7fe15b7",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=builtin; depth=1; License text from /mnt/c/Users/dylan/Silicon Sandbox/Library/PackageCache/com.unity.shadergraph@d44b48771ebb/LICENSE.md (not classified as an SPDX standard license)"
+      "comment": "Unity source=builtin; depth=1; License text from Library/PackageCache/com.unity.shadergraph@d44b48771ebb/LICENSE.md (not classified as an SPDX standard license)"
     },
     {
       "SPDXID": "SPDXRef-Package-com.unity.test-framework",
@@ -667,7 +667,7 @@
       "licenseDeclared": "LicenseRef-Unity-d3b09e9683afbc8d",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=builtin; depth=0; License text from /mnt/c/Users/dylan/Silicon Sandbox/Library/PackageCache/com.unity.test-framework@0b7a23ab2e1d/LICENSE.md (not classified as an SPDX standard license)"
+      "comment": "Unity source=builtin; depth=0; License text from Library/PackageCache/com.unity.test-framework@0b7a23ab2e1d/LICENSE.md (not classified as an SPDX standard license)"
     },
     {
       "SPDXID": "SPDXRef-Package-com.unity.test-framework.performance",
@@ -679,7 +679,7 @@
       "licenseDeclared": "LicenseRef-Unity-202adffac8b9d21d",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=registry; depth=3; License text from /mnt/c/Users/dylan/Silicon Sandbox/Library/PackageCache/com.unity.test-framework.performance@0840f58e4562/LICENSE.md (not classified as an SPDX standard license)"
+      "comment": "Unity source=registry; depth=3; License text from Library/PackageCache/com.unity.test-framework.performance@0840f58e4562/LICENSE.md (not classified as an SPDX standard license)"
     },
     {
       "SPDXID": "SPDXRef-Package-com.unity.timeline",
@@ -691,7 +691,7 @@
       "licenseDeclared": "LicenseRef-Unity-73111ef76bd8a502",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=registry; depth=0; License text from /mnt/c/Users/dylan/Silicon Sandbox/Library/PackageCache/com.unity.timeline@7f8b2fb101b6/LICENSE.md (not classified as an SPDX standard license)"
+      "comment": "Unity source=registry; depth=0; License text from Library/PackageCache/com.unity.timeline@7f8b2fb101b6/LICENSE.md (not classified as an SPDX standard license)"
     },
     {
       "SPDXID": "SPDXRef-Package-com.unity.ugui",
@@ -703,7 +703,7 @@
       "licenseDeclared": "LicenseRef-Unity-a8e0cae87b2edb8c",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=builtin; depth=0; License text from /mnt/c/Users/dylan/Silicon Sandbox/Library/PackageCache/com.unity.ugui@bb329a87fcdc/LICENSE.md (not classified as an SPDX standard license)"
+      "comment": "Unity source=builtin; depth=0; License text from Library/PackageCache/com.unity.ugui@bb329a87fcdc/LICENSE.md (not classified as an SPDX standard license)"
     },
     {
       "SPDXID": "SPDXRef-Package-com.unity.visualscripting",
@@ -715,7 +715,7 @@
       "licenseDeclared": "LicenseRef-Unity-38110f8f09a9b782",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: Unity Technologies",
-      "comment": "Unity source=registry; depth=0; License text from /mnt/c/Users/dylan/Silicon Sandbox/Library/PackageCache/com.unity.visualscripting@191c0d7e3b69/LICENSE.md (not classified as an SPDX standard license)"
+      "comment": "Unity source=registry; depth=0; License text from Library/PackageCache/com.unity.visualscripting@191c0d7e3b69/LICENSE.md (not classified as an SPDX standard license)"
     }
   ],
   "relationships": [
@@ -1460,6 +1460,14 @@
       "licenseId": "LicenseRef-Unity-5b1a26ff2ca6e6e7",
       "extractedText": "com.unity.mathematics copyright \u00a9 2023 Unity Technologies ApS\n\nLicensed under the Unity Companion License for Unity-dependent projects (see https://unity3d.com/legal/licenses/unity_companion_license).\nUnless expressly provided otherwise, the Software under this license is made available strictly on an \u201cAS IS\u201d BASIS WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED. Please review the license for details on these and other terms and conditions.",
       "name": "License text supplied with com.unity.mathematics"
+    },
+    {
+      "licenseId": "LicenseRef-Unity-Editor-Software-Terms",
+      "name": "Unity Editor Software Terms",
+      "extractedText": "Unity built-in engine module. Refer to the Unity Editor Software Terms at https://unity.com/legal/editor-terms-of-service/software.",
+      "seeAlso": [
+        "https://unity.com/legal/editor-terms-of-service/software"
+      ]
     },
     {
       "licenseId": "LicenseRef-Unity-e6522fc3e87017b4",
