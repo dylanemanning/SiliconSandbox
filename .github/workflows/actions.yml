@@ -204,5 +204,5 @@ jobs:
       - name: Upload Windows build
         uses: actions/upload-artifact@v4
         with:
-          name: SiliconSandbox-${{ github.event.number || github.ref }}-Windows
+          name: SiliconSandbox-${{ github.event.number || github.run_number }}-Windows
           path: build
