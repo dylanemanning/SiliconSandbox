@@ -139,6 +139,17 @@ jobs:
             exit 1
           }
 
+      - name: Locate SBOM scripts
+        run: |
+          echo "Current directory:"
+          pwd
+
+          echo "Available SBOM scripts:"
+          find . -type f \( -name "generate_unity_sbom.py" -o -name "merge_sboms.py" \) -print
+
+          echo "Root directory contents:"
+          ls -la
+
       # MODIFIED: Generate the Unity SBOM as an intermediate file
       - name: Generate Unity package SBOM
         run: |
