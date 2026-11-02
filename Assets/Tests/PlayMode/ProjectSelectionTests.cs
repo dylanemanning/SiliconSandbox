@@ -313,8 +313,11 @@ public class ProjectSelectionTests
     public IEnumerator TC_1_3_DeleteProjectRequiresConfirmation()
     {
         const string worldName = "TC_DeleteConfirmed";
+        const string remainingWorldName = "TC_DeleteConfirmed_Remaining";
         string savePath = Path.Combine(worldsDirectory, worldName + ".json");
+        string remainingSavePath = Path.Combine(worldsDirectory, remainingWorldName + ".json");
         File.WriteAllText(savePath, "{\"worldName\":\"" + worldName + "\",\"blocks\":[]}");
+        File.WriteAllText(remainingSavePath, "{\"worldName\":\"" + remainingWorldName + "\",\"blocks\":[]}");
 
         yield return LoadMainMenu();
 
@@ -325,9 +328,16 @@ public class ProjectSelectionTests
         Assert.IsNotNull(row, "The saved world should have a row in the load list.");
 
         Button deleteButton = row.Find("DeleteWorldButton").GetComponent<Button>();
+        Assert.AreEqual(new Color(0.72f, 0.24f, 0.22f, 1f), deleteButton.colors.normalColor);
         deleteButton.onClick.Invoke();
 
         Assert.IsTrue(File.Exists(savePath), "Opening confirmation must not delete the save.");
+        TMPro.TMP_Text confirmationMessage = menu.LoadPanel.transform
+            .Find("DeleteWorldConfirmation/ConfirmationDialog/ConfirmationMessage")
+            .GetComponent<TMPro.TMP_Text>();
+        Assert.AreEqual(TMPro.TextWrappingModes.Normal, confirmationMessage.textWrappingMode);
+        Assert.AreEqual(TMPro.TextOverflowModes.Ellipsis, confirmationMessage.overflowMode);
+        Assert.IsTrue(confirmationMessage.enableAutoSizing);
 
         Button cancelButton = menu.LoadPanel.transform
             .Find("DeleteWorldConfirmation/ConfirmationDialog/ConfirmationButtons/CancelDeleteButton")
@@ -348,6 +358,12 @@ public class ProjectSelectionTests
             WorldSaveSystem.GetSavedWorldNames().Contains(worldName),
             "Deleted worlds should no longer appear in the saved-world list."
         );
+        yield return null;
+
+        Transform remainingRow = menu.savedWorldContainer.Find("SavedWorldRow_" + remainingWorldName);
+        Assert.IsNotNull(remainingRow, "The remaining world should still have a row.");
+        Button remainingLoadButton = remainingRow.Find("LoadWorldButton").GetComponent<Button>();
+        Assert.AreEqual(menu.menuStyler.buttonBackground, remainingLoadButton.colors.normalColor);
     }
 
     [UnityTest]

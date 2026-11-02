@@ -17,6 +17,7 @@ public class Player : MonoBehaviour
     public GameObject blockHighlighter; // Visual indicator for targeted block
     public Block[] blockPalette; // Array of different block prefabs (Grass, Wire, Voltage, etc.)
     [SerializeField] private Material wirePreviewMaterial;
+    private PackagingWandController packagingWandController;
     float xRotation;
     float yRotation;
     bool isGrounded;
@@ -42,6 +43,9 @@ public class Player : MonoBehaviour
     void Start()
     {
         WorldSaveSystem.GetOrCreate(blockPalette, null);
+        packagingWandController = GetComponent<PackagingWandController>();
+        if (packagingWandController == null)
+            packagingWandController = gameObject.AddComponent<PackagingWandController>();
         rb = GetComponent<Rigidbody>();
         rb.freezeRotation = true; // Crucial for player controllers
         spawnPosition = transform.position;
@@ -59,7 +63,8 @@ public class Player : MonoBehaviour
     {
         // The inventory can close before this Update runs; block gameplay for the
         // rest of that frame so the closing input cannot also affect the world.
-        if (PauseManager.IsPaused || InventoryGrid.IsOpen || InventoryGrid.ClosedThisFrame) return;
+        if (PauseManager.IsPaused || InventoryGrid.IsOpen || InventoryGrid.ClosedThisFrame ||
+            PackagingWandController.IsConfirmationOpen) return;
 
         CheckFall();
         CheckRotation();
@@ -76,6 +81,22 @@ public class Player : MonoBehaviour
         if (wireRouteAnchor != null)
         {
             UpdateWireRoutePreview();
+        }
+
+        bool packagingWandSelected = hotbar != null && hotbar.IsPackagingWandSelected;
+        packagingWandController.HandleTool(packagingWandSelected, targetBlock, targetRaycastHit);
+        if (packagingWandSelected)
+        {
+            if (blockHighlighter != null) blockHighlighter.SetActive(false);
+            breakSeconds = 0f;
+            breakingBlock = null;
+
+            if (KeybindSettings.WasMouseButtonPressedThisFrame(KeybindSettings.BreakMouseButton))
+            {
+                packagingWandController.CancelSelection();
+            }
+
+            return;
         }
 
         bool breakHeld = KeybindSettings.IsMouseButtonPressed(KeybindSettings.BreakMouseButton);

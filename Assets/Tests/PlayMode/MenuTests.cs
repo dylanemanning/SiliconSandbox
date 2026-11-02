@@ -274,6 +274,11 @@ public class MenuTests : InputTestFixture
 
         Assert.IsNotNull(pauseTitle);
         Assert.AreEqual(TextAlignmentOptions.Center, pauseTitle.alignment);
+        Assert.AreEqual(styler.fontAsset, pauseTitle.font);
+
+        Button resumeButton = pausePanel.transform.Find("Button Container/ResumeButton").GetComponent<Button>();
+        Assert.AreEqual(styler.buttonBackground, resumeButton.colors.normalColor);
+        Assert.AreEqual(styler.fontAsset, resumeButton.GetComponentInChildren<TMP_Text>(true).font);
 
         // TMP_Text worldNameLabel = pausePanel.transform
         //     .Find("currentWorldName")

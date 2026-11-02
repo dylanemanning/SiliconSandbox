@@ -36,7 +36,7 @@ public static class InventoryBlockImageBuilder
         InstallImages();
         AssetDatabase.SaveAssets();
         CapturePreview();
-        Debug.Log("INVENTORY_IMAGES_BUILD_PASS: 13 catalog entries, top-down block sprites and an angled wire sprite, 23 empty slots.");
+        Debug.Log("INVENTORY_IMAGES_BUILD_PASS: 14 catalog entries including the packaging wand, top-down block sprites and an angled wire sprite, 22 empty slots.");
     }
 
     static void GenerateIcons()
@@ -173,9 +173,21 @@ public static class InventoryBlockImageBuilder
         Directory.CreateDirectory("Assets/Inventory");AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
         var catalog=AssetDatabase.LoadAssetAtPath<InventoryCatalog>(CatalogPath);
         if(catalog==null){catalog=ScriptableObject.CreateInstance<InventoryCatalog>();AssetDatabase.CreateAsset(catalog,CatalogPath);}
-        var items=new InventoryItem[Models.Length];
+        var items=new InventoryItem[Models.Length + 1];
         for(int i=0;i<items.Length;i++)
         {
+            if (i == Models.Length)
+            {
+                items[i] = new InventoryItem(
+                    "packaging_wand",
+                    "Packaging wand",
+                    null,
+                    AssetDatabase.LoadAssetAtPath<Sprite>(IconFolder + "/packaging_wand.png"),
+                    InventoryItemType.PackagingWand);
+                if (items[i].Icon == null) throw new Exception("Missing inventory catalog icon: Packaging wand");
+                continue;
+            }
+
             var prefab=AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/"+Prefabs[i]+".prefab");
             var icon=AssetDatabase.LoadAssetAtPath<Sprite>(IconFolder+"/"+Models[i]+".png");
             if(prefab==null || icon==null) throw new Exception("Missing inventory catalog asset: "+Labels[i]);
