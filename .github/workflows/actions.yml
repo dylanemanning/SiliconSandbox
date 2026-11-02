@@ -139,22 +139,11 @@ jobs:
             exit 1
           }
 
-      - name: Locate SBOM scripts
-        run: |
-          echo "Current directory:"
-          pwd
-
-          echo "Available SBOM scripts:"
-          find . -type f \( -name "generate_unity_sbom.py" -o -name "merge_sboms.py" \) -print
-
-          echo "Root directory contents:"
-          ls -la
-
       # MODIFIED: Generate the Unity SBOM as an intermediate file
       - name: Generate Unity package SBOM
         run: |
           mkdir -p doc/sbom-parts
-          python3 Assets/scripts/generate_unity_sbom.py --output doc/sbom-parts/unity.json
+          python3 Assets/Scripts/generate_unity_sbom.py --output doc/sbom-parts/unity.json
 
       # NEW: Scan the compiled Windows game
       - name: Scan built Windows game
@@ -178,7 +167,7 @@ jobs:
       # NEW: Merge the scans into one final SPDX SBOM
       - name: Merge SPDX package inventories
         run: |
-          python3 Assets/scripts/merge_sboms.py \
+          python3 Assets/Scripts/merge_sboms.py \
             --unity doc/sbom-parts/unity.json \
             --scans doc/sbom-parts/windows.json doc/sbom-parts/plugins.json doc/sbom-parts/native.json \
             --output doc/SBOM.json
