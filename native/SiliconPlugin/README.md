@@ -10,12 +10,13 @@ src/gates.h            Gate type and status enums, EvaluateGate declaration
 src/gates.cpp          The evaluator. Plain C++ — no Unity, no DLL awareness
 src/netlist.h          Netlist input structs, CircuitGraph, NetlistStatus, ParseNetlist declaration
 src/netlist.cpp        The netlist parser (#9). Plain C++, same rules as gates.cpp
-src/simulator.h        SimulateStatus, EvaluateCircuit declaration
-src/simulator.cpp      One-pass whole-circuit evaluator (#12). Plain C++, same rules as gates.cpp
+src/simulator.h        SimulateStatus, EvaluateCircuit and TickCircuit declarations
+src/simulator.cpp      Zero-delay one-pass evaluator (#12) and unit-delay tick (#10). Plain C++
 src/plugin.cpp         The extern "C" export surface. The only DLL-aware file
 tests/truth_table.cpp  Gate evaluator verification. Builds and runs without Unity
 tests/graph_parser.cpp Netlist parser verification. Builds and runs without Unity
 tests/circuit_eval.cpp Silicon_EvaluateCircuit verification. Builds and runs without Unity
+tests/tick.cpp         Silicon_LoadCircuit / Silicon_Tick verification (#10). Builds and runs without Unity
 tests/PluginCheck/     Loads the committed library through LogicEngine.cs (.NET, Windows/macOS). Run in CI
 ```
 
@@ -54,6 +55,17 @@ g++ -Wall -Wextra -o circuit_eval.exe tests/circuit_eval.cpp src/plugin.cpp src/
 ./circuit_eval.exe
 ```
 
+**Tick tests** — the unit-delay simulation the game runs (#10): loaded-circuit lifetime and error
+codes, the issue's 3-gate circuit against the zero-delay evaluator for every input, one tick of
+delay per gate (none for sources and LEDs), unwired pins, an `A AND NOT A` glitch, inverter-ring
+oscillators, a NOR SR latch (including the S = R = 1 release race) and a gated D latch. Exits
+non-zero on any failure.
+
+```sh
+g++ -Wall -Wextra -o tick.exe tests/tick.cpp src/plugin.cpp src/netlist.cpp src/simulator.cpp src/gates.cpp
+./tick.exe
+```
+
 **PluginCheck** loads the committed library for the host platform through the real
 `LogicEngine.cs`, checks every gate truth table and the error contract, evaluates whole circuits,
 and checks that debug sections were stripped. CI runs it on both Windows and macOS. Needs
@@ -90,8 +102,9 @@ rebuild adds its full size to the repo history permanently. Unstripped, the stat
 `.debug_*` sections. If you forget, `strip --strip-unneeded SiliconPlugin.dll` fixes an existing
 build without touching the code.
 
-Check the exports with `objdump -p SiliconPlugin.dll | grep Silicon_` — there should be two,
-`Silicon_EvaluateGate` and `Silicon_EvaluateCircuit`.
+Check the exports with `objdump -p SiliconPlugin.dll | grep Silicon_` — there should be five:
+`Silicon_EvaluateGate`, `Silicon_EvaluateCircuit`, `Silicon_LoadCircuit`, `Silicon_Tick` and
+`Silicon_UnloadCircuit`.
 
 Then copy `SiliconPlugin.dll` into `Assets/Plugins/x86_64/`. Build output left in this directory is
 gitignored; the committed binary is the copy under `Assets/`.
@@ -148,7 +161,28 @@ A missing native library on a supported platform is an error, not a passing skip
 macOS native checks are also part of BuildSystem alongside the existing Windows checks. Full
 Windows player validation remains in the Windows build job; validate the macOS player locally.
 
+## Simulation model (#10)
+
+The game runs a **unit-delay** simulation: `Silicon_LoadCircuit` parses the circuit once when its
+structure changes, and `Silicon_Tick` advances it one tick at a fixed rate. Every gate has exactly
+one tick of propagation delay (its output at tick t+1 comes from its inputs at tick t); sources,
+LEDs and wires have none. This is the same model as a Verilog/SystemVerilog gate-level simulation
+with `#1` on every gate, and the same as Minecraft redstone. It means the game shows real timing:
+signals ripple one gate per tick, unequal paths glitch, rings of inverters oscillate, latches hold
+state, and a clock faster than the circuit's longest path breaks it.
+
+The signal values live in the caller's `states` array, not in the DLL; the DLL keeps only the parsed
+graph. `Silicon_Tick` returns how many nodes changed, and 0 means the circuit has settled.
+
+Known limitation of equal delays: identical gates racing each other stay in lock-step instead of
+one winning (an SR latch released from S = R = 1 oscillates; a ring of inverters started all-low
+oscillates in phase). A Verilog simulation shows X in the same places. Real hardware breaks the tie
+with noise.
+
 ## Adding to the exported surface
+
+Every new export must also be added to the `-exported_symbol` list in `build-macos.sh`, or the
+macOS library will not export it.
 
 `LogicEngine.cs` holds mirrored copies of `GateType` and `GateStatus` (`gates.h`), `NetlistStatus`,
 `NetlistNode` and `NetlistConnection` (`netlist.h`), and `SimulationStatus` (`simulator.h`). Nothing
