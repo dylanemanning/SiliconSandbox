@@ -67,7 +67,7 @@ g++ -Wall -Wextra -o tick.exe tests/tick.cpp src/plugin.cpp src/netlist.cpp src/
 ```
 
 **PluginCheck** loads the committed library for the host platform through the real
-`LogicEngine.cs`, checks every gate truth table and the error contract, evaluates whole circuits,
+`LogicEngine.cs`, checks every gate truth table and the error contract, evaluates whole circuits, ticks them (ripple, SR latch, oscillator, tick errors),
 and checks that debug sections were stripped. CI runs it on both Windows and macOS. Needs
 .NET 8; run from the repository root:
 

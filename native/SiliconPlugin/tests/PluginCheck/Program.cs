@@ -58,6 +58,12 @@ internal static class Program
         CheckMultipleDriversRejected();
         CheckStatesLengthEnforced();
 
+        CheckTickRipple();
+        CheckTickSrLatch();
+        CheckTickOscillator();
+        CheckTickErrors();
+        LogicEngine.UnloadCircuit();
+
         Console.WriteLine(new string('-', 40));
         if (failures == 0)
         {
@@ -293,6 +299,133 @@ internal static class Program
             case GateType.Not:    return inputs[0] == 1 ? 0 : 1;
             case GateType.Buffer: return inputs[0];
             default: throw new ArgumentOutOfRangeException(nameof(gate), gate, "Not an evaluable gate");
+        }
+    }
+
+    // ---- Unit-delay tick checks (#10) -------------------------------------------
+
+    // Source -> BUFFER -> BUFFER -> LED: the LED rises exactly two ticks after
+    // the source, one per gate. Nodes: 0 source, 1 and 2 buffers, 3 LED.
+    private static void CheckTickRipple()
+    {
+        NetlistNode[] nodes =
+        {
+            new NetlistNode(0, GateType.Source), new NetlistNode(1, GateType.Buffer),
+            new NetlistNode(2, GateType.Buffer), new NetlistNode(3, GateType.Output),
+        };
+        NetlistConnection[] connections =
+        {
+            new NetlistConnection(0, 1, 0), new NetlistConnection(1, 2, 0), new NetlistConnection(2, 3, 0),
+        };
+        try
+        {
+            CircuitResult loaded = LogicEngine.LoadCircuit(nodes, connections);
+            var states = new[] { 1, 0, 0, 0 };
+            int first = LogicEngine.Tick(states);
+            int led1 = states[3];
+            int second = LogicEngine.Tick(states);
+            int led2 = states[3];
+            int third = LogicEngine.Tick(states);
+            bool ok = loaded == CircuitResult.Complete && led1 == 0 && led2 == 1 &&
+                      first == 1 && second == 2 && third == 0;
+            Record(ok, "tick: two buffers delay the LED by two ticks, then it settles",
+                   $"load {loaded}, LED {led1} then {led2}, changed {first}/{second}/{third}");
+        }
+        catch (Exception e)
+        {
+            Record(false, "tick: ripple", $"threw {e.GetType().Name}: {e.Message}");
+        }
+    }
+
+    // NOR SR latch: set, hold, reset, hold. Nodes: 0 S, 1 R, 2 Q, 3 Qn.
+    private static void CheckTickSrLatch()
+    {
+        NetlistNode[] nodes =
+        {
+            new NetlistNode(0, GateType.Source), new NetlistNode(1, GateType.Source),
+            new NetlistNode(2, GateType.Nor),    new NetlistNode(3, GateType.Nor),
+        };
+        NetlistConnection[] connections =
+        {
+            new NetlistConnection(1, 2, 0), new NetlistConnection(3, 2, 1),
+            new NetlistConnection(0, 3, 0), new NetlistConnection(2, 3, 1),
+        };
+        try
+        {
+            CircuitResult loaded = LogicEngine.LoadCircuit(nodes, connections);
+            var states = new int[4];
+            string trace = "";
+            foreach (var (s, r) in new[] { (1, 0), (0, 0), (0, 1), (0, 0) })
+            {
+                states[0] = s;
+                states[1] = r;
+                for (int t = 0; t < 8 && LogicEngine.Tick(states) != 0; t++) { }
+                trace += states[2];
+            }
+            Record(loaded == CircuitResult.HasFeedbackLoop && trace == "1100",
+                   "tick: NOR SR latch sets, holds, resets and holds",
+                   $"load {loaded}, Q after set/hold/reset/hold = {trace}");
+        }
+        catch (Exception e)
+        {
+            Record(false, "tick: SR latch", $"threw {e.GetType().Name}: {e.Message}");
+        }
+    }
+
+    // A NOT wired to its own input flips every tick and never settles.
+    private static void CheckTickOscillator()
+    {
+        NetlistNode[] nodes = { new NetlistNode(0, GateType.Not) };
+        NetlistConnection[] connections = { new NetlistConnection(0, 0, 0) };
+        try
+        {
+            LogicEngine.LoadCircuit(nodes, connections);
+            var states = new int[1];
+            string trace = "";
+            bool alwaysChanged = true;
+            for (int t = 0; t < 4; t++)
+            {
+                alwaysChanged &= LogicEngine.Tick(states) == 1;
+                trace += states[0];
+            }
+            Record(trace == "1010" && alwaysChanged, "tick: NOT into itself oscillates every tick",
+                   $"trace {trace}, changed every tick: {alwaysChanged}");
+        }
+        catch (Exception e)
+        {
+            Record(false, "tick: oscillator", $"threw {e.GetType().Name}: {e.Message}");
+        }
+    }
+
+    // Wrong length and nothing loaded are refused with the right codes, and the
+    // states array is not written.
+    private static void CheckTickErrors()
+    {
+        NetlistNode[] nodes = { new NetlistNode(0, GateType.Source), new NetlistNode(1, GateType.Output) };
+        NetlistConnection[] connections = { new NetlistConnection(0, 1, 0) };
+        LogicEngine.LoadCircuit(nodes, connections);
+        CheckTickFails("tick: wrong-length states rejected", new[] { 7, 7, 7 }, SimulationStatus.NodeCount);
+        LogicEngine.UnloadCircuit();
+        CheckTickFails("tick: nothing loaded rejected", new[] { 7, 7 }, SimulationStatus.NotLoaded);
+    }
+
+    private static void CheckTickFails(string name, int[] states, SimulationStatus expected)
+    {
+        int[] before = (int[])states.Clone();
+        try
+        {
+            LogicEngine.Tick(states);
+            Record(false, name, "was accepted");
+        }
+        catch (LogicEngineException e)
+        {
+            bool untouched = string.Join(",", states) == string.Join(",", before);
+            Record(e.StatusCode == (int)expected && untouched, name,
+                   $"status {e.StatusCode}, states untouched: {untouched}");
+        }
+        catch (Exception e)
+        {
+            Record(false, name, $"threw {e.GetType().Name}: {e.Message}");
         }
     }
 
