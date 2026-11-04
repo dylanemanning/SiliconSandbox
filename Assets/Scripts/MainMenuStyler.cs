@@ -536,6 +536,7 @@ public class MainMenuStyler : MonoBehaviour
     {
         foreach (var button in StyleRoot.GetComponentsInChildren<Button>(true))
         {
+            bool isDeleteButton = button.name == "DeleteWorldButton";
             var image = button.GetComponent<Image>();
             if (image != null)
             {
@@ -544,10 +545,10 @@ public class MainMenuStyler : MonoBehaviour
             }
 
             var colors = button.colors;
-            colors.normalColor = buttonBackground;
-            colors.highlightedColor = buttonHighlight;
-            colors.selectedColor = buttonHighlight;
-            colors.pressedColor = buttonPressed;
+            colors.normalColor = isDeleteButton ? new Color(0.72f, 0.24f, 0.22f, 1f) : buttonBackground;
+            colors.highlightedColor = isDeleteButton ? new Color(1f, 0.45f, 0.4f, 1f) : buttonHighlight;
+            colors.selectedColor = colors.highlightedColor;
+            colors.pressedColor = isDeleteButton ? new Color(0.55f, 0.12f, 0.1f, 1f) : buttonPressed;
             colors.disabledColor = new Color(0.55f, 0.59f, 0.56f, 0.65f);
             button.colors = colors;
 
@@ -653,6 +654,12 @@ public class MainMenuStyler : MonoBehaviour
                 || text.GetComponentInParent<TMP_InputField>(true) != null
                 || (backdropRoot != null && text.transform.IsChildOf(backdropRoot)))
             {
+                continue;
+            }
+
+            if (text.GetComponentInParent<TMP_Dropdown>(true) != null)
+            {
+                ApplyTextStyle(text, MenuTextRole.Button);
                 continue;
             }
 

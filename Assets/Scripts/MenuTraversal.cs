@@ -39,6 +39,7 @@ public class MenuTraversal : MonoBehaviour
     {
         EnsureStyler();
         ResolveSettingsControlsPanel();
+        InitializeVideoSettingsMenu();
 
         mainMenuPanel.SetActive(true);
         LoadPanel.SetActive(false);
@@ -258,8 +259,14 @@ public class MenuTraversal : MonoBehaviour
             message.gameObject.name = "ConfirmationMessage";
             message.text = $"Delete '{worldName}'?\nThis save cannot be restored.";
             message.alignment = TextAlignmentOptions.Center;
+            message.verticalAlignment = VerticalAlignmentOptions.Middle;
+            message.textWrappingMode = TextWrappingModes.Normal;
+            message.overflowMode = TextOverflowModes.Ellipsis;
             message.enableAutoSizing = true;
             message.fontSize = 24f;
+            message.fontSizeMin = 14f;
+            message.fontSizeMax = 24f;
+            message.color = new Color(146, 146, 146, 255);
             RectTransform messageRect = message.rectTransform;
             messageRect.anchorMin = new Vector2(0.05f, 0.42f);
             messageRect.anchorMax = new Vector2(0.95f, 0.95f);
@@ -311,6 +318,10 @@ public class MenuTraversal : MonoBehaviour
         {
             CloseDeleteConfirmation();
             PopulateSavedWorlds();
+            if (menuStyler != null)
+            {
+                menuStyler.Apply();
+            }
         }
     }
 
@@ -467,6 +478,7 @@ public class MenuTraversal : MonoBehaviour
         settingsPanel.SetActive(true);
 
         ResolveSettingsControlsPanel();
+        InitializeVideoSettingsMenu();
         if (settingsControlsPanel != null)
         {
             ControlsKeybindsMenu controlsMenu = settingsControlsPanel.GetComponent<ControlsKeybindsMenu>();
@@ -502,6 +514,19 @@ public class MenuTraversal : MonoBehaviour
         {
             menuStyler.Apply();
         }
+    }
+
+    private void InitializeVideoSettingsMenu()
+    {
+        if (settingsVideoPanel == null) return;
+
+        VideoSettingsMenu videoSettingsMenu = settingsVideoPanel.GetComponent<VideoSettingsMenu>();
+        if (videoSettingsMenu == null)
+        {
+            videoSettingsMenu = settingsVideoPanel.AddComponent<VideoSettingsMenu>();
+        }
+
+        videoSettingsMenu.Initialize();
     }
 
     public void openControlsTab()

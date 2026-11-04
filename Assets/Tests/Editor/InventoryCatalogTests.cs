@@ -9,25 +9,34 @@ public class InventoryCatalogTests
     InventoryCatalog Catalog => AssetDatabase.LoadAssetAtPath<InventoryCatalog>(InventoryBlockImageBuilder.CatalogPath);
 
     [Test]
-    public void CatalogContainsEveryComponentTypeWithUniqueIdsIconsAndPlaceablePrefabs()
+    public void CatalogContainsEveryComponentTypeAndThePackagingWand()
     {
         Assert.That(Catalog,Is.Not.Null);
-        Assert.That(Catalog.Items.Count,Is.EqualTo(13));
-        Assert.That(Catalog.Items.Select(i=>i.Id).Distinct().Count(),Is.EqualTo(13));
-        Assert.That(Catalog.Items.Select(i=>i.Icon).Distinct().Count(),Is.EqualTo(13));
+        Assert.That(Catalog.Items.Count,Is.EqualTo(14));
+        Assert.That(Catalog.Items.Select(i=>i.Id).Distinct().Count(),Is.EqualTo(14));
+        Assert.That(Catalog.Items.Select(i=>i.Icon).Distinct().Count(),Is.EqualTo(14));
         foreach(var item in Catalog.Items)
         {
             Assert.That(item.DisplayName,Is.Not.Empty);
-            Assert.That(item.Prefab,Is.Not.Null,item.Id);
             Assert.That(item.Icon,Is.Not.Null,item.Id);
-            Assert.That(PrefabUtility.IsPartOfPrefabAsset(item.Prefab),Is.True,item.Id);
+            if (item.ItemType == InventoryItemType.PackagingWand)
+            {
+                Assert.That(item.Id,Is.EqualTo("packaging_wand"));
+                Assert.That(item.Prefab,Is.Null);
+            }
+            else
+            {
+                Assert.That(item.Prefab,Is.Not.Null,item.Id);
+                Assert.That(PrefabUtility.IsPartOfPrefabAsset(item.Prefab),Is.True,item.Id);
+            }
         }
-        var gates=Catalog.Items.Select(i=>i.Prefab.GetComponent<GateBlock>()).Where(g=>g!=null).ToArray();
+        var blocks = Catalog.Items.Where(i=>i.ItemType==InventoryItemType.Block).ToArray();
+        var gates=blocks.Select(i=>i.Prefab.GetComponent<GateBlock>()).Where(g=>g!=null).ToArray();
         Assert.That(gates.Select(g=>g.GateType).Distinct().Count(),Is.EqualTo(8));
-        Assert.That(Catalog.Items.Count(i=>i.Prefab.GetComponent<LogicWireBlock>()!=null),Is.EqualTo(1));
-        Assert.That(Catalog.Items.Count(i=>i.Prefab.GetComponent<LogicClockSource>()!=null),Is.EqualTo(1));
-        Assert.That(Catalog.Items.Count(i=>i.Prefab.GetComponent<StateViewerBlock>()!=null),Is.EqualTo(1));
-        Assert.That(Catalog.Items.Count(i=>i.Prefab.name=="Block"),Is.EqualTo(1));
+        Assert.That(blocks.Count(i=>i.Prefab.GetComponent<LogicWireBlock>()!=null),Is.EqualTo(1));
+        Assert.That(blocks.Count(i=>i.Prefab.GetComponent<LogicClockSource>()!=null),Is.EqualTo(1));
+        Assert.That(blocks.Count(i=>i.Prefab.GetComponent<StateViewerBlock>()!=null),Is.EqualTo(1));
+        Assert.That(blocks.Count(i=>i.Prefab.name=="Block"),Is.EqualTo(1));
         Assert.That(Catalog.Items.Count(i=>i.Id=="constant_signal"),Is.EqualTo(1));
     }
 
@@ -36,6 +45,8 @@ public class InventoryCatalogTests
     {
         foreach(var item in Catalog.Items)
         {
+            if (item.ItemType == InventoryItemType.PackagingWand) continue;
+
             string path=AssetDatabase.GetAssetPath(item.Icon);
             var importer=(TextureImporter)AssetImporter.GetAtPath(path);
             Assert.That(importer.textureType,Is.EqualTo(TextureImporterType.Sprite));
@@ -56,6 +67,18 @@ public class InventoryCatalogTests
             }
             finally { Object.DestroyImmediate(image); }
         }
+    }
+
+    [Test]
+    public void PackagingWandHasItsOwnVisibleIconWithoutAPlaceablePrefab()
+    {
+        var wand = Catalog.Items.Single(item => item.ItemType == InventoryItemType.PackagingWand);
+
+        Assert.That(wand.Prefab, Is.Null);
+        Assert.That(wand.DisplayName, Is.EqualTo("Packaging wand"));
+        Assert.That(wand.Icon, Is.Not.Null);
+        Assert.That(wand.Icon.texture.width, Is.EqualTo(256));
+        Assert.That(wand.Icon.texture.height, Is.EqualTo(256));
     }
 
     [Test]

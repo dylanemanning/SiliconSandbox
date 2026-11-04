@@ -17,5 +17,7 @@ public class GameplayArtLighting : MonoBehaviour
             camera.allowHDR = true;
             camera.GetUniversalAdditionalCameraData().renderPostProcessing = true;
         }
+
+        VideoSettingsMenu.ApplySettings();
     }
 }

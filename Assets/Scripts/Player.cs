@@ -17,6 +17,7 @@ public partial class Player : MonoBehaviour
     public GameObject blockHighlighter; // Visual indicator for targeted block
     public Block[] blockPalette; // Array of different block prefabs (Grass, Wire, Voltage, etc.)
     [SerializeField] private Material wirePreviewMaterial;
+    private PackagingWandController packagingWandController;
     float xRotation;
     float yRotation;
     bool isGrounded;
@@ -35,6 +36,9 @@ public partial class Player : MonoBehaviour
     void Start()
     {
         WorldSaveSystem.GetOrCreate(blockPalette, null);
+        packagingWandController = GetComponent<PackagingWandController>();
+        if (packagingWandController == null)
+            packagingWandController = gameObject.AddComponent<PackagingWandController>();
         rb = GetComponent<Rigidbody>();
         rb.freezeRotation = true; // Crucial for player controllers
         spawnPosition = transform.position;
@@ -52,7 +56,7 @@ public partial class Player : MonoBehaviour
     {
         UpdateWireFeedback();
         bool cancelled = ConsumeWireCancelThisFrame();
-        if (PauseManager.IsPaused || InventoryGrid.IsOpen || InventoryGrid.ClosedThisFrame)
+        if (PauseManager.IsPaused || InventoryGrid.IsOpen || InventoryGrid.ClosedThisFrame || PackagingWandController.IsConfirmationOpen)
         {
             CancelWireRoute();
             return;
@@ -63,6 +67,33 @@ public partial class Player : MonoBehaviour
         CheckMovement();
         CheckJump();
         CheckTargetBlock();
+
+        //bool routeWasActive = wireRouteAnchor != null;
+        //if (routeWasActive && !IsWireSelected())
+        //{
+        //    CancelWireRoute();
+        //}
+
+        //if (wireRouteAnchor != null)
+        //{
+        //    UpdateWireRoutePreview();
+        //}
+
+        bool packagingWandSelected = hotbar != null && hotbar.IsPackagingWandSelected;
+        packagingWandController.HandleTool(packagingWandSelected, targetBlock, targetRaycastHit);
+        if (packagingWandSelected)
+        {
+            if (blockHighlighter != null) blockHighlighter.SetActive(false);
+            breakSeconds = 0f;
+            breakingBlock = null;
+
+            if (KeybindSettings.WasMouseButtonPressedThisFrame(KeybindSettings.BreakMouseButton))
+            {
+                packagingWandController.CancelSelection();
+            }
+
+            return;
+        }
 
         bool wireConsumed = ProcessWireInput(out bool consumeBreak);
         bool breakHeld = KeybindSettings.IsMouseButtonPressed(KeybindSettings.BreakMouseButton);
