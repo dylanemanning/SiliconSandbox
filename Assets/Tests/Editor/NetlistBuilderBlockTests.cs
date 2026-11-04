@@ -11,7 +11,7 @@
 // registry stays empty. That is why the builder takes its blocks as an argument.
 //
 // The first fixture is pure C# and runs everywhere. The second calls the native
-// plugin and, like LogicEngineTests, only runs in a Windows editor.
+// plugin and, like LogicEngineTests, runs in Windows and macOS editors.
 
 using System.Collections.Generic;
 using System.Linq;
@@ -49,8 +49,8 @@ public abstract class PlacedBlockFixture
         return block;
     }
 
-    // Older abstract circuit fixtures use six-way junctions. Endpoint-specific tests
-    // set an explicit mask to exercise the geometry of placed wires.
+    // Abstract circuit fixtures expose all six arms. Touching neighbors connect;
+    // endpoint-specific tests replace this mask with their actual geometry.
     protected LogicWireBlock Wire(int x, int y, int z)
     {
         var wire = Place<LogicWireBlock>(x, y, z);
@@ -83,10 +83,9 @@ public abstract class PlacedBlockFixture
     //   z=4   srcB   wire   [B         ]
     //
     // At yaw 90 both inputs are on the gate's -X face: A on the anchor cell,
-    // B on the cell at -Z. The two cells facing them are side by side, and wires
-    // join on all six faces (until #63), so a wire in each would merge into one
-    // shorted network, and a source in A's cell would touch B's wire too. A is
-    // fed through a BUFFER instead: gates have no ports on their sides.
+    // B on the cell at -Z. This fixture retains a BUFFER on A to exercise direct
+    // component-to-component input wiring as well as B's wire geometry.
+    // WireConnectivitySimulationTests separately covers two parallel input wires.
     protected struct TwoInputCircuit
     {
         public GateBlock Gate, Buffer;
@@ -175,6 +174,7 @@ public class NetlistBuilderBlockTests : PlacedBlockFixture
         LogicSignalSource source = Source(0, 0, 0, 0, 90f);
         LogicWireBlock w1 = Wire(1, 0, 0);
         LogicWireBlock w2 = Wire(2, 0, 0);
+        WireTopology.Join(w1, w2);
         Led(3, 0, 0);
 
         Netlist netlist = NetlistBuilder.FromBlocks(AllPlaced());
@@ -247,17 +247,16 @@ public class NetlistBuilderBlockTests : PlacedBlockFixture
 }
 
 // Blocks -> netlist -> native engine -> values, as the simulation driver (#82)
-// will do it. Windows editor only.
+// will do it. Windows and macOS editors.
 public class NetlistToEngineTests : PlacedBlockFixture
 {
     [OneTimeSetUp]
-    public void RequireWindowsEditor()
+    public void RequireNativeSimulation()
     {
-        if (Application.platform != RuntimePlatform.WindowsEditor)
+        if (!SimulationDriver.SimulationAvailable)
         {
             Assert.Ignore(
-                "SiliconPlugin is only built for Windows x86_64, so it cannot be " +
-                $"loaded on {Application.platform}. These tests only run in a Windows editor.");
+                $"Native simulation is unsupported on {Application.platform}; Windows and macOS are supported.");
         }
     }
 
@@ -288,8 +287,7 @@ public class NetlistToEngineTests : PlacedBlockFixture
     public void SourceThroughWire_ReachesLed(int sourceState)
     {
         Source(0, 0, 0, sourceState, 90f);
-        Wire(1, 0, 0);
-        Wire(2, 0, 0);
+        WireTopology.Join(Wire(1, 0, 0), Wire(2, 0, 0));
         StateViewerBlock led = Led(3, 0, 0);
 
         Assert.AreEqual(sourceState, Evaluate()[led]);

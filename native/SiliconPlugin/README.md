@@ -16,7 +16,7 @@ src/plugin.cpp         The extern "C" export surface. The only DLL-aware file
 tests/truth_table.cpp  Gate evaluator verification. Builds and runs without Unity
 tests/graph_parser.cpp Netlist parser verification. Builds and runs without Unity
 tests/circuit_eval.cpp Silicon_EvaluateCircuit verification. Builds and runs without Unity
-tests/PluginCheck/     Loads the committed DLL through LogicEngine.cs (.NET, Windows). Run in CI
+tests/PluginCheck/     Loads the committed library through LogicEngine.cs (.NET, Windows/macOS). Run in CI
 ```
 
 The split is deliberate: `gates.cpp` stays portable and testable on its own, and everything that
@@ -54,17 +54,25 @@ g++ -Wall -Wextra -o circuit_eval.exe tests/circuit_eval.cpp src/plugin.cpp src/
 ./circuit_eval.exe
 ```
 
-**PluginCheck** — loads the *committed* `Assets/Plugins/x86_64/SiliconPlugin.dll` through the real
-`LogicEngine.cs`, checks every `GateType` against its truth table, runs a few whole circuits through
-`LogicEngine.EvaluateCircuit`, and fails if the DLL still has debug
-sections. This is what the `native-plugin` CI job runs on `windows-latest`, since the Unity test job
-runs on Linux and can't load the DLL. Needs the .NET 8 SDK; run from the repo root:
+**PluginCheck** loads the committed library for the host platform through the real
+`LogicEngine.cs`, checks every gate truth table and the error contract, evaluates whole circuits,
+and checks that debug sections were stripped. CI runs it on both Windows and macOS. Needs
+.NET 8; run from the repository root:
 
 ```sh
 dotnet run -c Release --project native/SiliconPlugin/tests/PluginCheck
 ```
 
-**The plugin:**
+With only a newer SDK/runtime installed locally, restore and run its target explicitly:
+
+```sh
+dotnet restore native/SiliconPlugin/tests/PluginCheck -p:TargetFramework=net10.0
+dotnet run --no-restore -c Release --project native/SiliconPlugin/tests/PluginCheck -p:TargetFramework=net10.0
+```
+The Unity EditMode and PlayMode tests also execute the native engine on Windows and macOS.
+Linux Unity CI skips native evaluation because no Linux plugin is shipped.
+
+**The Windows plugin:**
 
 ```sh
 g++ -shared -O2 -static -s -o SiliconPlugin.dll src/plugin.cpp src/gates.cpp src/netlist.cpp src/simulator.cpp
@@ -90,9 +98,8 @@ gitignored; the committed binary is the copy under `Assets/`.
 
 ### Requirements
 
-A 64-bit toolchain. Check with `g++ -dumpmachine` — it must report `x86_64-...`. Unity 6's editor
-and standalone player are x86_64 only, and a 32-bit build fails to load without a useful error
-message.
+A 64-bit toolchain. Check with `g++ -dumpmachine` — it must report `x86_64-...`. The Windows editor and player use the x86_64 DLL; a 32-bit build will not load.
+macOS uses the separate universal library described below.
 
 ### Gotchas
 
@@ -105,11 +112,41 @@ message.
   committed. Editor must be enabled with `OS: Windows` — Play mode loads the *Editor* entry, not
   Standalone.
 
-## Other platforms
+## macOS (Apple Silicon and Intel)
 
-Only a Windows x86_64 binary is committed. `plugin.cpp` already handles non-Windows export
-decoration via the `SILICON_API` macro, so a macOS or Linux build needs no source changes — just a
-separately compiled library committed alongside the DLL with its own platform settings.
+Windows and macOS are required development/runtime targets. Both use the same C++ sources and
+C ABI; no alternate managed simulation is substituted on the Mac.
+
+With Xcode Command Line Tools installed, close Unity and rebuild from the repository root:
+
+```sh
+bash native/SiliconPlugin/build-macos.sh
+```
+
+The script builds `arm64` and `x86_64` slices with a macOS 11 deployment target, strips local
+symbols, applies an ad-hoc signature, verifies both architectures, and installs the result at
+`Assets/Plugins/macOS/libSiliconPlugin.dylib`. Intermediate output stays in ignored `Builds/`.
+Commit the dylib and its `.meta` together. The Windows DLL remains separate and unchanged by
+this command. Rebuild both platform libraries when modifying the native engine.
+
+The importer enables this universal library for the macOS Editor and macOS standalone only.
+The Windows DLL importer remains Windows-only, so Unity never loads the wrong binary for an OS.
+The library depends only on macOS system libraries; it requires no Homebrew runtime on a tester's Mac.
+
+Verify the shipped Mac binary:
+
+```sh
+xcrun lipo -archs Assets/Plugins/macOS/libSiliconPlugin.dylib
+codesign --verify --strict Assets/Plugins/macOS/libSiliconPlugin.dylib
+otool -L Assets/Plugins/macOS/libSiliconPlugin.dylib
+dotnet run -c Release --project native/SiliconPlugin/tests/PluginCheck
+```
+
+Run Unity EditMode and PlayMode tests on a supported desktop before publishing changes. On a
+Mac these include source-to-wire-to-LED propagation, separated wires, and geometric contact edits.
+A missing native library on a supported platform is an error, not a passing skipped simulation.
+macOS native checks are also part of BuildSystem alongside the existing Windows checks. Full
+Windows player validation remains in the Windows build job; validate the macOS player locally.
 
 ## Adding to the exported surface
 

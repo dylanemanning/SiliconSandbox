@@ -7,9 +7,7 @@
 // call every GateType through the real P/Invoke path, so a stale or mismatched
 // binary shows up as a failing test instead of as wrong behaviour in play mode.
 //
-// Platform note: the only committed native library is Windows x86_64. On any
-// other editor (including the Linux runner CI uses) the plugin cannot load, so
-// the fixture is ignored there rather than failed. See OneTimeSetUp.
+// Native tests run on Windows and macOS. The Linux Unity runner skips them.
 
 using System;
 using System.Collections.Generic;
@@ -42,13 +40,12 @@ public class LogicEngineTests
     };
 
     [OneTimeSetUp]
-    public void RequireWindowsEditor()
+    public void RequireNativeSimulation()
     {
-        if (Application.platform != RuntimePlatform.WindowsEditor)
+        if (!SimulationDriver.SimulationAvailable)
         {
             Assert.Ignore(
-                "SiliconPlugin is only built for Windows x86_64, so it cannot be " +
-                $"loaded on {Application.platform}. These tests only run in a Windows editor.");
+                $"Native simulation is unsupported on {Application.platform}; Windows and macOS are supported.");
         }
     }
 

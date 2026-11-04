@@ -26,3 +26,4 @@ All objects should move coherently, the player should move at a speed and in a d
 ### Test Log  
 |Tester Name|Test Date|Success?|Additional Comments|
 |---|---|---|---|
+|Dylan Manning|11/1/26|No|While rotating the camera on diagonals I experienced notable lag and at one point the entire screen suddenly showed just sky. This was fixed upon more movement, but should not happen.|

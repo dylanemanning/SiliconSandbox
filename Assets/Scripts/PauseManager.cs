@@ -27,8 +27,7 @@ public class PauseManager : MonoBehaviour
 
     private void Update()
     {
-        if (PackagingWandController.IsConfirmationOpen) return;
-        if (InventoryGrid.ClosedThisFrame) return;
+        if (InventoryGrid.ClosedThisFrame || Player.ConsumeWireCancelThisFrame() || PackagingWandController.IsConfirmationOpen) return;
         if (KeybindSettings.WasPressedThisFrame(KeybindSettings.Pause))
         {
             TogglePause();

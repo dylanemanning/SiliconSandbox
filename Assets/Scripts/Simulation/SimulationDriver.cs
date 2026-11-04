@@ -47,14 +47,15 @@ public class SimulationDriver : MonoBehaviour
     public CircuitResult LastResult { get; private set; }
 
     /// <summary>
-    /// True on platforms that have a native SiliconPlugin build. The committed
-    /// library is Windows x86_64 only, so this is false in the Linux editor the
-    /// CI runner uses (and on a Mac). Tests that need real circuit values check
-    /// it and skip themselves where the simulation cannot run.
+    /// True on platforms with a shipped native SiliconPlugin: Windows x86_64
+    /// and macOS (Apple Silicon or Intel). Unsupported platforms such as the
+    /// Linux Unity CI runner skip native evaluation tests.
     /// </summary>
     public static bool SimulationAvailable =>
         Application.platform == RuntimePlatform.WindowsEditor ||
-        Application.platform == RuntimePlatform.WindowsPlayer;
+        Application.platform == RuntimePlatform.WindowsPlayer ||
+        Application.platform == RuntimePlatform.OSXEditor ||
+        Application.platform == RuntimePlatform.OSXPlayer;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void CreateOnStartup()
@@ -86,7 +87,7 @@ public class SimulationDriver : MonoBehaviour
             pluginUnavailable = true;
             if (!Application.isBatchMode)
             {
-                Debug.LogWarning("Circuit simulation is off: SiliconPlugin is built for Windows x86_64 only.");
+                Debug.LogWarning("Circuit simulation is off: SiliconPlugin supports Windows x86_64 and macOS only.");
             }
         }
     }
@@ -160,11 +161,11 @@ public class SimulationDriver : MonoBehaviour
         }
         catch (LogicEngineException e) when (e.InnerException is DllNotFoundException)
         {
-            // Expected on any platform without a native build (the Linux CI
-            // runner, a Mac). A warning, not an error, so PlayMode tests there
-            // are not failed by it. Logged once; the simulation stays off.
+            // A supported platform with a missing plugin is a broken install.
+            // Log once and stop calling it; never report this as a passing
+            // native simulation test.
             pluginUnavailable = true;
-            Debug.LogWarning("Circuit simulation is off: " + e.Message);
+            Debug.LogError("Circuit simulation is off: " + e.Message);
         }
         catch (LogicEngineException e)
         {
