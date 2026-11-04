@@ -1,20 +1,31 @@
 // SimulationDriver.cs — runs the placed circuit through the logic engine and
-// shows the result on the blocks (#82).
+// shows the result on the blocks (#82), as a unit-delay simulation (#10).
 //
-// Once a frame it checks LogicSignalBlock.CircuitVersion. If a block was placed
-// or broken, or a source changed, it:
-//   1. builds the netlist from every registered block (NetlistBuilder, #18),
-//   2. writes each source's value into the state array,
-//   3. evaluates the whole circuit in one native call (LogicEngine.EvaluateCircuit, #12),
-//   4. pushes the results out: gates and LEDs show their node's value; each wire
-//      shows its network's driver value, low when nothing drives it, and the
-//      error colour when two outputs drive it.
-// While nothing changes it does nothing at all.
+// The simulation model (see native/SiliconPlugin/README.md, "Simulation model"):
+// every gate has exactly one tick of propagation delay, and sources, LEDs and
+// wires have none. That is a Verilog gate-level simulation with #1 on every
+// gate, so the game shows what real logic does: signals ripple one gate per
+// tick, unequal paths glitch, rings of inverters oscillate, latches hold state,
+// and a clock faster than the circuit's longest path breaks it.
 //
-// This is the stateless demo version: every change re-evaluates the whole
-// circuit from the sources. That is exact for combinational circuits. Feedback
-// loops (latches) and the clock need #10's fixed-rate Silicon_Tick with state
-// kept between ticks; until then a loop is reported and its gates read low.
+// What happens when:
+//   - A block is placed, broken or rewired (LogicSignalBlock.CircuitVersion
+//     moves): rebuild the netlist (#18) and load it into the engine. Every node
+//     keeps the value it had in the old circuit, so a latch keeps holding while
+//     the player builds next to it; new nodes start low (power-on).
+//   - A source changes (the player toggles it, or a clock flips): nothing is
+//     rebuilt. The new value is written into the state array, which wires and
+//     LEDs on that source show at once (no delay), and the first gate responds
+//     one tick later.
+//   - Time passes: the engine is ticked ticksPerSecond times a second
+//     (LogicEngine.Tick). When a tick changes nothing the circuit has settled
+//     and ticking stops until a source or the circuit changes again. A circuit
+//     that oscillates keeps ticking.
+//   - After all of that, only blocks whose value changed are pushed new values:
+//     gates and LEDs show their node, each wire its network's driver (low when
+//     nothing drives it, the error colour when two outputs drive it).
+// Ticks run on scaled game time, so the simulation stops while the game is
+// paused (timeScale 0).
 //
 // One driver exists for the whole game. It creates itself before the first scene
 // loads and survives scene changes, so no scene has to contain it (and nobody's
@@ -30,21 +41,71 @@ public class SimulationDriver : MonoBehaviour
     /// <summary>The running driver, or null outside play mode.</summary>
     public static SimulationDriver Instance { get; private set; }
 
+    [Tooltip("Simulation ticks per second of game time. One tick is one gate's propagation delay, " +
+             "so a signal crosses this many gates per second. Redstone runs at 10.")]
+    [SerializeField, Min(1f)] private float ticksPerSecond = 20f;
+
+    [Tooltip("Most ticks run in one frame. After a long frame the simulation drops the rest " +
+             "instead of trying to catch up, so a hitch never snowballs.")]
+    [SerializeField, Min(1)] private int maxTicksPerFrame = 8;
+
+    [Tooltip("Most ticks Simulate() runs while waiting for the circuit to settle. Only reached by " +
+             "circuits that oscillate.")]
+    [SerializeField, Min(1)] private int settleTickLimit = 1000;
+
     [Tooltip("Log the netlist builder's warnings (an LED fed twice, a gate left at Invalid...). " +
              "Each distinct set of warnings is logged once, not every rebuild.")]
     [SerializeField] private bool logWarnings = true;
 
     private int seenVersion = -1;
-    private int[] states = Array.Empty<int>();
     private string lastWarnings = string.Empty;
-    private bool loopReported;
     private bool pluginUnavailable;
 
-    /// <summary>The netlist from the most recent evaluation, for debugging and tests.</summary>
-    public Netlist LastNetlist { get; private set; }
+    // The circuit and its state. states is indexed by netlist node and is the
+    // only copy of the circuit's signal values; the engine keeps just the graph.
+    private Netlist netlist;
+    private int[] states = Array.Empty<int>();
 
-    /// <summary>How the most recent evaluation went.</summary>
+    // Per node: the node driving it when it is an LED (Output), else -1.
+    private int[] outputDriver = Array.Empty<int>();
+
+    // Source nodes and their blocks, read every frame for value changes.
+    private int[] sourceNodes = Array.Empty<int>();
+    private LogicSignalSource[] sourceBlocks = Array.Empty<LogicSignalSource>();
+
+    // What each block was last shown, so only changes are pushed. -1 = unknown.
+    // Networks store value | (error ? 2 : 0).
+    private int[] shownNode = Array.Empty<int>();
+    private int[] shownNetwork = Array.Empty<int>();
+
+    private bool engineLoaded;   // this circuit is loaded and can be ticked
+    private bool engineHolds;    // the plugin holds a circuit we loaded (to unload)
+    private bool settled = true;
+    private float tickAccumulator;
+
+    /// <summary>The netlist the driver is simulating, for debugging and tests.</summary>
+    public Netlist LastNetlist => netlist;
+
+    /// <summary>
+    /// How the last load went. HasFeedbackLoop is information only: loops are
+    /// simulated.
+    /// </summary>
     public CircuitResult LastResult { get; private set; }
+
+    /// <summary>True when the last tick changed nothing, so no more ticks are needed
+    /// until a source or the circuit changes. False while signals are moving or a
+    /// circuit oscillates.</summary>
+    public bool IsSettled => settled;
+
+    /// <summary>Ticks run since the driver started.</summary>
+    public long TickCount { get; private set; }
+
+    /// <summary>Simulation ticks per second of game time (one gate delay each).</summary>
+    public float TicksPerSecond
+    {
+        get => ticksPerSecond;
+        set => ticksPerSecond = Mathf.Max(1f, value);
+    }
 
     /// <summary>
     /// True on platforms with a shipped native SiliconPlugin: Windows x86_64
@@ -94,6 +155,10 @@ public class SimulationDriver : MonoBehaviour
 
     private void OnDestroy()
     {
+        // The editor keeps native plugins loaded between play sessions, so the
+        // loaded circuit would otherwise outlive this one.
+        if (engineHolds) LogicEngine.UnloadCircuit();
+        engineHolds = false;
         if (Instance == this) Instance = null;
     }
 
@@ -103,61 +168,228 @@ public class SimulationDriver : MonoBehaviour
     private void LateUpdate()
     {
         int version = LogicSignalBlock.CircuitVersion;
-        if (version == seenVersion) return;
-
-        seenVersion = version;
-        Simulate(LogicSignalBlock.All);
+        if (version != seenVersion)
+        {
+            seenVersion = version;
+            Rebuild(LogicSignalBlock.All);
+        }
+        Advance(Time.deltaTime);
     }
 
+    // ---- Public API (LateUpdate uses these; tests call them directly) --------
+
     /// <summary>
-    /// Builds, evaluates and displays the circuit made of these blocks. Called
-    /// automatically when the circuit changes; public so tests can drive it with
-    /// blocks created in EditMode (where the grid registry stays empty).
+    /// Builds the circuit made of these blocks, runs it until it settles, and
+    /// shows the result: the steady state a player sees once signals have
+    /// finished moving. Used by tests with blocks created in EditMode (where the
+    /// grid registry stays empty and LateUpdate never runs). A circuit that
+    /// oscillates stops after settleTickLimit ticks, with IsSettled false.
     /// </summary>
     public Netlist Simulate(IEnumerable<LogicSignalBlock> blocks)
     {
-        Netlist netlist = NetlistBuilder.FromBlocks(blocks);
-        LastNetlist = netlist;
-        ReportWarnings(netlist);
-
-        if (states.Length != netlist.NodeCount) states = new int[netlist.NodeCount];
-        for (int node = 0; node < netlist.NodeCount; node++)
-        {
-            states[node] = netlist.NodeBlock(node) is LogicSignalSource source ? source.SignalState : 0;
-        }
-
-        LastResult = Evaluate(netlist);
-        Apply(netlist);
+        Rebuild(blocks);
+        Settle();
         return netlist;
     }
 
-    private CircuitResult Evaluate(Netlist netlist)
+    /// <summary>
+    /// Rebuilds the netlist from these blocks and loads it into the engine,
+    /// carrying every surviving block's value over from the old circuit. Shows
+    /// the new circuit without ticking it. Called when the circuit's structure
+    /// changes.
+    /// </summary>
+    public Netlist Rebuild(IEnumerable<LogicSignalBlock> blocks)
     {
-        // No sources, gates or LEDs: nothing to evaluate, and no reason to load
-        // the native plugin. This also keeps the menu and the PlayMode tests on
-        // the Linux CI runner (which has no plugin) from touching it.
-        if (netlist.NodeCount == 0) return CircuitResult.Complete;
+        Netlist previous = netlist;
+        int[] previousStates = states;
 
-        if (pluginUnavailable)
+        netlist = NetlistBuilder.FromBlocks(blocks);
+        ReportWarnings(netlist);
+
+        int nodeCount = netlist.NodeCount;
+        states = new int[nodeCount];
+        CarryOver(previous, previousStates);
+        IndexNodes();
+
+        shownNode = new int[nodeCount];
+        shownNetwork = new int[netlist.Networks.Length];
+        Fill(shownNode, -1);
+        Fill(shownNetwork, -1);
+
+        LoadIntoEngine();
+        ReadSources();
+        // LEDs have no delay, so one that was just connected or cut off shows
+        // its new net at once, not on the next tick. (Gates keep their carried
+        // value until they tick: that is their delay.)
+        SyncOutputs();
+        Apply();
+        return netlist;
+    }
+
+    /// <summary>
+    /// Runs exactly this many ticks now, regardless of the tick rate, then shows
+    /// the result. Source values are read first. Returns how many nodes the last
+    /// tick changed (0 = settled), or 0 when there is nothing to tick.
+    /// </summary>
+    public int Step(int ticks = 1)
+    {
+        ReadSources();
+        int changed = 0;
+        for (int i = 0; i < ticks && engineLoaded; i++)
         {
+            changed = TickOnce();
+        }
+        Apply();
+        return changed;
+    }
+
+    /// <summary>
+    /// Ticks until the circuit settles or settleTickLimit is reached, then shows
+    /// the result. Returns the number of ticks that changed something (the
+    /// circuit's settling time), or -1 if it never settled (it oscillates).
+    /// </summary>
+    public int Settle()
+    {
+        ReadSources();
+        int ticks = 0;
+        int result = 0;
+        while (engineLoaded)
+        {
+            if (TickOnce() == 0) break;
+            ticks++;
+            if (ticks >= settleTickLimit)
+            {
+                result = -1;
+                break;
+            }
+        }
+        tickAccumulator = 0f;
+        Apply();
+        return result < 0 ? -1 : ticks;
+    }
+
+    /// <summary>
+    /// Lets this much game time pass: reads the sources and runs the ticks that
+    /// fall due at ticksPerSecond (at most maxTicksPerFrame), then shows the
+    /// result. LateUpdate calls it with Time.deltaTime.
+    /// </summary>
+    public void Advance(float seconds)
+    {
+        bool inputsChanged = ReadSources();
+        if (inputsChanged && settled)
+        {
+            // The circuit was idle. Start the tick clock now, so the first gate
+            // responds a full gate delay after the input changed rather than at
+            // whatever moment the old clock would next have ticked.
+            settled = false;
+            tickAccumulator = 0f;
+        }
+
+        if (engineLoaded && !settled)
+        {
+            tickAccumulator = Mathf.Min(tickAccumulator + seconds * ticksPerSecond, maxTicksPerFrame);
+            while (tickAccumulator >= 1f && engineLoaded)
+            {
+                tickAccumulator -= 1f;
+                TickOnce();
+                if (settled)
+                {
+                    tickAccumulator = 0f;
+                    break;
+                }
+            }
+        }
+        else
+        {
+            tickAccumulator = 0f;
+        }
+
+        Apply();
+    }
+
+    // ---- Internals -------------------------------------------------------------
+
+    // Keep the value of every node whose block is still in the circuit, so an
+    // edit elsewhere doesn't reset a latch. Node indices change on every
+    // rebuild, so the match is by block.
+    private void CarryOver(Netlist previous, int[] previousStates)
+    {
+        if (previous == null || previousStates.Length == 0) return;
+
+        var carried = new Dictionary<LogicSignalBlock, int>();
+        int count = Math.Min(previous.NodeCount, previousStates.Length);
+        for (int node = 0; node < count; node++)
+        {
+            LogicSignalBlock block = previous.NodeBlock(node);
+            if (block != null) carried[block] = previousStates[node];
+        }
+
+        for (int node = 0; node < netlist.NodeCount; node++)
+        {
+            LogicSignalBlock block = netlist.NodeBlock(node);
+            if (block != null && carried.TryGetValue(block, out int value)) states[node] = value;
+        }
+    }
+
+    private void IndexNodes()
+    {
+        int nodeCount = netlist.NodeCount;
+        outputDriver = new int[nodeCount];
+        Fill(outputDriver, -1);
+        foreach (NetlistConnection connection in netlist.Connections)
+        {
+            // A node's id is its index (NetlistBuilder).
+            if (netlist.Nodes[connection.ToId].Type == (int)GateType.Output)
+            {
+                outputDriver[connection.ToId] = connection.FromId;
+            }
+        }
+
+        var nodes = new List<int>();
+        var blocks = new List<LogicSignalSource>();
+        for (int node = 0; node < nodeCount; node++)
+        {
+            if (netlist.NodeBlock(node) is LogicSignalSource source)
+            {
+                nodes.Add(node);
+                blocks.Add(source);
+            }
+        }
+        sourceNodes = nodes.ToArray();
+        sourceBlocks = blocks.ToArray();
+    }
+
+    private void LoadIntoEngine()
+    {
+        // tickAccumulator is deliberately kept: editing the circuit must not
+        // shift the tick clock, or every block placed next to a running
+        // oscillator or clock would make it stutter. (It is already 0 when the
+        // circuit was settled.)
+        engineLoaded = false;
+        settled = true;
+        LastResult = CircuitResult.Complete;
+
+        // No sources, gates or LEDs: nothing to simulate, and no reason to load
+        // the native plugin. This also keeps the menu and the tests on the Linux
+        // CI runner (which has no plugin) from touching it.
+        if (netlist.NodeCount == 0 || pluginUnavailable || !SimulationAvailable)
+        {
+            if (engineHolds)
+            {
+                LogicEngine.UnloadCircuit();
+                engineHolds = false;
+            }
             Array.Clear(states, 0, states.Length);
-            return CircuitResult.Complete;
+            return;
         }
 
         try
         {
-            CircuitResult result = LogicEngine.EvaluateCircuit(netlist.Nodes, netlist.Connections, states);
-
-            bool hasLoop = result == CircuitResult.HasFeedbackLoop;
-            if (hasLoop && !loopReported)
-            {
-                Debug.LogWarning(
-                    "Circuit has a feedback loop (an output wired back into its own inputs). " +
-                    "Loops need the clocked simulation that comes after the demo; for now the " +
-                    "gates on the loop read low and the rest of the circuit works normally.");
-            }
-            loopReported = hasLoop;
-            return result;
+            LastResult = LogicEngine.LoadCircuit(netlist.Nodes, netlist.Connections);
+            engineLoaded = true;
+            engineHolds = true;
+            settled = false;  // at least one tick to find out
+            return;
         }
         catch (LogicEngineException e) when (e.InnerException is DllNotFoundException)
         {
@@ -170,51 +402,130 @@ public class SimulationDriver : MonoBehaviour
         catch (LogicEngineException e)
         {
             // A stale DLL or a netlist the engine rejected. Both are bugs, so this
-            // one is an error. Everything shows low rather than stale values.
-            Debug.LogError("Circuit could not be evaluated: " + e.Message);
+            // one is an error. A failed load leaves nothing loaded in the plugin.
+            Debug.LogError("Circuit could not be loaded: " + e.Message);
         }
 
+        engineHolds = false;
         Array.Clear(states, 0, states.Length);
-        return CircuitResult.Complete;
     }
 
-    private void Apply(Netlist netlist)
+    // One engine tick. Returns how many nodes changed and sets settled from it.
+    // A failure is logged and stops the simulation until the next rebuild.
+    private int TickOnce()
     {
+        try
+        {
+            int changed = LogicEngine.Tick(states);
+            TickCount++;
+            settled = changed == 0;
+            return changed;
+        }
+        catch (LogicEngineException e)
+        {
+            Debug.LogError("Circuit simulation stopped: " + e.Message);
+            engineLoaded = false;
+            settled = true;
+            Array.Clear(states, 0, states.Length);
+            return 0;
+        }
+    }
+
+    // Write each source's current value into the state array. Returns whether
+    // any changed. LEDs follow at once: they have no delay.
+    private bool ReadSources()
+    {
+        if (!engineLoaded) return false;
+
+        bool changed = false;
+        for (int i = 0; i < sourceNodes.Length; i++)
+        {
+            LogicSignalSource source = sourceBlocks[i];
+            if (source == null) continue;  // broken this frame; the rebuild follows
+
+            int value = source.SignalState != 0 ? 1 : 0;
+            int node = sourceNodes[i];
+            if (states[node] != value)
+            {
+                states[node] = value;
+                changed = true;
+            }
+        }
+
+        if (changed) SyncOutputs();
+        return changed;
+    }
+
+    // An LED shows the net it sits on with no delay, exactly as the engine
+    // computes it during a tick. Done here too so an LED on a source lights the
+    // moment the source flips, before the next tick.
+    private void SyncOutputs()
+    {
+        for (int node = 0; node < outputDriver.Length; node++)
+        {
+            if (netlist.Nodes[node].Type != (int)GateType.Output) continue;
+            int driver = outputDriver[node];
+            states[node] = driver >= 0 ? states[driver] : 0;
+        }
+    }
+
+    private void Apply()
+    {
+        if (netlist == null) return;
+
         for (int node = 0; node < netlist.NodeCount; node++)
         {
-            switch (netlist.NodeBlock(node))
+            int value = states[node];
+            if (shownNode[node] == value) continue;
+
+            LogicSignalBlock block = netlist.NodeBlock(node);
+            if (block == null) continue;  // destroyed; the rebuild follows
+            shownNode[node] = value;
+
+            switch (block)
             {
                 case GateBlock gate:
-                    gate.SetDisplayedState(states[node]);
+                    gate.SetDisplayedState(value);
                     break;
                 case StateViewerBlock led:
-                    led.SetDisplayedState(states[node]);
+                    led.SetDisplayedState(value);
                     break;
             }
         }
 
-        foreach (WireNetwork network in netlist.Networks)
+        for (int i = 0; i < netlist.Networks.Length; i++)
         {
+            WireNetwork network = netlist.Networks[i];
             int value = network.DriverNode >= 0 ? states[network.DriverNode] : 0;
+            bool error = network.HasMultipleDrivers;
+            int shown = value | (error ? 2 : 0);
+            if (shownNetwork[i] == shown) continue;
+            shownNetwork[i] = shown;
+
             foreach (int part in network.WireParts)
             {
-                if (netlist.Blocks[part] is LogicWireBlock wire)
+                if (netlist.Blocks[part] is LogicWireBlock wire && wire != null)
                 {
-                    wire.SetDisplayedState(value, network.HasMultipleDrivers);
+                    wire.SetDisplayedState(value, error);
                 }
             }
         }
     }
 
-    private void ReportWarnings(Netlist netlist)
+    private void ReportWarnings(Netlist built)
     {
-        string warnings = string.Join("\n", netlist.Warnings);
+        string warnings = string.Join("\n", built.Warnings);
         if (warnings == lastWarnings) return;
 
         lastWarnings = warnings;
         if (logWarnings && warnings.Length > 0)
         {
-            Debug.LogWarning("Circuit: " + string.Join("\nCircuit: ", netlist.Warnings));
+            Debug.LogWarning("Circuit: " + string.Join("\nCircuit: ", built.Warnings));
         }
+    }
+
+    private static void Fill(int[] array, int value)
+    {
+        for (int i = 0; i < array.Length; i++) array[i] = value;
     }
 }

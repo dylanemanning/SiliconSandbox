@@ -13,16 +13,17 @@ public class LogicSignalSource : LogicSignalBlock
     public override int SignalState => outputState;
 
     /// <summary>
-    /// Sets the source's value. Anything non-zero is 1. Re-evaluates the circuit
-    /// (via MarkCircuitChanged) only when the value actually changes.
+    /// Sets the source's value. Anything non-zero is 1.
+    ///
+    /// This does not mark the circuit changed: a source's value is an input to
+    /// the running simulation, not part of the circuit's structure. The
+    /// SimulationDriver reads every source each frame, so wires and LEDs on the
+    /// source follow at once and the gates it feeds respond on the next ticks,
+    /// without rebuilding the netlist (#10).
     /// </summary>
     public void SetState(int state)
     {
-        int next = state == 0 ? 0 : 1;
-        if (next == outputState) return;
-
-        outputState = next;
-        MarkCircuitChanged();
+        outputState = state == 0 ? 0 : 1;
     }
 
     public void ToggleState()
@@ -30,12 +31,6 @@ public class LogicSignalSource : LogicSignalBlock
         SetState(outputState == 0 ? 1 : 0);
     }
 
-#if UNITY_EDITOR
-    // Changing outputState in the Inspector during play updates the circuit
-    // immediately, which is handy for testing a circuit by hand.
-    private void OnValidate()
-    {
-        MarkCircuitChanged();
-    }
-#endif
+    // Changing Output State in the Inspector during play also works: the
+    // SimulationDriver reads it like any other source change.
 }
