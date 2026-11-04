@@ -3,8 +3,11 @@ name: BuildSystem
 on:
   push:
     branches: ["main", "dev"]
+    tags: 
+      - "v*.*.*"
   pull_request:
     branches: ["main", "dev"]
+  workflow_dispatch:
 
 jobs:
   test:
@@ -29,14 +32,29 @@ jobs:
           restore-keys: |
             Unity-Library-${{ runner.os }}-StandaloneWindows64-
 
-      - name: Run Unity Test Runner (EditMode + PlayMode)
-        uses: game-ci/unity-test-runner@v4
+      - name: Run Unity PlayMode tests
+        uses: game-ci/unity-test-runner@c609e5c8e6d256ee6f61b8cebaaa3fe8b0b9469f
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
           unityVersion: 6000.3.8f1
+          testMode: playmode
+          coverageEnabled: false
+          artifactsPath: artifacts/playmode
+
+      - name: Run Unity EditMode tests
+        uses: game-ci/unity-test-runner@c609e5c8e6d256ee6f61b8cebaaa3fe8b0b9469f
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          unityVersion: 6000.3.8f1
+          testMode: editmode
+          coverageEnabled: false
+          artifactsPath: artifacts/editmode
 
       - name: Return license
         uses: game-ci/unity-return-license@v2
@@ -49,9 +67,42 @@ jobs:
           name: Test-Results
           path: artifacts
 
+  native-plugin:
+    permissions:
+      contents: read
+
+    name: Check Native Plugin (${{ matrix.platform }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform: Windows
+          - os: macos-latest
+            platform: macOS
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Verify universal Mac binary and signature
+        if: runner.os == 'macOS'
+        run: |
+          xcrun lipo Assets/Plugins/macOS/libSiliconPlugin.dylib -verify_arch arm64 x86_64
+          codesign --verify --strict Assets/Plugins/macOS/libSiliconPlugin.dylib
+
+      - name: Check committed native plugin through managed wrapper
+        run: dotnet run -c Release --project native/SiliconPlugin/tests/PluginCheck
+
   build:
     name: Build Windows Game
-    needs: [test]
+    needs: [test, native-plugin]
     runs-on: ubuntu-latest
 
     steps:
@@ -87,5 +138,5 @@ jobs:
       - name: Upload Windows build
         uses: actions/upload-artifact@v4
         with:
-          name: Windows-Build
+          name: SiliconSandbox-${{ github.event.number || github.run_number }}-Windows
           path: build

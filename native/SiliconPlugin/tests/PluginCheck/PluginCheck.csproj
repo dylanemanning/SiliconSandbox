@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Loads each platform's committed binary through the real managed wrapper. -->
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <PlatformTarget Condition="$([MSBuild]::IsOSPlatform('Windows'))">x64</PlatformTarget>
+    <PlatformTarget Condition="$([MSBuild]::IsOSPlatform('OSX'))">AnyCPU</PlatformTarget>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- The same wrapper gameplay code uses, linked rather than copied. -->
+    <Compile Include="../../../../Assets/Scripts/LogicEngine/LogicEngine.cs" Link="LogicEngine.cs" />
+    <!-- The committed binary under test, copied next to the exe so DllImport finds it. -->
+    <None Condition="$([MSBuild]::IsOSPlatform('Windows'))" Include="../../../../Assets/Plugins/x86_64/SiliconPlugin.dll" Link="SiliconPlugin.dll" CopyToOutputDirectory="PreserveNewest" />
+    <None Condition="$([MSBuild]::IsOSPlatform('OSX'))" Include="../../../../Assets/Plugins/macOS/libSiliconPlugin.dylib" Link="libSiliconPlugin.dylib" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>
