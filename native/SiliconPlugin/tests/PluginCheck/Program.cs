@@ -403,7 +403,17 @@ internal static class Program
     {
         NetlistNode[] nodes = { new NetlistNode(0, GateType.Source), new NetlistNode(1, GateType.Output) };
         NetlistConnection[] connections = { new NetlistConnection(0, 1, 0) };
-        LogicEngine.LoadCircuit(nodes, connections);
+        try
+        {
+            LogicEngine.LoadCircuit(nodes, connections);
+        }
+        catch (Exception e)
+        {
+            // An out-of-date library without the tick exports lands here. Report
+            // it as a failed check rather than crashing the whole run.
+            Record(false, "tick: load for the error checks", $"threw {e.GetType().Name}: {e.Message}");
+            return;
+        }
         CheckTickFails("tick: wrong-length states rejected", new[] { 7, 7, 7 }, SimulationStatus.NodeCount);
         LogicEngine.UnloadCircuit();
         CheckTickFails("tick: nothing loaded rejected", new[] { 7, 7 }, SimulationStatus.NotLoaded);

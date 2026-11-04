@@ -361,9 +361,12 @@ public class SimulationDriver : MonoBehaviour
 
     private void LoadIntoEngine()
     {
+        // tickAccumulator is deliberately kept: editing the circuit must not
+        // shift the tick clock, or every block placed next to a running
+        // oscillator or clock would make it stutter. (It is already 0 when the
+        // circuit was settled.)
         engineLoaded = false;
         settled = true;
-        tickAccumulator = 0f;
         LastResult = CircuitResult.Complete;
 
         // No sources, gates or LEDs: nothing to simulate, and no reason to load
