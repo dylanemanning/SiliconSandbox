@@ -14,3 +14,4 @@ Windows and macOS are both required for gameplay and development in Unity 6000.3
 ## Documentation
 
 - [Explanation](doc/explanation.md): architecture, design decisions, and tradeoffs
+- [How-To](doc/how-to.md): Developer & Player guides for common or fundamental actions
