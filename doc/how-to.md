@@ -68,6 +68,19 @@ Note: This action can also be done from the 3D game scene. To do this replace al
 
 ## For Developers:  
 
+### How To Setup Silicon Sandbox In Unity  
+In order to make any meaningful changes to the Silicon Sandbox gamestate a developer must have access to the Unity editor with the up to date code. Unity does not naturally integrate with Github so this process can be a little confusing  
+To begin this process a developer must already have a Github account to be able to clone and make changes to the repo, a Unity account with a personal license, and has downloaded the Unity Hub.  
+
+1. Create a new directory on your local machine to store the Silicon Sandbox project repo  
+2. Clone the Github project to this new directory using a command like **git clone git<!-- -->@github.com:dylanemanning/SiliconSandbox.git** (Note that this command may change depending on how you connect to github)  
+3. Open the Unity Hub to the "Projects" tab  
+4. Select "New Project"  
+5. Change "Project Name" to Silicon Sandbox  
+6. Change the location to the Silicon Sandbox directory created in step 1
+
+After doing this a developer should be able to open the new project and see the current main branch of Silicon Sandbox in the editor.
+
 ### How To Update the Current Version:  
 
 As Silicon Sandbox grows and matures we want to keep users in the loop with the current gamestate. This is most simply done with the version number, which should follow classic SemVar style (vX.Y.Z). Updating the current version will update the version on the homescreen for users to see, update the title of the created build, and the version shown on the deployment platform.  
@@ -99,3 +112,23 @@ This process will take place after opening the Unity Editor to the project.
 8. You may repeat these steps in the EditMode, PlayMode, or Player sections, which you can swap between with the buttons at the top center of the pop up (Note that by default you will be in EditMode)  
 
 You should see the tests one by one appear with either a green checkmark or a red skip icon. Clicking any test with an icon next to it will show what failure occurred and any text printed by the test.  
+
+### How To Structure a Pull Request  
+
+Since Silicon Sandbox uses feature branches off of our development branch, the time other developers most learn about your code changes is when you create a PR. Given that Unity can generate a lot of files in a single change, it is important to know how to guide reviewers to what changes are relevant and what are automatically generated.  
+This guide will cover what happens after after clicking for a new PR and setting the two branches to compare  
+
+1. Any feature branch should be based off of one main feature, which should already be a Github issue. title your branch [#\<issue number\>] \<title relevant to this feature\> \<+ any other key changes/>  
+2. In the description category add a line saying Closes #\<issue number\> for each issue that will be closed with this PR    
+3. For each issue you are closing add a heading for that issue title  
+   1. If the issue is a bug fix, these can be a list under one bug fix heading, instead of individual sections  
+4. In each section explain what was added, what needed to be changed, list all brand new files for that feature, and list the files that were changed relevant to that feature  
+   1. For a bug fix list what the root issue was, and link a RCA document  
+5. Assign yourself to the PR  
+6. Add at least 2 reviewers to the PR, if any developers have worked on related features make sure they are added as a reviwer.
+7. The only default labels we currently use are Bug and Documentation, use these only if the PR is solely dedicated to these concepts. Not just if a PR includes these things
+8. Link to the Github Project in the projects section
+9. Press "Create Pull Request"
+
+This should bring you to the created pull request on Github.  
+Note that before anyone else is responsible to review your PR you are responsible to ensure it passes all gh actions. These checks normally take 10-15 minutes, so keep an eye out to see if the pr passes or fails and be prepared to make more commits to fix these actions before anyone else must review your request.  
