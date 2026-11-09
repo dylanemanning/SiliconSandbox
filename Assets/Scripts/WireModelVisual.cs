@@ -9,11 +9,25 @@ public class WireModelVisual : MonoBehaviour
     public Material highMaterial;
     private LogicWireBlock wire;
     private int oldMask = -1, oldState = -1;
+    private bool oldError;
+    private MaterialPropertyBlock patternProperties;
     private static readonly Vector3[] Directions = {
         Vector3.right,Vector3.left,Vector3.up,Vector3.down,Vector3.forward,Vector3.back
     };
 
+    private void Awake()
+    {
+        patternProperties = new MaterialPropertyBlock();
+    }
+
     private void LateUpdate() => Refresh();
+
+    public void RefreshAccessibilityVisuals()
+    {
+        oldMask = -1;
+        Refresh();
+    }
+
     public void Refresh()
     {
         if (wire == null) wire = GetComponent<LogicWireBlock>();
@@ -29,8 +43,11 @@ public class WireModelVisual : MonoBehaviour
 
     private void RefreshForConnections(int mask, int state)
     {
-        if (mask == oldMask && state == oldState) return;
-        oldMask = mask; oldState = state;
+        bool isError = wire != null && wire.IsError;
+        if (mask == oldMask && state == oldState && isError == oldError) return;
+        oldMask = mask;
+        oldState = state;
+        oldError = isError;
         straightModel.SetActive(false); elbowModel.SetActive(false);
         foreach (var branch in branches) branch.SetActive(false);
         Vector3 a = Vector3.zero, b = Vector3.zero;
@@ -61,7 +78,25 @@ public class WireModelVisual : MonoBehaviour
                 branch.transform.localRotation = Quaternion.FromToRotation(Vector3.forward,local);
             }
         }
-        var material = state == 0 ? lowMaterial : highMaterial;
-        foreach (var renderer in GetComponentsInChildren<Renderer>(true)) renderer.sharedMaterial = material;
+        Material material = isError
+            ? wire.ErrorVisualMaterial ?? lowMaterial
+            : state == 0 ? lowMaterial : highMaterial;
+        foreach (var renderer in GetComponentsInChildren<Renderer>(true))
+        {
+            if (material != null) renderer.sharedMaterial = material;
+            if (isError && wire.ErrorVisualMaterial == null)
+            {
+                renderer.GetPropertyBlock(patternProperties);
+                patternProperties.SetColor("_BaseColor", wire.ErrorColor);
+                patternProperties.SetColor("_Color", wire.ErrorColor);
+                renderer.SetPropertyBlock(patternProperties);
+            }
+            else
+            {
+                renderer.SetPropertyBlock(null);
+            }
+
+            AccessibilitySettings.ApplySignalPattern(renderer, state, isError);
+        }
     }
 }

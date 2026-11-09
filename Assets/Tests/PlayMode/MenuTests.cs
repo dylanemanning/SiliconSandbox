@@ -14,6 +14,8 @@ public class MenuTests : InputTestFixture
 
     private Keyboard keyboard;
     private Mouse mouse;
+    private bool hadFontSizePreference;
+    private int originalFontSizePreference;
 
     public override void Setup()
     {
@@ -21,6 +23,8 @@ public class MenuTests : InputTestFixture
 
         keyboard = InputSystem.AddDevice<Keyboard>();
         mouse = InputSystem.AddDevice<Mouse>();
+        hadFontSizePreference = PlayerPrefs.HasKey(AccessibilitySettings.FontSizeKey);
+        originalFontSizePreference = PlayerPrefs.GetInt(AccessibilitySettings.FontSizeKey);
 
         PlayerPrefs.DeleteKey("Keybind.Pause");
     }
@@ -28,6 +32,15 @@ public class MenuTests : InputTestFixture
     public override void TearDown()
     {        
         Time.timeScale = 1f;
+        if (hadFontSizePreference)
+        {
+            PlayerPrefs.SetInt(AccessibilitySettings.FontSizeKey, originalFontSizePreference);
+        }
+        else
+        {
+            PlayerPrefs.DeleteKey(AccessibilitySettings.FontSizeKey);
+        }
+
         base.TearDown();
     }
 
@@ -288,18 +301,12 @@ public class MenuTests : InputTestFixture
 
     // ---------------------------------------------------------
     // TC-9.2.2
-    // Pause menu must contain navigable settings
-    //
-    // EXPECTED TO FAIL CURRENTLY.
+    // Pause menu opens settings without resuming gameplay.
     // ---------------------------------------------------------
 
     [UnityTest]
     public IEnumerator TC_9_2_2_PauseMenuSettingsExists()
     {
-        Assert.Ignore(
-            "Pause-menu settings navigation is not implemented yet."
-        );
-
         yield return LoadScene(GameplayScene);
 
         PauseManager pause =
@@ -338,40 +345,27 @@ public class MenuTests : InputTestFixture
             "Pause menu does not contain SettingsButton."
         );
 
-        // TODO: Implement Settings in pause menu
-        // settingsButton.onClick.Invoke();
+        settingsButton.onClick.Invoke();
 
-        // yield return null;
-
-        // GameObject settingsPanel =
-        //     GameObject.Find("SettingsPanel");
-
-        // Assert.IsNotNull(
-        //     settingsPanel,
-        //     "TC-9.2.2 FAILED: SettingsButton currently " +
-        //     "does not open a pause-menu SettingsPanel."
-        // );
-
-        // Assert.IsTrue(
-        //     settingsPanel.activeInHierarchy,
-        //     "Pause settings page exists but was not opened."
-        // );
+        GameObject settingsPanel = GameObject.Find("settingsPanel");
+        Assert.IsNotNull(settingsPanel);
+        Assert.IsTrue(settingsPanel.activeSelf);
+        Assert.IsFalse(pausePanel.activeSelf);
+        Assert.IsTrue(PauseManager.IsPaused);
+        Assert.AreEqual(0f, Time.timeScale);
+        Assert.IsTrue(settingsPanel.transform.Find("SettingsContent/ControlsPage").gameObject.activeSelf);
+        Assert.IsFalse(settingsPanel.transform.Find("SettingsContent/VideoPage").gameObject.activeSelf);
+        Assert.IsFalse(settingsPanel.transform.Find("SettingsContent/AccessibilityPage").gameObject.activeSelf);
     }
 
     // ---------------------------------------------------------
     // TC-9.2 Integration
-    // Pause menu exists and is navigable
-    //
-    // EXPECTED TO FAIL until TC-9.2.2 is implemented.
+    // Settings tabs and exit preserve the paused game state.
     // ---------------------------------------------------------
 
     [UnityTest]
     public IEnumerator TC_9_2_PauseMenuExistsAndNavigable()
     {
-        Assert.Ignore(
-            "Pause-menu settings navigation is not implemented yet."
-        );
-
         yield return LoadScene(GameplayScene);
 
         PauseManager pause =
@@ -419,17 +413,81 @@ public class MenuTests : InputTestFixture
         Assert.IsTrue(settingsFound);
         Assert.IsTrue(quitFound);
 
-        // Requirement also says the menu is navigable.
-        // Settings currently does nothing, therefore this
-        // integration test must not pass yet.
+        pausePanel.transform.Find("Button Container/SettingsButton")
+            .GetComponent<Button>().onClick.Invoke();
+        GameObject settingsPanel = GameObject.Find("settingsPanel");
+        Assert.IsNotNull(settingsPanel);
+        Assert.IsTrue(settingsPanel.activeSelf);
 
-        GameObject settingsPanel =
-            GameObject.Find("SettingsPanel");
+        GameObject.Find("VideoButton").GetComponent<Button>().onClick.Invoke();
+        Assert.IsTrue(settingsPanel.transform.Find("SettingsContent/VideoPage").gameObject.activeSelf);
+        Assert.IsFalse(settingsPanel.transform.Find("SettingsContent/ControlsPage").gameObject.activeSelf);
 
-        Assert.IsNotNull(
-            settingsPanel,
-            "TC-9.2 FAILED: Pause menu exists, but its " +
-            "required settings navigation is not implemented."
-        );
+        GameObject.Find("AccessibilityButton").GetComponent<Button>().onClick.Invoke();
+        GameObject accessibilityPage =
+            settingsPanel.transform.Find("SettingsContent/AccessibilityPage").gameObject;
+        Assert.IsTrue(accessibilityPage.activeSelf);
+        Assert.IsFalse(settingsPanel.transform.Find("SettingsContent/VideoPage").gameObject.activeSelf);
+        AccessibilitySettingsMenu accessibilityMenu =
+            accessibilityPage.GetComponent<AccessibilitySettingsMenu>();
+        Assert.IsNotNull(accessibilityMenu);
+        Assert.IsNotNull(accessibilityPage.transform.Find(
+            "AccessibilitySettingsControls/Colorblind ModeRow/Colorblind ModeControl/colorblindModeToggle"));
+
+        accessibilityPage.transform.Find("AccessibilitySettingsActions/ExitButton")
+            .GetComponent<Button>().onClick.Invoke();
+        Assert.IsFalse(settingsPanel.activeSelf);
+        Assert.IsTrue(pausePanel.activeSelf);
+        Assert.IsTrue(PauseManager.IsPaused);
+        Assert.AreEqual(0f, Time.timeScale);
+
+        pause.ResumeGame();
+        Assert.IsFalse(PauseManager.IsPaused);
+        Assert.AreEqual(1f, Time.timeScale);
+    }
+
+    [UnityTest]
+    public IEnumerator PauseSettingsKeepHotbarTextSizeAndRenderAboveHotbar()
+    {
+        PlayerPrefs.SetInt(AccessibilitySettings.FontSizeKey, 2);
+        yield return LoadScene(GameplayScene);
+
+        PauseManager pause = Object.FindFirstObjectByType<PauseManager>();
+        GameObject hotbar = GameObject.Find("Hotbar");
+        GameObject pauseCanvasObject = GameObject.Find("PauseCanvas");
+        Assert.IsNotNull(pause);
+        Assert.IsNotNull(hotbar);
+        Assert.IsNotNull(pauseCanvasObject);
+
+        Canvas hotbarCanvas = hotbar.GetComponent<Canvas>();
+        Canvas pauseCanvas = pauseCanvasObject.GetComponent<Canvas>();
+        Assert.IsNotNull(hotbarCanvas);
+        Assert.IsNotNull(pauseCanvas);
+        Assert.Greater(pauseCanvas.sortingOrder, hotbarCanvas.sortingOrder);
+
+        TMP_Text[] hotbarTexts = hotbar.GetComponentsInChildren<TMP_Text>(true);
+        Assert.IsNotEmpty(hotbarTexts);
+        float[] initialFontSizes = new float[hotbarTexts.Length];
+        for (int i = 0; i < hotbarTexts.Length; i++)
+        {
+            initialFontSizes[i] = hotbarTexts[i].fontSize;
+        }
+
+        for (int i = 0; i < 3; i++)
+        {
+            pause.PauseGame();
+            pause.OpenSettings();
+            pause.CloseSettings();
+
+            for (int textIndex = 0; textIndex < hotbarTexts.Length; textIndex++)
+            {
+                Assert.AreEqual(
+                    initialFontSizes[textIndex],
+                    hotbarTexts[textIndex].fontSize,
+                    0.01f);
+            }
+        }
+
+        pause.ResumeGame();
     }
 }

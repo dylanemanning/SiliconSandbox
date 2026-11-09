@@ -235,6 +235,7 @@ public class ControlsKeybindsMenu : MonoBehaviour
 
     private void ExitControls()
     {
+        if (PauseManager.TryCloseSettings()) return;
         if (menuTraversal != null) menuTraversal.closeSettings();
     }
 

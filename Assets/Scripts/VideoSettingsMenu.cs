@@ -162,30 +162,33 @@ public class VideoSettingsMenu : MonoBehaviour
     private void CreateActionButtons()
     {
         RectTransform actions = CreateRectTransform("VideoSettingsActions", transform);
-        actions.anchorMin = new Vector2(0.5f, 0f);
-        actions.anchorMax = new Vector2(0.5f, 0f);
-        actions.pivot = new Vector2(0.5f, 0f);
-        actions.anchoredPosition = new Vector2(0f, 32f);
-        actions.sizeDelta = new Vector2(440f, 56f);
+        actions.anchorMin = new Vector2(0.5f, 0.5f);
+        actions.anchorMax = new Vector2(0.5f, 0.5f);
+        actions.pivot = new Vector2(0.5f, 0.5f);
+        actions.anchoredPosition = Vector2.zero;
+        actions.sizeDelta = new Vector2(1612f, 972f);
 
-        HorizontalLayoutGroup layout = actions.gameObject.AddComponent<HorizontalLayoutGroup>();
-        layout.spacing = 36f;
-        layout.childAlignment = TextAnchor.MiddleCenter;
-        layout.childControlWidth = true;
-        layout.childControlHeight = true;
-        layout.childForceExpandWidth = false;
-        layout.childForceExpandHeight = false;
-
-        CreateActionButton(actions, "SaveButton", "Save", SaveSettings);
-        CreateActionButton(actions, "ExitButton", "Exit", ExitSettings);
+        CreateActionButton(actions, "SaveButton", "Save", SaveSettings, new Vector2(0.28f, 0.03f));
+        CreateActionButton(actions, "ExitButton", "Exit", ExitSettings, new Vector2(0.72f, 0.03f));
     }
 
-    private void CreateActionButton(Transform parent, string buttonName, string label, UnityEngine.Events.UnityAction action)
+    private void CreateActionButton(
+        Transform parent,
+        string buttonName,
+        string label,
+        UnityEngine.Events.UnityAction action,
+        Vector2 anchor)
     {
         Button button = CreateButton(buttonName, parent, action);
         LayoutElement buttonLayout = button.gameObject.AddComponent<LayoutElement>();
-        buttonLayout.preferredWidth = 200f;
-        buttonLayout.preferredHeight = 48f;
+        buttonLayout.preferredWidth = 190f;
+        buttonLayout.preferredHeight = 42f;
+        RectTransform buttonRect = button.GetComponent<RectTransform>();
+        buttonRect.anchorMin = anchor;
+        buttonRect.anchorMax = anchor;
+        buttonRect.pivot = new Vector2(0.5f, 0.5f);
+        buttonRect.anchoredPosition = Vector2.zero;
+        buttonRect.sizeDelta = new Vector2(190f, 42f);
 
         TMP_Text buttonText = CreateText("Text", button.transform, 0f, TextAlignmentOptions.Center);
         Stretch(buttonText.rectTransform);
@@ -200,6 +203,8 @@ public class VideoSettingsMenu : MonoBehaviour
     private void ExitSettings()
     {
         PlayerPrefs.Save();
+        if (PauseManager.TryCloseSettings()) return;
+
         MenuTraversal menuTraversal = FindFirstObjectByType<MenuTraversal>();
         if (menuTraversal == null)
         {

@@ -6,18 +6,24 @@ using TMPro;
 public class PauseManager : MonoBehaviour
 {
     [SerializeField] private GameObject pausePanel;
+    [SerializeField] private GameObject settingsPanel;
+    [SerializeField] private GameObject settingsControlsPage;
+    [SerializeField] private GameObject settingsVideoPage;
+    [SerializeField] private GameObject settingsAccessibilityPage;
     private MainMenuStyler menuStyler;
     private TMP_Text currentWorldNameLabel;
 
     public static bool IsPaused { get; private set; }
+    public bool IsSettingsOpen => settingsPanel != null && settingsPanel.activeSelf;
 
     private void Start()
     {
         IsPaused = false;
-        pausePanel.SetActive(false);
+        if (pausePanel != null) pausePanel.SetActive(false);
+        if (settingsPanel != null) settingsPanel.SetActive(false);
 
         EnsureMenuStyler();
-        menuStyler.ApplyTo(pausePanel.transform);
+        if (pausePanel != null) TryApplyMenuStyle(pausePanel.transform);
 
         Time.timeScale = 1f;
 
@@ -38,7 +44,8 @@ public class PauseManager : MonoBehaviour
     {
         if (IsPaused)
         {
-            ResumeGame();
+            if (IsSettingsOpen) CloseSettings();
+            else ResumeGame();
         }
         else
         {
@@ -52,15 +59,120 @@ public class PauseManager : MonoBehaviour
         //Debug.Log("Pause");
         IsPaused = true;
 
-        if (menuStyler == null) EnsureMenuStyler();
-        menuStyler.ApplyTo(pausePanel.transform);
-        UpdateCurrentWorldNameLabel();
-        pausePanel.SetActive(true);
+        EnsureMenuStyler();
+        if (pausePanel != null)
+        {
+            TryApplyMenuStyle(pausePanel.transform);
+            UpdateCurrentWorldNameLabel();
+            pausePanel.SetActive(true);
+        }
 
         Time.timeScale = 0f;
 
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
+    }
+
+    public void OpenSettings()
+    {
+        if (pausePanel == null || settingsPanel == null ||
+            settingsControlsPage == null || settingsVideoPage == null || settingsAccessibilityPage == null)
+        {
+            Debug.LogError("Cannot open pause settings because a settings panel or page reference is missing.");
+            return;
+        }
+
+        if (!IsPaused) PauseGame();
+
+        if (!InitializeSettingsMenus()) return;
+        SetSettingsPage(settingsControlsPage);
+        pausePanel.SetActive(false);
+        settingsPanel.SetActive(true);
+        TryApplyMenuStyle(settingsPanel.transform);
+    }
+
+    public void ShowControlsSettings()
+    {
+        SetSettingsPage(settingsControlsPage);
+    }
+
+    public void ShowVideoSettings()
+    {
+        SetSettingsPage(settingsVideoPage);
+    }
+
+    public void ShowAccessibilitySettings()
+    {
+        SetSettingsPage(settingsAccessibilityPage);
+    }
+
+    public void CloseSettings()
+    {
+        if (settingsPanel == null)
+        {
+            Debug.LogError("Cannot close pause settings because a settings panel reference is missing.");
+            return;
+        }
+
+        settingsPanel.SetActive(false);
+        if (pausePanel == null)
+        {
+            Debug.LogError("Cannot restore pause menu because the pause panel reference is missing.");
+            return;
+        }
+
+        pausePanel.SetActive(true);
+        TryApplyMenuStyle(pausePanel.transform);
+    }
+
+    public static bool TryCloseSettings()
+    {
+        PauseManager pauseManager = FindFirstObjectByType<PauseManager>();
+        if (pauseManager == null || !pauseManager.IsSettingsOpen) return false;
+
+        pauseManager.CloseSettings();
+        return true;
+    }
+
+    private bool InitializeSettingsMenus()
+    {
+        if (settingsControlsPage == null || settingsVideoPage == null || settingsAccessibilityPage == null)
+        {
+            Debug.LogError("Cannot initialize pause settings because one or more settings pages are not assigned.");
+            return false;
+        }
+
+        ControlsKeybindsMenu controlsMenu = settingsControlsPage.GetComponent<ControlsKeybindsMenu>();
+        if (controlsMenu == null) controlsMenu = settingsControlsPage.AddComponent<ControlsKeybindsMenu>();
+        controlsMenu.Initialize();
+
+        VideoSettingsMenu videoMenu = settingsVideoPage.GetComponent<VideoSettingsMenu>();
+        if (videoMenu == null) videoMenu = settingsVideoPage.AddComponent<VideoSettingsMenu>();
+        videoMenu.Initialize();
+
+        AccessibilitySettingsMenu accessibilityMenu =
+            settingsAccessibilityPage.GetComponent<AccessibilitySettingsMenu>();
+        if (accessibilityMenu == null)
+        {
+            accessibilityMenu = settingsAccessibilityPage.AddComponent<AccessibilitySettingsMenu>();
+        }
+
+        accessibilityMenu.Initialize();
+        return true;
+    }
+
+    private void SetSettingsPage(GameObject selectedPage)
+    {
+        if (selectedPage == null || settingsControlsPage == null ||
+            settingsVideoPage == null || settingsAccessibilityPage == null)
+        {
+            Debug.LogError("Cannot change pause settings tab because one or more settings pages are not assigned.");
+            return;
+        }
+
+        settingsControlsPage.SetActive(selectedPage == settingsControlsPage);
+        settingsVideoPage.SetActive(selectedPage == settingsVideoPage);
+        settingsAccessibilityPage.SetActive(selectedPage == settingsAccessibilityPage);
     }
 
     private void EnsureMenuStyler()
@@ -77,7 +189,19 @@ public class PauseManager : MonoBehaviour
             return;
         }
 
-        menuStyler = gameObject.AddComponent<MainMenuStyler>();
+        menuStyler = gameObject.GetComponent<MainMenuStyler>();
+        if (menuStyler == null) menuStyler = gameObject.AddComponent<MainMenuStyler>();
+    }
+
+    private bool TryApplyMenuStyle(Transform target)
+    {
+        if (target == null) return false;
+
+        EnsureMenuStyler();
+        if (menuStyler == null) return false;
+
+        menuStyler.ApplyTo(target);
+        return true;
     }
 
     private void UpdateCurrentWorldNameLabel()
@@ -100,7 +224,8 @@ public class PauseManager : MonoBehaviour
         //Debug.Log("Resume");
         IsPaused = false;
 
-        pausePanel.SetActive(false);
+        if (settingsPanel != null) settingsPanel.SetActive(false);
+        if (pausePanel != null) pausePanel.SetActive(false);
 
         Time.timeScale = 1f;
 
@@ -112,6 +237,8 @@ public class PauseManager : MonoBehaviour
     {
         //Debug.Log("Main Menu");
         IsPaused = false;
+        if (settingsPanel != null) settingsPanel.SetActive(false);
+        if (pausePanel != null) pausePanel.SetActive(false);
         Time.timeScale = 1f;
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;

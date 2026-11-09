@@ -58,5 +58,11 @@ public class StateViewerBlock : LogicSignalBlock
         propertyBlock.SetColor("_BaseColor", currentState == 1 ? highColor : lowColor);
         propertyBlock.SetColor("_Color", currentState == 1 ? highColor : lowColor);
         targetRenderer.SetPropertyBlock(propertyBlock);
+        AccessibilitySettings.ApplySignalPattern(targetRenderer, currentState, false);
+    }
+
+    public void RefreshAccessibilityVisuals()
+    {
+        ApplyVisualState();
     }
 }

@@ -151,6 +151,12 @@ public class GateBlock : LogicSignalBlock
         propertyBlock.SetColor("_BaseColor", color); // URP / HDRP Lit
         propertyBlock.SetColor("_Color", color);     // Built-in Standard
         outputIndicator.SetPropertyBlock(propertyBlock);
+        AccessibilitySettings.ApplySignalPattern(outputIndicator, displayedState, false);
+    }
+
+    public void RefreshAccessibilityVisuals()
+    {
+        ApplyVisualState();
     }
 
 #if UNITY_EDITOR

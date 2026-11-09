@@ -15,7 +15,7 @@ public class MenuTraversal : MonoBehaviour
     public GameObject settingsPanel;
     public GameObject settingsControlsPanel;
     public GameObject settingsVideoPanel;
-    public GameObject settingsAudioPanel;
+    // public GameObject settingsAudioPanel;
     public GameObject settingsAccessibilityPanel;
     public GameObject settingsTabButtons;
 
@@ -40,6 +40,7 @@ public class MenuTraversal : MonoBehaviour
         EnsureStyler();
         ResolveSettingsControlsPanel();
         InitializeVideoSettingsMenu();
+        InitializeAccessibilitySettingsMenu();
 
         mainMenuPanel.SetActive(true);
         LoadPanel.SetActive(false);
@@ -479,6 +480,7 @@ public class MenuTraversal : MonoBehaviour
 
         ResolveSettingsControlsPanel();
         InitializeVideoSettingsMenu();
+        InitializeAccessibilitySettingsMenu();
         if (settingsControlsPanel != null)
         {
             ControlsKeybindsMenu controlsMenu = settingsControlsPanel.GetComponent<ControlsKeybindsMenu>();
@@ -508,7 +510,7 @@ public class MenuTraversal : MonoBehaviour
     {
         settingsControlsPanel.SetActive(tabName == "Controls");
         settingsVideoPanel.SetActive(tabName == "Video");
-        settingsAudioPanel.SetActive(tabName == "Audio");
+        // settingsAudioPanel.SetActive(tabName == "Audio");
         settingsAccessibilityPanel.SetActive(tabName == "Accessibility");
         if (menuStyler != null)
         {
@@ -529,6 +531,20 @@ public class MenuTraversal : MonoBehaviour
         videoSettingsMenu.Initialize();
     }
 
+    private void InitializeAccessibilitySettingsMenu()
+    {
+        if (settingsAccessibilityPanel == null) return;
+
+        AccessibilitySettingsMenu accessibilitySettingsMenu =
+            settingsAccessibilityPanel.GetComponent<AccessibilitySettingsMenu>();
+        if (accessibilitySettingsMenu == null)
+        {
+            accessibilitySettingsMenu = settingsAccessibilityPanel.AddComponent<AccessibilitySettingsMenu>();
+        }
+
+        accessibilitySettingsMenu.Initialize();
+    }
+
     public void openControlsTab()
     {
         OpenSettingsTab("Controls");
@@ -539,10 +555,10 @@ public class MenuTraversal : MonoBehaviour
         OpenSettingsTab("Video");
     }
 
-    public void openAudioTab()
-    {
-        OpenSettingsTab("Audio");
-    }
+    // public void openAudioTab()
+    // {
+    //     OpenSettingsTab("Audio");
+    // }
 
     public void openAccessibilityTab()
     {

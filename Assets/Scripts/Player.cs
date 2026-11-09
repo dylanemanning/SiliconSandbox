@@ -150,8 +150,9 @@ public partial class Player : MonoBehaviour
         if (mouse == null) return;
 
         Vector2 mouseDelta = mouse.delta.ReadValue();
-        float mouseX = mouseDelta.x * Time.deltaTime * cameraSettings.sensitivityX;
-        float mouseY = mouseDelta.y * Time.deltaTime * cameraSettings.sensitivityY;
+        float sensitivity = AccessibilitySettings.MouseSensitivityMultiplier;
+        float mouseX = mouseDelta.x * Time.deltaTime * cameraSettings.sensitivityX * sensitivity;
+        float mouseY = mouseDelta.y * Time.deltaTime * cameraSettings.sensitivityY * sensitivity;
 
         yRotation += mouseX;
         xRotation -= mouseY;

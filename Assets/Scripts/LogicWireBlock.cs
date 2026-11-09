@@ -37,6 +37,10 @@ public class LogicWireBlock : LogicSignalBlock
     private MaterialPropertyBlock propertyBlock;
 
     public override int SignalState => signalState;
+    public Material ErrorVisualMaterial => errorMaterial != null
+        ? errorMaterial
+        : erroredMaterial != null ? erroredMaterial : null;
+    public Color ErrorColor => errorColor;
 
     /// <summary>True while this wire's network has more than one driver.</summary>
     public bool IsError => isError;
@@ -179,7 +183,7 @@ public class LogicWireBlock : LogicSignalBlock
 
         // No error material assigned: tint instead. Cleared again as soon as the
         // error goes away, so normal wires never carry a property block.
-        if (isError && errorMaterial == null)
+        if (isError && ErrorVisualMaterial == null)
         {
             if (propertyBlock == null) propertyBlock = new MaterialPropertyBlock();
             propertyBlock.SetColor("_BaseColor", errorColor); // URP / HDRP Lit
@@ -190,6 +194,32 @@ public class LogicWireBlock : LogicSignalBlock
         {
             targetRenderer.SetPropertyBlock(null);
         }
+
+        AccessibilitySettings.ApplySignalPattern(targetRenderer, signalState, isError);
+        foreach (LineRenderer line in connectionLines)
+        {
+            if (line == null) continue;
+
+            if (isError && ErrorVisualMaterial == null)
+            {
+                if (propertyBlock == null) propertyBlock = new MaterialPropertyBlock();
+                line.GetPropertyBlock(propertyBlock);
+                propertyBlock.SetColor("_BaseColor", errorColor);
+                propertyBlock.SetColor("_Color", errorColor);
+                line.SetPropertyBlock(propertyBlock);
+            }
+            else
+            {
+                line.SetPropertyBlock(null);
+            }
+
+            AccessibilitySettings.ApplySignalPattern(line, signalState, isError);
+        }
+    }
+
+    public void RefreshAccessibilityVisuals()
+    {
+        ApplyVisualState();
     }
 
     private void EnsureConnectionLines()
