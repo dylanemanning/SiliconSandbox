@@ -66,7 +66,7 @@ This was our original architecture. The overall shape has held up; what changed 
 
 ### Figure 3 — Whole system today: data flow and trust boundaries
 
-![Silicon Sandbox data flow diagram with trust boundaries](images/silicon-sandbox-dfd.png)
+![Silicon Sandbox data flow diagram with trust boundaries](images/SiliconSandbox%20DFD.png)
 
 Figure 3 is the current, detailed version of Figure 2, drawn for our security design review. Blue shapes are processes, orange are privileged processes, brown are data stores, and dashed grey shapes are planned. Red dashed boxes are trust boundaries.
 
