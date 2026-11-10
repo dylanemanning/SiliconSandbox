@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python3
 
 """Merge Unity package and Syft SPDX 2.3 inventories (package-level only)."""

@@ -68,21 +68,26 @@ public partial class Player : MonoBehaviour
         CheckJump();
         CheckTargetBlock();
 
-        //bool routeWasActive = wireRouteAnchor != null;
-        //if (routeWasActive && !IsWireSelected())
-        //{
-        //    CancelWireRoute();
-        //}
-
-        //if (wireRouteAnchor != null)
-        //{
-        //    UpdateWireRoutePreview();
-        //}
+        if (KeybindSettings.WasPressedThisFrame(KeybindSettings.Jump))
+        {
+            if (waitingForSecondSpacePress && Time.time - lastSpacePressTime <= doublePressTime)
+            {
+                ToggleFlight();
+                waitingForSecondSpacePress = false;
+            }
+            else
+            {
+                lastSpacePressTime = Time.time;
+                waitingForSecondSpacePress = true;
+            }
+        }
 
         bool packagingWandSelected = hotbar != null && hotbar.IsPackagingWandSelected;
         packagingWandController.HandleTool(packagingWandSelected, targetBlock, targetRaycastHit);
         if (packagingWandSelected)
         {
+            CancelWireRoute();
+
             if (blockHighlighter != null) blockHighlighter.SetActive(false);
             breakSeconds = 0f;
             breakingBlock = null;
@@ -109,20 +114,6 @@ public partial class Player : MonoBehaviour
         bool toggledSource = !cancelled && !wireConsumed && TryToggleSource();
         if (!cancelled && !wireConsumed && !toggledSource &&
             KeybindSettings.WasMouseButtonPressedThisFrame(KeybindSettings.PlaceMouseButton)) TryPlaceBlock();
-
-        if (KeybindSettings.WasPressedThisFrame(KeybindSettings.Jump))
-        {
-            if (waitingForSecondSpacePress && Time.time - lastSpacePressTime <= doublePressTime)
-            {
-                ToggleFlight();
-                waitingForSecondSpacePress = false;
-            }
-            else
-            {
-                lastSpacePressTime = Time.time;
-                waitingForSecondSpacePress = true;
-            }
-        }
     }
 
     void CheckFall()

@@ -27,9 +27,9 @@ public class VideoSettingsMenu : MonoBehaviour
     private static float baselineContrast;
 
     private bool initialized;
-    private TMP_Dropdown displayModeDropdown;
-    private Toggle shadowsToggle;
-    private TMP_Text shadowsValue;
+    // private TMP_Dropdown displayModeDropdown;
+    // private Toggle shadowsToggle;
+    // private TMP_Text shadowsValue;
 
     private void Awake()
     {
@@ -59,9 +59,16 @@ public class VideoSettingsMenu : MonoBehaviour
             Screen.fullScreenMode = displayMode;
         }
 
-        QualitySettings.shadows = PlayerPrefs.GetInt(ShadowsKey, 1) != 0
+        bool shadowsEnabled = PlayerPrefs.GetInt(ShadowsKey, 1) != 0;
+        QualitySettings.shadows = shadowsEnabled
             ? UnityEngine.ShadowQuality.All
             : UnityEngine.ShadowQuality.Disable;
+        foreach (Camera sceneCamera in FindObjectsByType<Camera>(
+                     FindObjectsInactive.Include,
+                     FindObjectsSortMode.None))
+        {
+            sceneCamera.GetUniversalAdditionalCameraData().renderShadows = shadowsEnabled;
+        }
 
         Camera camera = Camera.main;
         if (camera == null)
@@ -267,7 +274,7 @@ public class VideoSettingsMenu : MonoBehaviour
             PlayerPrefs.SetInt(FullscreenKey, value == 1 ? 1 : 0);
             ApplySettings();
         });
-        displayModeDropdown = dropdown;
+        // displayModeDropdown = dropdown;
     }
 
     private void CreateShadowsRow(Transform parent, string label, string initialValue, string toggleName)
@@ -296,8 +303,8 @@ public class VideoSettingsMenu : MonoBehaviour
             row.value.text = value ? "On" : "Off";
             ApplySettings();
         });
-        shadowsToggle = toggle;
-        shadowsValue = row.value;
+        // shadowsToggle = toggle;
+        // shadowsValue = row.value;
     }
 
     private RectTransform CreateDropdownTemplate(Transform parent, string dropdownName)

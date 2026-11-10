@@ -280,10 +280,10 @@ public class MenuTests : InputTestFixture
         Assert.AreEqual(styler.buttonBackground, resumeButton.colors.normalColor);
         Assert.AreEqual(styler.fontAsset, resumeButton.GetComponentInChildren<TMP_Text>(true).font);
 
-        // TMP_Text worldNameLabel = pausePanel.transform
-        //     .Find("currentWorldName")
-        //     .GetComponent<TMP_Text>();
-        // Assert.AreEqual("TC_PauseWorldLabel", worldNameLabel.text);
+        TMP_Text worldNameLabel = pausePanel.transform
+            .Find("currentWorldName")
+            .GetComponent<TMP_Text>();
+        Assert.AreEqual("TC_PauseWorldLabel", worldNameLabel.text);
     }
 
     // ---------------------------------------------------------

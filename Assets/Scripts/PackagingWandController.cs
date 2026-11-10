@@ -196,7 +196,7 @@ public sealed class PackagingWandController : MonoBehaviour
 
         TMP_FontAsset font = TMP_Settings.defaultFontAsset;
         MainMenuStyler styler = FindFirstObjectByType<MainMenuStyler>(FindObjectsInactive.Include);
-        if (font == null && styler != null) font = styler.fontAsset;
+        if (styler != null) font = styler.fontAsset;
 
         GameObject overlay = CreateImage("Overlay", confirmationCanvas.transform,
             new Color(0f, 0f, 0f, 0.62f), Vector2.zero, Vector2.one);

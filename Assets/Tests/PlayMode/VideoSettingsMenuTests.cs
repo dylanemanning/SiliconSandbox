@@ -125,8 +125,12 @@ public class VideoSettingsMenuTests
         shadows.isOn = false;
         Assert.AreEqual(0, PlayerPrefs.GetInt(ShadowsKey));
         Assert.AreEqual(UnityEngine.ShadowQuality.Disable, QualitySettings.shadows);
+        Assert.IsFalse(Camera.main.GetUniversalAdditionalCameraData().renderShadows);
         Assert.AreEqual("Off", settings.transform.Find(
             "VideoSettingsControls/ShadowsRow/ShadowsValue").GetComponent<TMP_Text>().text);
+        shadows.isOn = true;
+        Assert.AreEqual(1, PlayerPrefs.GetInt(ShadowsKey));
+        Assert.IsTrue(Camera.main.GetUniversalAdditionalCameraData().renderShadows);
 
         Button saveButton = settings.transform.Find(
             "VideoSettingsActions/SaveButton").GetComponent<Button>();
