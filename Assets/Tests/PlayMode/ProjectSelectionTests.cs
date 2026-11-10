@@ -1,6 +1,7 @@
 using System.Collections;
 using System.IO;
 using System.Linq;
+using System.Text;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -110,6 +111,47 @@ public class ProjectSelectionTests
             GameplayScene,
             SceneManager.GetActiveScene().name
         );
+    }
+
+    [UnityTest]
+    public IEnumerator NewWorldNameCannotExceedTheDisplayedCharacterLimit()
+    {
+        yield return LoadMainMenu();
+
+        MenuTraversal menu = GetMenu();
+        menu.worldNameInput.text = new string('W', MenuTraversal.MaxWorldNameCharacters + 1);
+        Assert.IsTrue(menu.duplicateWorldNameMessage.activeSelf);
+
+        menu.createWorld();
+
+        Assert.AreEqual(MainMenuScene, SceneManager.GetActiveScene().name);
+        Assert.IsTrue(menu.duplicateWorldNameMessage.activeSelf);
+        StringAssert.Contains(MenuTraversal.MaxWorldNameCharacters.ToString(),
+            menu.duplicateWorldNameMessage.GetComponent<TMPro.TMP_Text>().text);
+    }
+
+    [UnityTest]
+    public IEnumerator ExitingGameplayImmediatelySavesTheCurrentSourceState()
+    {
+        const string worldName = "TC_SourceStateOnExit";
+        WorldSaveSystem.PendingWorldName = worldName;
+        yield return LoadGameplay();
+
+        GameObject sourceObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        sourceObject.name = "TC exit source";
+        sourceObject.AddComponent<Block>();
+        LogicSignalSource source = sourceObject.AddComponent<LogicSignalSource>();
+        source.SetState(1);
+
+        Object.FindFirstObjectByType<PauseManager>().ReturnToMainMenu();
+        yield return null;
+        yield return null;
+
+        string savePath = Path.Combine(worldsDirectory, worldName + ".json");
+        Assert.IsTrue(File.Exists(savePath));
+        string saveJson = File.ReadAllText(savePath, Encoding.UTF8);
+        StringAssert.Contains("\"hasSourceState\": true", saveJson);
+        StringAssert.Contains("\"sourceState\": 1", saveJson);
     }
 
     // ---------------------------------------------------------

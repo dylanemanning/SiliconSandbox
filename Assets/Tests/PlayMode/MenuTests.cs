@@ -26,6 +26,7 @@ public class MenuTests : InputTestFixture
         hadFontSizePreference = PlayerPrefs.HasKey(AccessibilitySettings.FontSizeKey);
         originalFontSizePreference = PlayerPrefs.GetInt(AccessibilitySettings.FontSizeKey);
 
+        PlayerPrefs.SetInt(AccessibilitySettings.FontSizeKey, 1);
         PlayerPrefs.DeleteKey("Keybind.Pause");
     }
 

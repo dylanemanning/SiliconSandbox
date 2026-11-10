@@ -171,6 +171,7 @@ public class ControlsKeybindsMenu : MonoBehaviour
             moveRightButton, placeButton, breakButton, pauseButton, jumpButton, downButton, interactButton,
             manualWireButton, deleteWireRunButton, resetWireButton })
             FitRowCaption(bindingButton);
+        SetRowCaption(downButton, "Flight (double-tap Jump to toggle)");
         SetLabel(resetWireButton, "Restore defaults");
         AddListener(resetWireButton, () => { KeybindSettings.ResetWireBindings(); FinishRebinding(); });
         AddListener(manualWireButton, () => BeginRebinding(BindingType.ManualWire));
@@ -362,6 +363,16 @@ public class ControlsKeybindsMenu : MonoBehaviour
             label.enableAutoSizing = true;
             label.fontSizeMin = 16;
             label.fontSizeMax = 24;
+        }
+    }
+
+    private static void SetRowCaption(Button button, string caption)
+    {
+        if (button == null) return;
+        foreach (TMP_Text label in button.transform.parent.GetComponentsInChildren<TMP_Text>(true))
+        {
+            if (label.transform.IsChildOf(button.transform)) continue;
+            label.text = caption;
         }
     }
 

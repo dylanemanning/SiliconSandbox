@@ -180,16 +180,27 @@ public class WireRouteCommitTests
     }
 
     [Test]
-    public void SelectedPinAxisCannotBeEnteredSidewaysEvenWithAnOtherwiseValidPath()
+    public void SelectedPinCanBendImmediatelyAfterItsConnectionCell()
     {
         var source = Source(Origin, 90);
         var start = new WireEndpoint(source, Origin, Vector3Int.right, false);
         var end = new WireEndpoint(Origin + Vector3Int.right * 2 + Vector3Int.up);
         var snapshot = Capture(start, end);
         var path = new[] { start.Cell, start.Cell + Vector3Int.up, end.Cell };
-        Assert.That(WireRouteCommit.TryCommit(snapshot, path, prefab, start, end, out var error), Is.False);
-        Assert.That(error, Does.Contain("axis"));
-        Assert.That(ActiveWires(), Is.Empty);
+        Assert.That(WireRouteCommit.TryCommit(snapshot, path, prefab, start, end, out var error), Is.True, error);
+        Assert.That(ActiveWireAt(start.Cell).HasEndpointTowards(Origin), Is.True);
+        Assert.That(ActiveWireAt(start.Cell).ConnectsTo(source, Origin), Is.True);
+    }
+
+    [Test]
+    public void ValidPinRouteCommitsInEitherEndpointOrder()
+    {
+        AssertPinRouteCommits(
+            Origin,
+            sourceFirst: true);
+        AssertPinRouteCommits(
+            Origin + Vector3Int.forward * 32,
+            sourceFirst: false);
     }
 
     [Test]
@@ -253,6 +264,22 @@ public class WireRouteCommitTests
     {
         Assert.That(WireWorldSnapshot.TryCapture(start, end, out var snapshot, out var error), Is.True, error);
         return snapshot;
+    }
+
+    private void AssertPinRouteCommits(Vector3Int origin, bool sourceFirst)
+    {
+        LogicSignalSource source = Source(origin, 90);
+        Block viewerBlock = Surface(origin + Vector3Int.right * 4);
+        StateViewerBlock viewer = viewerBlock.gameObject.AddComponent<StateViewerBlock>();
+        var sourceEndpoint = new WireEndpoint(source, origin, Vector3Int.right, false);
+        var viewerEndpoint = new WireEndpoint(viewer, viewer.GridPosition, Vector3Int.left, true);
+        WireEndpoint start = sourceFirst ? sourceEndpoint : viewerEndpoint;
+        WireEndpoint end = sourceFirst ? viewerEndpoint : sourceEndpoint;
+        WireWorldSnapshot snapshot = Capture(start, end);
+        WireRouteResult result = WireRouteSolver.Find(snapshot.Request);
+
+        Assert.That(result.Status, Is.EqualTo(WireRouteStatus.Success));
+        Assert.That(WireRouteCommit.TryCommit(snapshot, result.Path, prefab, start, end, out var error), Is.True, error);
     }
 
     private GameObject Own(GameObject value) { owned.Add(value); return value; }

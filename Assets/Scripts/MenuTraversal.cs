@@ -8,6 +8,8 @@ using System.Linq;
 
 public class MenuTraversal : MonoBehaviour
 {
+    public const int MaxWorldNameCharacters = 20;
+
     [Header("Panels")]
     public GameObject mainMenuPanel;
     public GameObject LoadPanel;
@@ -47,7 +49,8 @@ public class MenuTraversal : MonoBehaviour
         CreatePanel.SetActive(false);
         settingsPanel.SetActive(false);
 
-        duplicateWorldNameMessage.SetActive(false);
+        if (duplicateWorldNameMessage != null) duplicateWorldNameMessage.SetActive(false);
+        if (worldNameInput != null) worldNameInput.onValueChanged.AddListener(ValidateWorldNameLength);
 
         if (settingsControlsPanel != null && settingsControlsPanel.GetComponent<ControlsKeybindsMenu>() == null)
         {
@@ -96,13 +99,39 @@ public class MenuTraversal : MonoBehaviour
         
         string worldName = worldNameInput == null ? "World" : worldNameInput.text.Trim();
         worldName = string.IsNullOrWhiteSpace(worldName) ? "World" : worldName;
-        if(savedWorldNames.Contains(worldName)) {
-            worldNameInput.text = "";
-            duplicateWorldNameMessage.SetActive(true);
+        if (worldName.Length > MaxWorldNameCharacters)
+        {
+            ShowWorldNameError($"Limit: {MaxWorldNameCharacters} characters");
             return;
         }
+        if (savedWorldNames.Contains(worldName)) {
+            if (worldNameInput != null) worldNameInput.text = "";
+            ShowWorldNameError("World Name Already Exists");
+            return;
+        }
+        if (duplicateWorldNameMessage != null) duplicateWorldNameMessage.SetActive(false);
         WorldSaveSystem.PendingWorldName = worldName;
         SceneManager.LoadScene(gameplaySceneName);
+    }
+
+    private void ShowWorldNameError(string message)
+    {
+        if (duplicateWorldNameMessage == null) return;
+        TMP_Text errorLabel = duplicateWorldNameMessage.GetComponent<TMP_Text>();
+        if (errorLabel != null) errorLabel.text = message;
+        duplicateWorldNameMessage.SetActive(true);
+    }
+
+    private void ValidateWorldNameLength(string value)
+    {
+        if (value.Length > MaxWorldNameCharacters)
+        {
+            ShowWorldNameError($"Limit: {MaxWorldNameCharacters} characters");
+        }
+        else if (duplicateWorldNameMessage != null)
+        {
+            duplicateWorldNameMessage.SetActive(false);
+        }
     }
 
     public void loadWorld(string worldName)
@@ -455,6 +484,7 @@ public class MenuTraversal : MonoBehaviour
         CloseDeleteConfirmation();
         LoadPanel.SetActive(false);
         CreatePanel.SetActive(true);
+        if (duplicateWorldNameMessage != null) duplicateWorldNameMessage.SetActive(false);
 
         if (menuStyler != null)
         {

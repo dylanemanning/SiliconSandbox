@@ -236,6 +236,7 @@ public class PauseManager : MonoBehaviour
     public void ReturnToMainMenu()
     {
         //Debug.Log("Main Menu");
+        WorldSaveSystem.Instance?.SaveNow();
         IsPaused = false;
         if (settingsPanel != null) settingsPanel.SetActive(false);
         if (pausePanel != null) pausePanel.SetActive(false);

@@ -2782,7 +2782,7 @@ MonoBehaviour:
     sensitivityY: 40
   speed: 5
   jumpForce: 5
-  flightStep: 1
+  flightStep: 5
   reachDistance: 5
   fallThreshold: -4
   respawnPoint: {fileID: 0}

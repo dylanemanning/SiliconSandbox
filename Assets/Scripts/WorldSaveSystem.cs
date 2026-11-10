@@ -6,7 +6,7 @@ using UnityEngine;
 
 public class WorldSaveSystem : MonoBehaviour
 {
-    public const int CurrentSaveVersion = 3;
+    public const int CurrentSaveVersion = 4;
 
     [Serializable]
     public class SavedBlock
@@ -19,10 +19,11 @@ public class WorldSaveSystem : MonoBehaviour
         public bool isGround;
         public bool hasWireEndpointMask;
         public int wireEndpointMask;
+        public bool hasSourceState;
+        public int sourceState;
     }
 
-    // Read-only compatibility fields. New saves serialize SavedBlock instead,
-    // so hidden connection state never survives in the geometry-only format.
+    // Read-only compatibility fields for save versions that stored wire joins.
     [Serializable]
     public class LegacySavedBlock : SavedBlock
     {
@@ -158,6 +159,7 @@ public class WorldSaveSystem : MonoBehaviour
     private static SavedBlock CaptureBlock(Block block)
     {
         LogicWireBlock wire = block.GetComponent<LogicWireBlock>();
+        LogicSignalSource source = block.GetComponent<LogicSignalSource>();
         return new SavedBlock
         {
             prefabName = GetPrefabName(block.gameObject),
@@ -167,7 +169,9 @@ public class WorldSaveSystem : MonoBehaviour
             footprintSize = block.GetFootprintSize(),
             isGround = block.isGround,
             hasWireEndpointMask = wire != null,
-            wireEndpointMask = wire != null ? wire.EndpointMask : 0
+            wireEndpointMask = wire != null ? wire.EndpointMask : 0,
+            hasSourceState = source != null,
+            sourceState = source != null ? source.SignalState : 0
         };
     }
 
@@ -284,6 +288,8 @@ public class WorldSaveSystem : MonoBehaviour
                 if (isGround) savedBlockComponent.breakable = false;
             }
 
+            RestoreSourceState(block.GetComponent<LogicSignalSource>(), savedBlock);
+
             LogicWireBlock savedWire = block.GetComponent<LogicWireBlock>();
             if (savedWire != null) restoredWires.Add(savedWire, savedBlock);
         }
@@ -291,6 +297,11 @@ public class WorldSaveSystem : MonoBehaviour
         RestoreWireTopology(restoredWires, save.version);
         savePending = false;
         isLoading = false;
+    }
+
+    private static void RestoreSourceState(LogicSignalSource source, LegacySavedBlock saved)
+    {
+        if (source != null && saved.hasSourceState) source.SetState(saved.sourceState);
     }
 
     private static void RestoreWireTopology(Dictionary<LogicWireBlock, LegacySavedBlock> restoredWires, int version)
@@ -308,7 +319,7 @@ public class WorldSaveSystem : MonoBehaviour
             RestoreLegacyZeroMaskVisuals(restoredWires.Keys);
             return;
         }
-        if (version >= CurrentSaveVersion) return;
+        if (version >= 3) return;
 
         // Version 2 rendered EndpointMask | ConnectionMask. Only reciprocal
         // stored wire joins contributed extra visible arms; a unilateral stale
