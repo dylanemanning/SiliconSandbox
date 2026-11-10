@@ -162,6 +162,7 @@ public class MenuTests : InputTestFixture
     [UnityTest]
     public IEnumerator TC_9_1_2_ReturnToMainMenu()
     {
+        WorldSaveSystem.PendingWorldName = "TC_ReturnToMenu_" + System.Guid.NewGuid().ToString("N");
         yield return LoadScene(GameplayScene);
 
         PauseManager pause =
