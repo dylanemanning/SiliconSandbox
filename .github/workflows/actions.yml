@@ -1,20 +1,28 @@
+
 name: BuildSystem
 
 on:
   push:
     branches: ["main", "dev"]
-    tags: 
+    tags:
       - "v*.*.*"
   pull_request:
     branches: ["main", "dev"]
   workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   test:
     permissions:
       contents: read
       checks: write
-  
+
     name: Run Unity Tests
     runs-on: ubuntu-latest
 
@@ -130,6 +138,70 @@ jobs:
           targetPlatform: StandaloneWindows64
           buildName: Game
           buildPath: build
+
+      - name: Install Syft
+        uses: anchore/sbom-action/download-syft@v0
+
+      - name: Verify Windows build output
+        run: |
+          find build -maxdepth 5 -type f \( -name 'Game.exe' -o -name 'UnityPlayer.dll' \) -print
+          test -d build/StandaloneWindows64 || {
+            echo "Expected build directory not found"
+            find build -maxdepth 3 -type d
+            exit 1
+          }
+
+      - name: Generate Unity package SBOM
+        run: |
+          mkdir -p doc/sbom-parts
+          python3 toolScripts/generate_unity_sbom.py --output doc/sbom-parts/unity.json
+
+      - name: Scan built Windows game
+        run: |
+          syft dir:build/StandaloneWindows64 \
+            -o spdx-json=doc/sbom-parts/windows.json
+
+      - name: Scan project plugins and native source
+        run: |
+          if [ -d Assets/Plugins ]; then
+            syft dir:Assets/Plugins \
+              -o spdx-json=doc/sbom-parts/plugins.json
+          fi
+
+          if [ -d native ]; then
+            syft dir:native \
+              -o spdx-json=doc/sbom-parts/native.json
+          fi
+
+      - name: Merge SPDX package inventories
+        run: |
+          python3 toolScripts/merge_sboms.py \
+            --unity doc/sbom-parts/unity.json \
+            --scans doc/sbom-parts/windows.json doc/sbom-parts/plugins.json doc/sbom-parts/native.json \
+            --output doc/SBOM.json
+
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SiliconSandbox-SBOM
+          path: |
+            doc/SBOM.json
+            doc/sbom-parts/*.json
+
+      - name: Commit and push updated SBOM
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev')
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add doc/SBOM.json
+
+          if git diff --cached --quiet; then
+            echo "SBOM is already up to date."
+          else
+            git commit -m "Automatically update SBOM [skip ci]"
+            git push
+          fi
 
       - name: Return license
         uses: game-ci/unity-return-license@v2

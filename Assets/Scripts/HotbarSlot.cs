@@ -23,7 +23,7 @@ public class HotbarSlot : MonoBehaviour
 
     public void SetItem(InventoryItem item)
     {
-        if (item != null && item.Prefab == null) return;
+        if (item != null && item.Prefab == null && item.ItemType != InventoryItemType.PackagingWand) return;
         Item = item;
         blockPrefab = item != null ? item.Prefab : null;
         SetIcon(item != null ? item.Icon : null);

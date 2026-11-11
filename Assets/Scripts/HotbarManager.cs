@@ -11,18 +11,19 @@ public class HotbarManager : MonoBehaviour
     public int SelectedSlotIndex => selectedSlot;
     public int SlotCount => slots != null ? slots.Length : 0;
     public HotbarSlot GetSlot(int index) => slots != null && index >= 0 && index < slots.Length ? slots[index] : null;
+    public InventoryItem SelectedItem => GetSlot(selectedSlot)?.Item;
+    public bool IsPackagingWandSelected => SelectedItem?.ItemType == InventoryItemType.PackagingWand;
 
     public bool AssignItem(int index, InventoryItem item)
     {
         var slot = GetSlot(index);
-        if (slot == null || item == null || item.Prefab == null) return false;
+        if (slot == null || item == null ||
+            (item.Prefab == null && item.ItemType != InventoryItemType.PackagingWand)) return false;
         slot.SetItem(item);
         return true;
     }
 
-    public Block SelectedBlock => slots != null && slots.Length > 0
-        ? slots[selectedSlot].BlockPrefab
-        : null;
+    public Block SelectedBlock => GetSlot(selectedSlot)?.BlockPrefab;
 
     private void Start()
     {
@@ -34,7 +35,8 @@ public class HotbarManager : MonoBehaviour
 
     private void Update()
     {
-        if (PauseManager.IsPaused || InventoryGrid.IsOpen || InventoryGrid.ClosedThisFrame) return;
+        if (PauseManager.IsPaused || InventoryGrid.IsOpen || InventoryGrid.ClosedThisFrame ||
+            PackagingWandController.IsConfirmationOpen) return;
         if (Keyboard.current == null)
             return;
 

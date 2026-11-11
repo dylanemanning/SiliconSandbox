@@ -162,6 +162,7 @@ public class MenuTests : InputTestFixture
     [UnityTest]
     public IEnumerator TC_9_1_2_ReturnToMainMenu()
     {
+        WorldSaveSystem.PendingWorldName = "TC_ReturnToMenu_" + System.Guid.NewGuid().ToString("N");
         yield return LoadScene(GameplayScene);
 
         PauseManager pause =
@@ -274,11 +275,16 @@ public class MenuTests : InputTestFixture
 
         Assert.IsNotNull(pauseTitle);
         Assert.AreEqual(TextAlignmentOptions.Center, pauseTitle.alignment);
+        Assert.AreEqual(styler.fontAsset, pauseTitle.font);
 
-        // TMP_Text worldNameLabel = pausePanel.transform
-        //     .Find("currentWorldName")
-        //     .GetComponent<TMP_Text>();
-        // Assert.AreEqual("TC_PauseWorldLabel", worldNameLabel.text);
+        Button resumeButton = pausePanel.transform.Find("Button Container/ResumeButton").GetComponent<Button>();
+        Assert.AreEqual(styler.buttonBackground, resumeButton.colors.normalColor);
+        Assert.AreEqual(styler.fontAsset, resumeButton.GetComponentInChildren<TMP_Text>(true).font);
+
+        TMP_Text worldNameLabel = pausePanel.transform
+            .Find("currentWorldName")
+            .GetComponent<TMP_Text>();
+        Assert.AreEqual("TC_PauseWorldLabel", worldNameLabel.text);
     }
 
     // ---------------------------------------------------------

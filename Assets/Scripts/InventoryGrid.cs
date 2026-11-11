@@ -47,7 +47,7 @@ public class InventoryGrid : MonoBehaviour
 
     private void Update()
     {
-        if (Keyboard.current == null || PauseManager.IsPaused) return;
+        if (Keyboard.current == null || PauseManager.IsPaused || PackagingWandController.IsConfirmationOpen) return;
         if (open && (Keyboard.current.escapeKey.wasPressedThisFrame
             || KeybindSettings.WasPressedThisFrame(KeybindSettings.Pause)))
             SetOpen(false);
@@ -58,7 +58,7 @@ public class InventoryGrid : MonoBehaviour
     // early so opening/closing still blocks player and hotbar input in that frame.
     private void LateUpdate()
     {
-        if (Keyboard.current == null || PauseManager.IsPaused) return;
+        if (Keyboard.current == null || PauseManager.IsPaused || PackagingWandController.IsConfirmationOpen) return;
         if (open && hoveredSlot != null && hoveredSlot.Item != null)
         {
             for (int i = 0; i < 9; i++)

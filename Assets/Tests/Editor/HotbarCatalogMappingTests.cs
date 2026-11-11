@@ -10,6 +10,13 @@ public class HotbarCatalogMappingTests
         var catalog = AssetDatabase.LoadAssetAtPath<InventoryCatalog>(InventoryBlockImageBuilder.CatalogPath);
         foreach (var item in catalog.Items)
         {
+            if (item.ItemType == InventoryItemType.PackagingWand)
+            {
+                Assert.That(item.Prefab, Is.Null, item.Id);
+                Assert.That(catalog.FindForPrefab(item.Prefab), Is.Null, item.Id);
+                continue;
+            }
+
             Assert.That(catalog.FindForPrefab(item.Prefab), Is.SameAs(item));
             // A clone is not the catalog's exact asset reference, so it exercises type matching.
             if (item.Id=="building_block") continue;

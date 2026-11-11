@@ -4,21 +4,35 @@ using System.Linq;
 using UnityEngine;
 
 [Serializable]
+public enum InventoryItemType
+{
+    Block,
+    PackagingWand
+}
+
+[Serializable]
 public class InventoryItem
 {
     [SerializeField] private string id;
     [SerializeField] private string displayName;
     [SerializeField] private Block prefab;
     [SerializeField] private Sprite icon;
+    [SerializeField] private InventoryItemType itemType;
 
     public string Id => id;
     public string DisplayName => displayName;
     public Block Prefab => prefab;
     public Sprite Icon => icon;
+    public InventoryItemType ItemType => itemType;
 
-    public InventoryItem(string id,string name,Block prefab,Sprite icon)
+    public InventoryItem(string id, string name, Block prefab, Sprite icon,
+        InventoryItemType itemType = InventoryItemType.Block)
     {
-        this.id=id;displayName=name;this.prefab=prefab;this.icon=icon;
+        this.id = id;
+        displayName = name;
+        this.prefab = prefab;
+        this.icon = icon;
+        this.itemType = itemType;
     }
 }
 
