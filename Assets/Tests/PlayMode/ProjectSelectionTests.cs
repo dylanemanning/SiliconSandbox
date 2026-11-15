@@ -470,6 +470,41 @@ public class ProjectSelectionTests
         Assert.IsNotNull(menu.savedWorldContainer.Find("SavedWorldRow_" + worldName + "_2"));
     }
 
+    [UnityTest]
+    public IEnumerator CopyingOriginalWorldAgainUsesHighestExistingCopyNumber()
+    {
+        const string worldName = "TC_CopySequence";
+        File.WriteAllText(
+            Path.Combine(worldsDirectory, worldName + ".json"),
+            "{\"version\":4,\"worldName\":\"" + worldName + "\",\"blocks\":[]}"
+        );
+
+        yield return LoadMainMenu();
+
+        MenuTraversal menu = GetMenu();
+        menu.openLoad();
+
+        for (int copyNumber = 2; copyNumber <= 4; copyNumber++)
+        {
+            Transform sourceRow = menu.savedWorldContainer.Find("SavedWorldRow_" + worldName);
+            Assert.IsNotNull(sourceRow);
+            sourceRow.Find("CopyWorldButton").GetComponent<Button>().onClick.Invoke();
+
+            string expectedCopyName = worldName + "_" + copyNumber;
+            string expectedPath = Path.Combine(worldsDirectory, expectedCopyName + ".json");
+            Assert.IsTrue(File.Exists(expectedPath), $"Expected copy '{expectedCopyName}' to be created.");
+            StringAssert.Contains(
+                "\"worldName\": \"" + expectedCopyName + "\"",
+                File.ReadAllText(expectedPath)
+            );
+        }
+
+        Transform numberedCopyRow = menu.savedWorldContainer.Find("SavedWorldRow_" + worldName + "_2");
+        Assert.IsNotNull(numberedCopyRow);
+        numberedCopyRow.Find("CopyWorldButton").GetComponent<Button>().onClick.Invoke();
+        Assert.IsTrue(File.Exists(Path.Combine(worldsDirectory, worldName + "_5.json")));
+    }
+
     // ---------------------------------------------------------
     // TC-1.2.4
     // Saved project exists in filesystem

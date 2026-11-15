@@ -67,6 +67,27 @@ public class PlayerSafetyTests
         Assert.That(Physics.gravity, Is.EqualTo(originalGravity));
     }
 
+    [Test]
+    public void FlightRequiresTwoDistinctJumpPressesToToggle()
+    {
+        CreatePlayer();
+        MethodInfo handleFlightToggle = typeof(Player).GetMethod(
+            "HandleFlightToggle",
+            BindingFlags.Instance | BindingFlags.NonPublic
+        );
+
+        Assert.That((bool)handleFlightToggle.Invoke(player, new object[] { true, 1f }), Is.False);
+        Assert.That((bool)handleFlightToggle.Invoke(player, new object[] { false, 1.1f }), Is.False);
+        Assert.That((bool)handleFlightToggle.Invoke(player, new object[] { false, 1.2f }), Is.False);
+        Assert.That(body.useGravity, Is.True, "Holding Jump should not toggle flight.");
+
+        Assert.That((bool)handleFlightToggle.Invoke(player, new object[] { true, 1.25f }), Is.True);
+        Assert.That(body.useGravity, Is.False, "A second press within the double-tap window should enable flight.");
+
+        Assert.That((bool)handleFlightToggle.Invoke(player, new object[] { true, 2f }), Is.False);
+        Assert.That(body.useGravity, Is.False, "A later single press should only begin a new double-tap window.");
+    }
+
     private void CreatePlayer()
     {
         playerObject = GameObject.CreatePrimitive(PrimitiveType.Capsule);

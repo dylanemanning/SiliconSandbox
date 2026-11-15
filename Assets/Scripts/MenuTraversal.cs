@@ -4,6 +4,7 @@ using TMPro;
 using UnityEngine.UI;
 using System.Collections.Generic;
 using System.Linq;
+using System.Globalization;
 // using System.Drawing;
 
 public class MenuTraversal : MonoBehaviour
@@ -319,22 +320,14 @@ public class MenuTraversal : MonoBehaviour
 
     private void CopySavedWorld(string sourceWorldName)
     {
-        int lenEndNum = 0;
-        int idx = 1;
-        string copyWorldName;
-        while(char.IsNumber(sourceWorldName[^idx])) {
-            lenEndNum++;
-            idx++;
+        if (!TryGetNextCopyWorldName(sourceWorldName, WorldSaveSystem.GetSavedWorldNames(), out string copyWorldName, out string error))
+        {
+            Debug.LogError($"Could not copy world '{sourceWorldName}': {error}");
+            ShowCopyError(error);
+            return;
         }
-        if(lenEndNum != 0) {
-            string endNumStr = sourceWorldName[^lenEndNum..];
-            int endNumInt = int.Parse(endNumStr);
-            copyWorldName = sourceWorldName[..^lenEndNum] + (endNumInt + 1).ToString();
-        } else {
-            copyWorldName = sourceWorldName + "_2";
-        }
-        // if(char.isAsciiDigit(sourceWorldName[-1]))
-        if (!WorldSaveSystem.TryCopySavedWorld(sourceWorldName, copyWorldName, out string error))
+
+        if (!WorldSaveSystem.TryCopySavedWorld(sourceWorldName, copyWorldName, out error))
         {
             Debug.LogError($"Could not copy world '{sourceWorldName}': {error}");
             ShowCopyError(error);
@@ -343,6 +336,80 @@ public class MenuTraversal : MonoBehaviour
 
         PopulateSavedWorlds();
         if (menuStyler != null) menuStyler.Apply();
+    }
+
+    private static bool TryGetNextCopyWorldName(
+        string sourceWorldName,
+        IEnumerable<string> savedWorldNames,
+        out string copyWorldName,
+        out string error)
+    {
+        copyWorldName = null;
+        error = null;
+        if (string.IsNullOrWhiteSpace(sourceWorldName))
+        {
+            error = "The source world name is invalid.";
+            return false;
+        }
+
+        string baseName = sourceWorldName;
+        string suffixSeparator = "_";
+        int highestNumber = 1;
+
+        int underscoreIndex = sourceWorldName.LastIndexOf('_');
+        if (underscoreIndex >= 0 &&
+            TryParsePositiveSuffix(sourceWorldName.Substring(underscoreIndex + 1), out int underscoredNumber))
+        {
+            baseName = sourceWorldName.Substring(0, underscoreIndex);
+            highestNumber = underscoredNumber;
+        }
+        else
+        {
+            int digitStart = sourceWorldName.Length;
+            while (digitStart > 0 && char.IsDigit(sourceWorldName[digitStart - 1])) digitStart--;
+            if (digitStart < sourceWorldName.Length)
+            {
+                string trailingNumber = sourceWorldName.Substring(digitStart);
+                if (!TryParsePositiveSuffix(trailingNumber, out highestNumber))
+                {
+                    error = "The world name's numeric suffix is too large to increment.";
+                    return false;
+                }
+
+                baseName = sourceWorldName.Substring(0, digitStart);
+                suffixSeparator = string.Empty;
+            }
+        }
+
+        foreach (string savedWorldName in savedWorldNames)
+        {
+            if (string.IsNullOrEmpty(savedWorldName) ||
+                !savedWorldName.StartsWith(baseName + suffixSeparator, System.StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            string suffix = savedWorldName.Substring((baseName + suffixSeparator).Length);
+            if (TryParsePositiveSuffix(suffix, out int existingNumber) && existingNumber > highestNumber)
+            {
+                highestNumber = existingNumber;
+            }
+        }
+
+        if (highestNumber == int.MaxValue)
+        {
+            error = "No higher copy number is available for this world.";
+            return false;
+        }
+
+        copyWorldName = baseName + suffixSeparator + (highestNumber + 1).ToString(CultureInfo.InvariantCulture);
+        return true;
+    }
+
+    private static bool TryParsePositiveSuffix(string value, out int number)
+    {
+        return int.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out number) &&
+            number > 0;
     }
 
     private void ShowCopyError(string message)

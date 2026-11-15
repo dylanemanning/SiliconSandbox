@@ -75,25 +75,15 @@ public partial class Player : MonoBehaviour
             return;
         }
 
+        bool flightToggled = HandleFlightToggle(
+            KeybindSettings.WasPressedThisFrame(KeybindSettings.Jump),
+            Time.unscaledTime
+        );
         CheckFall();
         CheckRotation();
         CheckMovement();
-        CheckJump();
+        CheckJump(flightToggled);
         CheckTargetBlock();
-
-        if (KeybindSettings.WasPressedThisFrame(KeybindSettings.Jump))
-        {
-            if (waitingForSecondSpacePress && Time.time - lastSpacePressTime <= doublePressTime)
-            {
-                ToggleFlight();
-                waitingForSecondSpacePress = false;
-            }
-            else
-            {
-                lastSpacePressTime = Time.time;
-                waitingForSecondSpacePress = true;
-            }
-        }
 
         bool packagingWandSelected = hotbar != null && hotbar.IsPackagingWandSelected;
         packagingWandController.HandleTool(packagingWandSelected, targetBlock, targetRaycastHit);
@@ -128,20 +118,22 @@ public partial class Player : MonoBehaviour
         bool toggledSource = !cancelled && !wireConsumed && TryToggleSource();
         if (!cancelled && !wireConsumed && !toggledSource &&
             KeybindSettings.WasMouseButtonPressedThisFrame(KeybindSettings.PlaceMouseButton)) TryPlaceBlock();
+    }
 
-        if (KeybindSettings.WasPressedThisFrame(KeybindSettings.Jump))
+    private bool HandleFlightToggle(bool jumpPressed, float currentTime)
+    {
+        if (!jumpPressed) return false;
+
+        if (waitingForSecondSpacePress && currentTime - lastSpacePressTime <= doublePressTime)
         {
-            if (waitingForSecondSpacePress && Time.unscaledTime - lastSpacePressTime <= doublePressTime)
-            {
-                ToggleFlight();
-                waitingForSecondSpacePress = false;
-            }
-            else
-            {
-                lastSpacePressTime = Time.unscaledTime;
-                waitingForSecondSpacePress = true;
-            }
+            ToggleFlight();
+            waitingForSecondSpacePress = false;
+            return true;
         }
+
+        lastSpacePressTime = currentTime;
+        waitingForSecondSpacePress = true;
+        return false;
     }
 
     void CheckFall()
@@ -299,10 +291,10 @@ public partial class Player : MonoBehaviour
         rb.linearVelocity = new Vector3(move.x, rb.linearVelocity.y, move.z);
     }
 
-    void CheckJump()
+    void CheckJump(bool flightToggled)
     {
         if(!isFlying) {
-            if (isGrounded && KeybindSettings.WasPressedThisFrame(KeybindSettings.Jump))
+            if (!flightToggled && isGrounded && KeybindSettings.WasPressedThisFrame(KeybindSettings.Jump))
             {
                 rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
             }
