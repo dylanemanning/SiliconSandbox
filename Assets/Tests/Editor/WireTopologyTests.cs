@@ -338,7 +338,7 @@ public class WireTopologyTests
     }
 
     [Test]
-    public void VersionThreeRoundTripStoresGeometryOnlyAndDoesNotReapplyLegacyOr()
+    public void VersionFourRoundTripStoresGeometryOnlyAndDoesNotReapplyLegacyOr()
     {
         var first = Wire(Vector3Int.zero, Bit(Vector3Int.right));
         var second = Wire(Vector3Int.right, Bit(Vector3Int.forward));
@@ -350,13 +350,13 @@ public class WireTopologyTests
         worldType.GetField("worldName").SetValue(world, "Round trip");
         worldType.GetField("blocks").SetValue(world, new List<WorldSaveSystem.SavedBlock> { firstSaved, secondSaved });
         string json = JsonUtility.ToJson(world);
-        Assert.That(WorldSaveSystem.CurrentSaveVersion, Is.EqualTo(3));
+        Assert.That(WorldSaveSystem.CurrentSaveVersion, Is.EqualTo(4));
         StringAssert.DoesNotContain("JoinMask", json);
         StringAssert.DoesNotContain("joinMask", json);
         Assert.That(firstSaved.position, Is.EqualTo((Vector3)first.GridPosition));
         Assert.That(firstSaved.rotation, Is.EqualTo(first.transform.rotation));
         List<WorldSaveSystem.LegacySavedBlock> loaded = ReadWorldJson(json, out int version);
-        Assert.That(version, Is.EqualTo(3));
+        Assert.That(version, Is.EqualTo(4));
         Assert.That(loaded[0].position, Is.EqualTo(firstSaved.position));
         Assert.That(loaded[0].rotation, Is.EqualTo(firstSaved.rotation));
         Assert.That(loaded[0].hasWireEndpointMask, Is.True);
@@ -366,6 +366,23 @@ public class WireTopologyTests
         {
             [first] = loaded[0], [second] = loaded[1]
         }, version);
+        Assert.That(first.EndpointMask, Is.EqualTo(Bit(Vector3Int.right)));
+        Assert.That(second.EndpointMask, Is.EqualTo(Bit(Vector3Int.forward)));
+        Assert.That(first.ConnectsTo(second, second.GridPosition), Is.False);
+    }
+
+    [Test]
+    public void VersionThreeGeometryDoesNotReapplyLegacyJoinMigration()
+    {
+        var first = Wire(Vector3Int.zero, Bit(Vector3Int.right));
+        var second = Wire(Vector3Int.right, Bit(Vector3Int.forward));
+
+        Restore(new Dictionary<LogicWireBlock, WorldSaveSystem.LegacySavedBlock>
+        {
+            [first] = Saved(Bit(Vector3Int.right)),
+            [second] = Saved(Bit(Vector3Int.forward))
+        }, 3);
+
         Assert.That(first.EndpointMask, Is.EqualTo(Bit(Vector3Int.right)));
         Assert.That(second.EndpointMask, Is.EqualTo(Bit(Vector3Int.forward)));
         Assert.That(first.ConnectsTo(second, second.GridPosition), Is.False);

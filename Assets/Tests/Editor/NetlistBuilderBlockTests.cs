@@ -166,6 +166,30 @@ public class NetlistBuilderBlockTests : PlacedBlockFixture
         Assert.IsEmpty(netlist.Warnings);
     }
 
+    [Test]
+    public void DirectGateOutputConnectsToNonAnchorInputPort()
+    {
+        GateBlock source = Gate(GateType.Not, 0, 0, 0, 90f);
+        GateBlock target = Gate(GateType.And, 1, 0, 1, 90f);
+
+        Netlist netlist = NetlistBuilder.FromBlocks(AllPlaced());
+
+        Assert.IsTrue(HasConnection(netlist, source, target, 1));
+        Assert.IsEmpty(netlist.Warnings);
+    }
+
+    [Test]
+    public void WireCreatedBeforeMatchingSourceConnectsWhenSourceIsPlaced()
+    {
+        LogicWireBlock wire = Wire(1, 0, 0);
+        wire.SetEndpointMask(LogicWireBlock.GetDirectionBit(Vector3Int.left));
+        LogicSignalSource source = Source(0, 0, 0, 1, 90f);
+
+        Netlist netlist = NetlistBuilder.FromBlocks(AllPlaced());
+
+        Assert.That(NetworkFor(netlist, wire).DriverNode, Is.EqualTo(NodeOf(netlist, source)));
+    }
+
     // The lookup table the driver uses: each network lists its wire blocks, and
     // its driver is the source's node.
     [Test]

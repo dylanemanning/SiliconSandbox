@@ -144,37 +144,51 @@ public static partial class NetlistBuilder
             sinks.Add(new List<(int, int)>());
         }
         var directLinks = new List<(int from, int to, int pin)>();
+        var portsAtCell = new Dictionary<Vector3Int, List<(int node, PartPort port)>>();
+        for (int node = 0; node < nodes.Count; node++)
+        {
+            foreach (PartPort port in PortsOf(parts[nodeParts[node]]))
+            {
+                if (!portsAtCell.TryGetValue(port.OnCell, out List<(int node, PartPort port)> ports))
+                {
+                    ports = new List<(int node, PartPort port)>();
+                    portsAtCell.Add(port.OnCell, ports);
+                }
+                ports.Add((node, port));
+            }
+        }
 
         for (int node = 0; node < nodes.Count; node++)
         {
             CircuitPart part = parts[nodeParts[node]];
             foreach (PartPort port in PortsOf(part))
             {
-                if (!partAt.TryGetValue(port.FacingCell, out int other)) continue;
-
-                int network = networkOfPart[other];
-                if (network >= 0)
+                if (partAt.TryGetValue(port.FacingCell, out int other))
                 {
-                    Vector3Int face = port.OnCell - port.FacingCell;
-                    if (!WireExposes(parts[other], face)) continue;
-                    if (port.IsOutput)
+                    int network = networkOfPart[other];
+                    if (network >= 0)
                     {
-                        drivers[network].Add(node);
+                        Vector3Int face = port.OnCell - port.FacingCell;
+                        if (!WireExposes(parts[other], face)) continue;
+                        if (port.IsOutput)
+                        {
+                            drivers[network].Add(node);
+                        }
+                        else if (!sinks[network].Contains((node, port.Pin)))
+                        {
+                            // A source or LED can touch one network on several faces;
+                            // it is still one terminal.
+                            sinks[network].Add((node, port.Pin));
+                        }
+                        continue;
                     }
-                    else if (!sinks[network].Contains((node, port.Pin)))
-                    {
-                        // A source or LED can touch one network on several faces;
-                        // it is still one terminal.
-                        sinks[network].Add((node, port.Pin));
-                    }
-                    continue;
                 }
 
-                int otherNode = nodeOfPart[other];
-                if (!port.IsOutput || otherNode < 0) continue;
+                if (!port.IsOutput || !portsAtCell.TryGetValue(port.FacingCell, out var facingPorts)) continue;
 
-                foreach (PartPort back in PortsOf(parts[other]))
+                foreach ((int otherNode, PartPort back) in facingPorts)
                 {
+                    if (otherNode == node) continue;
                     if (!back.IsOutput && back.FacingCell == port.OnCell && back.OnCell == port.FacingCell)
                     {
                         directLinks.Add((node, otherNode, back.Pin));

@@ -154,6 +154,7 @@ public class MainMenuStyler : MonoBehaviour
         ApplyInputFields();
         ApplyText();
         ApplySavedWorldList();
+        AccessibilitySettings.ApplyTextSettings(true, StyleRoot);
     }
 
     public void ApplyTo(Transform root)

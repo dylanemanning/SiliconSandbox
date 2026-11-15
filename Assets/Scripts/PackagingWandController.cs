@@ -286,6 +286,7 @@ public sealed class PackagingWandController : MonoBehaviour
         TMP_Text text = textObject.GetComponent<TMP_Text>();
         if (font != null) text.font = font;
         text.text = value;
+        AccessibilitySettings.ApplyTextSettings();
         return text;
     }
 

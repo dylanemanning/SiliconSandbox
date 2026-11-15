@@ -8,6 +8,8 @@ using System.Linq;
 
 public class MenuTraversal : MonoBehaviour
 {
+    public const int MaxWorldNameCharacters = 20;
+
     [Header("Panels")]
     public GameObject mainMenuPanel;
     public GameObject LoadPanel;
@@ -15,7 +17,7 @@ public class MenuTraversal : MonoBehaviour
     public GameObject settingsPanel;
     public GameObject settingsControlsPanel;
     public GameObject settingsVideoPanel;
-    public GameObject settingsAudioPanel;
+    // public GameObject settingsAudioPanel;
     public GameObject settingsAccessibilityPanel;
     public GameObject settingsTabButtons;
 
@@ -40,13 +42,15 @@ public class MenuTraversal : MonoBehaviour
         EnsureStyler();
         ResolveSettingsControlsPanel();
         InitializeVideoSettingsMenu();
+        InitializeAccessibilitySettingsMenu();
 
         mainMenuPanel.SetActive(true);
         LoadPanel.SetActive(false);
         CreatePanel.SetActive(false);
         settingsPanel.SetActive(false);
 
-        duplicateWorldNameMessage.SetActive(false);
+        if (duplicateWorldNameMessage != null) duplicateWorldNameMessage.SetActive(false);
+        if (worldNameInput != null) worldNameInput.onValueChanged.AddListener(ValidateWorldNameLength);
 
         if (settingsControlsPanel != null && settingsControlsPanel.GetComponent<ControlsKeybindsMenu>() == null)
         {
@@ -57,6 +61,9 @@ public class MenuTraversal : MonoBehaviour
         {
             menuStyler.Apply();
         }
+
+        string loadError = WorldSaveSystem.ConsumePendingLoadError();
+        if (!string.IsNullOrWhiteSpace(loadError)) ShowWorldNameError(loadError);
     }
 
     private void EnsureStyler()
@@ -95,13 +102,44 @@ public class MenuTraversal : MonoBehaviour
         
         string worldName = worldNameInput == null ? "World" : worldNameInput.text.Trim();
         worldName = string.IsNullOrWhiteSpace(worldName) ? "World" : worldName;
-        if(savedWorldNames.Contains(worldName)) {
-            worldNameInput.text = "";
-            duplicateWorldNameMessage.SetActive(true);
+        if (worldName.Length > MaxWorldNameCharacters)
+        {
+            ShowWorldNameError($"Limit: {MaxWorldNameCharacters} characters");
             return;
         }
+        if (string.Equals(worldName, WorldSaveSystem.TutorialWorldName, System.StringComparison.OrdinalIgnoreCase))
+        {
+            ShowWorldNameError("This world name is reserved");
+            return;
+        }
+        if (savedWorldNames.Contains(worldName)) {
+            if (worldNameInput != null) worldNameInput.text = "";
+            ShowWorldNameError("World Name Already Exists");
+            return;
+        }
+        if (duplicateWorldNameMessage != null) duplicateWorldNameMessage.SetActive(false);
         WorldSaveSystem.PendingWorldName = worldName;
         SceneManager.LoadScene(gameplaySceneName);
+    }
+
+    private void ShowWorldNameError(string message)
+    {
+        if (duplicateWorldNameMessage == null) return;
+        TMP_Text errorLabel = duplicateWorldNameMessage.GetComponent<TMP_Text>();
+        if (errorLabel != null) errorLabel.text = message;
+        duplicateWorldNameMessage.SetActive(true);
+    }
+
+    private void ValidateWorldNameLength(string value)
+    {
+        if (value.Length > MaxWorldNameCharacters)
+        {
+            ShowWorldNameError($"Limit: {MaxWorldNameCharacters} characters");
+        }
+        else if (duplicateWorldNameMessage != null)
+        {
+            duplicateWorldNameMessage.SetActive(false);
+        }
     }
 
     public void loadWorld(string worldName)
@@ -188,6 +226,35 @@ public class MenuTraversal : MonoBehaviour
             if (label != null) label.text = worldName;
             loadButton.onClick.AddListener(() => loadWorld(worldName));
 
+            Button copyButton = Instantiate(savedWorldButtonPrefab, row.transform);
+            copyButton.name = "CopyWorldButton";
+            LayoutElement copyLayout = copyButton.GetComponent<LayoutElement>();
+            if (copyLayout == null) copyLayout = copyButton.gameObject.AddComponent<LayoutElement>();
+            copyLayout.minHeight = rowHeight;
+            copyLayout.minWidth = 52f;
+            copyLayout.preferredWidth = 52f;
+            copyLayout.flexibleWidth = 0f;
+            copyLayout.preferredHeight = rowHeight;
+            copyLayout.flexibleHeight = 0f;
+
+            ColorBlock copyColors = copyButton.colors;
+            copyColors.normalColor = new Color(0.25f, 0.43f, 0.58f, 1f);
+            copyColors.highlightedColor = new Color(0.34f, 0.55f, 0.72f, 1f);
+            copyColors.selectedColor = copyColors.highlightedColor;
+            copyButton.colors = copyColors;
+
+            TMP_Text copyLabel = copyButton.GetComponentInChildren<TMP_Text>(true);
+            if (copyLabel != null)
+            {
+                copyLabel.text = string.Empty;
+                copyLabel.raycastTarget = false;
+            }
+            Image copyBackground = copyButton.GetComponent<Image>();
+            if (copyBackground != null) copyBackground.color = copyColors.normalColor;
+            CreateCopyIconOutline(copyButton.transform, new Vector2(-3f, 3f));
+            CreateCopyIconOutline(copyButton.transform, new Vector2(3f, -3f));
+            copyButton.onClick.AddListener(() => CopySavedWorld(worldName));
+
             Button deleteButton = Instantiate(savedWorldButtonPrefab, row.transform);
             ColorBlock deleteColors = deleteButton.colors;
             deleteButton.name = "DeleteWorldButton";
@@ -217,7 +284,128 @@ public class MenuTraversal : MonoBehaviour
         LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform)savedWorldContainer);
         if (loadScrollRect != null) loadScrollRect.verticalNormalizedPosition = 1f;
     }
+    /**/
 
+    private void CreateCopyIconOutline(Transform parent, Vector2 center)
+    {
+        Color iconColor = Color.white;
+        const float width = 15f;
+        const float height = 19f;
+        const float thickness = 2f;
+        CreateCopyIconBar(parent, iconColor, center + new Vector2(0f, height * 0.5f), new Vector2(width, thickness));
+        CreateCopyIconBar(parent, iconColor, center + new Vector2(0f, -height * 0.5f), new Vector2(width, thickness));
+        CreateCopyIconBar(parent, iconColor, center + new Vector2(-width * 0.5f, 0f), new Vector2(thickness, height));
+        CreateCopyIconBar(parent, iconColor, center + new Vector2(width * 0.5f, 0f), new Vector2(thickness, height));
+    }
+
+    private void CreateCopyIconBar(Transform parent, Color color, Vector2 position, Vector2 size)
+    {
+        GameObject bar = new GameObject(
+            "CopyIconBar",
+            typeof(RectTransform),
+            typeof(CanvasRenderer),
+            typeof(Image)
+        );
+        bar.transform.SetParent(parent, false);
+        RectTransform barRect = bar.GetComponent<RectTransform>();
+        barRect.anchorMin = new Vector2(0.5f, 0.5f);
+        barRect.anchorMax = new Vector2(0.5f, 0.5f);
+        barRect.anchoredPosition = position;
+        barRect.sizeDelta = size;
+        Image barImage = bar.GetComponent<Image>();
+        barImage.color = color;
+        barImage.raycastTarget = false;
+    }
+
+    private void CopySavedWorld(string sourceWorldName)
+    {
+        int lenEndNum = 0;
+        int idx = 1;
+        string copyWorldName;
+        while(char.IsNumber(sourceWorldName[^idx])) {
+            lenEndNum++;
+            idx++;
+        }
+        if(lenEndNum != 0) {
+            string endNumStr = sourceWorldName[^lenEndNum..];
+            int endNumInt = int.Parse(endNumStr);
+            copyWorldName = sourceWorldName[..^lenEndNum] + (endNumInt + 1).ToString();
+        } else {
+            copyWorldName = sourceWorldName + "_2";
+        }
+        // if(char.isAsciiDigit(sourceWorldName[-1]))
+        if (!WorldSaveSystem.TryCopySavedWorld(sourceWorldName, copyWorldName, out string error))
+        {
+            Debug.LogError($"Could not copy world '{sourceWorldName}': {error}");
+            ShowCopyError(error);
+            return;
+        }
+
+        PopulateSavedWorlds();
+        if (menuStyler != null) menuStyler.Apply();
+    }
+
+    private void ShowCopyError(string message)
+    {
+        if (LoadPanel == null || savedWorldButtonPrefab == null) return;
+        CloseDeleteConfirmation();
+
+        deleteConfirmationPanel = new GameObject(
+            "CopyWorldError",
+            typeof(RectTransform),
+            typeof(Image)
+        );
+        deleteConfirmationPanel.transform.SetParent(LoadPanel.transform, false);
+        deleteConfirmationPanel.transform.SetAsLastSibling();
+
+        RectTransform overlayRect = deleteConfirmationPanel.GetComponent<RectTransform>();
+        overlayRect.anchorMin = Vector2.zero;
+        overlayRect.anchorMax = Vector2.one;
+        overlayRect.offsetMin = Vector2.zero;
+        overlayRect.offsetMax = Vector2.zero;
+
+        Image overlayImage = deleteConfirmationPanel.GetComponent<Image>();
+        overlayImage.color = new Color(0f, 0f, 0f, 0.68f);
+        overlayImage.raycastTarget = true;
+
+        GameObject dialog = new GameObject("ErrorDialog", typeof(RectTransform), typeof(Image));
+        dialog.transform.SetParent(deleteConfirmationPanel.transform, false);
+        RectTransform dialogRect = dialog.GetComponent<RectTransform>();
+        dialogRect.anchorMin = new Vector2(0.5f, 0.5f);
+        dialogRect.anchorMax = new Vector2(0.5f, 0.5f);
+        dialogRect.pivot = new Vector2(0.5f, 0.5f);
+        dialogRect.sizeDelta = new Vector2(460f, 190f);
+        dialog.GetComponent<Image>().color = menuStyler != null
+            ? menuStyler.panelBackground
+            : new Color(0.2f, 0.2f, 0.2f, 1f);
+
+        TMP_Text textTemplate = savedWorldButtonPrefab.GetComponentInChildren<TMP_Text>(true);
+        if (textTemplate != null)
+        {
+            TMP_Text errorLabel = Instantiate(textTemplate.gameObject, dialog.transform).GetComponent<TMP_Text>();
+            errorLabel.gameObject.name = "CopyErrorMessage";
+            errorLabel.text = message;
+            errorLabel.alignment = TextAlignmentOptions.Center;
+            errorLabel.verticalAlignment = VerticalAlignmentOptions.Middle;
+            errorLabel.enableAutoSizing = true;
+            errorLabel.fontSizeMin = 14f;
+            errorLabel.fontSizeMax = 22f;
+            RectTransform errorRect = errorLabel.rectTransform;
+            errorRect.anchorMin = new Vector2(0.05f, 0.3f);
+            errorRect.anchorMax = new Vector2(0.95f, 0.95f);
+            errorRect.offsetMin = Vector2.zero;
+            errorRect.offsetMax = Vector2.zero;
+        }
+
+        Button closeButton = CreateConfirmationButton(dialog.transform, "OK", "CloseCopyErrorButton");
+        RectTransform closeRect = closeButton.GetComponent<RectTransform>();
+        closeRect.anchorMin = new Vector2(0.3f, 0.05f);
+        closeRect.anchorMax = new Vector2(0.7f, 0.28f);
+        closeRect.offsetMin = Vector2.zero;
+        closeRect.offsetMax = Vector2.zero;
+        closeButton.onClick.AddListener(CloseDeleteConfirmation);
+    }
+    /**/
     private void ShowDeleteConfirmation(string worldName)
     {
         if (deleteConfirmationPanel != null) Destroy(deleteConfirmationPanel);
@@ -454,6 +642,7 @@ public class MenuTraversal : MonoBehaviour
         CloseDeleteConfirmation();
         LoadPanel.SetActive(false);
         CreatePanel.SetActive(true);
+        if (duplicateWorldNameMessage != null) duplicateWorldNameMessage.SetActive(false);
 
         if (menuStyler != null)
         {
@@ -479,6 +668,7 @@ public class MenuTraversal : MonoBehaviour
 
         ResolveSettingsControlsPanel();
         InitializeVideoSettingsMenu();
+        InitializeAccessibilitySettingsMenu();
         if (settingsControlsPanel != null)
         {
             ControlsKeybindsMenu controlsMenu = settingsControlsPanel.GetComponent<ControlsKeybindsMenu>();
@@ -508,7 +698,7 @@ public class MenuTraversal : MonoBehaviour
     {
         settingsControlsPanel.SetActive(tabName == "Controls");
         settingsVideoPanel.SetActive(tabName == "Video");
-        settingsAudioPanel.SetActive(tabName == "Audio");
+        // settingsAudioPanel.SetActive(tabName == "Audio");
         settingsAccessibilityPanel.SetActive(tabName == "Accessibility");
         if (menuStyler != null)
         {
@@ -529,6 +719,20 @@ public class MenuTraversal : MonoBehaviour
         videoSettingsMenu.Initialize();
     }
 
+    private void InitializeAccessibilitySettingsMenu()
+    {
+        if (settingsAccessibilityPanel == null) return;
+
+        AccessibilitySettingsMenu accessibilitySettingsMenu =
+            settingsAccessibilityPanel.GetComponent<AccessibilitySettingsMenu>();
+        if (accessibilitySettingsMenu == null)
+        {
+            accessibilitySettingsMenu = settingsAccessibilityPanel.AddComponent<AccessibilitySettingsMenu>();
+        }
+
+        accessibilitySettingsMenu.Initialize();
+    }
+
     public void openControlsTab()
     {
         OpenSettingsTab("Controls");
@@ -539,14 +743,66 @@ public class MenuTraversal : MonoBehaviour
         OpenSettingsTab("Video");
     }
 
-    public void openAudioTab()
-    {
-        OpenSettingsTab("Audio");
-    }
+    // public void openAudioTab()
+    // {
+    //     OpenSettingsTab("Audio");
+    // }
 
     public void openAccessibilityTab()
     {
         OpenSettingsTab("Accessibility");
+    }
+
+    public void openTutorial()
+    {
+        WorldSaveSystem.PendingWorldName = WorldSaveSystem.TutorialWorldName;
+        SceneManager.LoadScene(gameplaySceneName);
+    }
+
+    public void loadFromFile()
+    {
+        string worldName = worldNameInput == null ? "World" : worldNameInput.text.Trim();
+        worldName = string.IsNullOrWhiteSpace(worldName) ? "World" : worldName;
+        if (worldName.Length > MaxWorldNameCharacters)
+        {
+            ShowWorldNameError($"Limit: {MaxWorldNameCharacters} characters");
+            return;
+        }
+        if (string.Equals(worldName, WorldSaveSystem.TutorialWorldName, System.StringComparison.OrdinalIgnoreCase))
+        {
+            ShowWorldNameError("This world name is reserved");
+            return;
+        }
+        if (WorldSaveSystem.GetSavedWorldNames().Contains(worldName))
+        {
+            ShowWorldNameError("World Name Already Exists");
+            return;
+        }
+
+        string sourcePath;
+        try
+        {
+            sourcePath = WorldFileDialog.OpenWorldFile();
+        }
+        catch (System.Exception exception)
+        {
+            Debug.LogError($"Could not open the world file dialog: {exception.Message}");
+            ShowWorldNameError("Could not open the world file dialog");
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(sourcePath)) return;
+        if (!WorldSaveSystem.TryImportWorld(sourcePath, worldName, out string error))
+        {
+            Debug.LogError($"Could not import world '{worldName}': {error}");
+            ShowWorldNameError(error);
+            return;
+        }
+
+        if (duplicateWorldNameMessage != null) duplicateWorldNameMessage.SetActive(false);
+        WorldSaveSystem.MarkImportedWorldPending(worldName);
+        WorldSaveSystem.PendingWorldName = worldName;
+        SceneManager.LoadScene(gameplaySceneName);
     }
 
     public void quitGame()
