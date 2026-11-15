@@ -233,6 +233,34 @@ public class PauseManager : MonoBehaviour
         Cursor.visible = false;
     }
 
+    public void downloadWorld()
+    {
+        WorldSaveSystem saveSystem = WorldSaveSystem.Instance;
+        if (saveSystem == null)
+        {
+            Debug.LogError("Cannot download the world because its save system is unavailable.");
+            return;
+        }
+
+        try
+        {
+            string destinationPath = WorldFileDialog.SaveWorldFile(
+                WorldSaveSystem.SanitizeExportFileName(saveSystem.WorldName)
+            );
+            if (string.IsNullOrWhiteSpace(destinationPath)) return;
+            if (!destinationPath.EndsWith(".json", System.StringComparison.OrdinalIgnoreCase))
+            {
+                destinationPath += ".json";
+            }
+
+            saveSystem.ExportWorld(destinationPath);
+        }
+        catch (System.Exception exception)
+        {
+            Debug.LogError($"Could not download world '{saveSystem.WorldName}': {exception.Message}");
+        }
+    }
+
     public void ReturnToMainMenu()
     {
         //Debug.Log("Main Menu");

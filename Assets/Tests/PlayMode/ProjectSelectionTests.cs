@@ -358,8 +358,8 @@ public class ProjectSelectionTests
         const string remainingWorldName = "TC_DeleteConfirmed_Remaining";
         string savePath = Path.Combine(worldsDirectory, worldName + ".json");
         string remainingSavePath = Path.Combine(worldsDirectory, remainingWorldName + ".json");
-        File.WriteAllText(savePath, "{\"worldName\":\"" + worldName + "\",\"blocks\":[]}");
-        File.WriteAllText(remainingSavePath, "{\"worldName\":\"" + remainingWorldName + "\",\"blocks\":[]}");
+        File.WriteAllText(savePath, "{\"version\":4,\"worldName\":\"" + worldName + "\",\"blocks\":[]}");
+        File.WriteAllText(remainingSavePath, "{\"version\":4,\"worldName\":\"" + remainingWorldName + "\",\"blocks\":[]}");
 
         yield return LoadMainMenu();
 
@@ -413,7 +413,7 @@ public class ProjectSelectionTests
     {
         const string worldName = "TC_LoadButtonVisible";
         string savePath = Path.Combine(worldsDirectory, worldName + ".json");
-        File.WriteAllText(savePath, "{\"worldName\":\"" + worldName + "\",\"blocks\":[]}");
+        File.WriteAllText(savePath, "{\"version\":4,\"worldName\":\"" + worldName + "\",\"blocks\":[]}");
 
         yield return LoadMainMenu();
 
@@ -473,6 +473,87 @@ public class ProjectSelectionTests
             "Expected save file was not found: "
             + expectedPath
         );
+    }
+
+    [UnityTest]
+    public IEnumerator ExportWorldWritesACopyOfTheCurrentSave()
+    {
+        const string worldName = "TC_ExportSource";
+        string exportPath = Path.Combine(worldsDirectory, "TC_ExportCopy.json");
+        WorldSaveSystem.PendingWorldName = worldName;
+
+        yield return LoadGameplay();
+
+        WorldSaveSystem saveSystem = Object.FindFirstObjectByType<WorldSaveSystem>();
+        Assert.IsNotNull(saveSystem);
+        saveSystem.ExportWorld(exportPath);
+
+        Assert.IsTrue(File.Exists(exportPath));
+        StringAssert.Contains("\"worldName\": \"TC_ExportSource\"", File.ReadAllText(exportPath));
+    }
+
+    [Test]
+    public void ImportingWorldUsesTheEnteredNameAndPreservesSavedBlocks()
+    {
+        const string importedWorldName = "TC_ImportedWorld";
+        string sourcePath = Path.Combine(worldsDirectory, "TC_ImportSource.json");
+        string destinationPath = Path.Combine(worldsDirectory, importedWorldName + ".json");
+        File.WriteAllText(
+            sourcePath,
+            "{\"version\":4,\"worldName\":\"Original\",\"blocks\":[{" +
+            "\"prefabName\":\"Cube\",\"position\":{\"x\":0,\"y\":0,\"z\":0}," +
+            "\"rotation\":{\"x\":0,\"y\":0,\"z\":0,\"w\":1},\"scale\":{\"x\":1,\"y\":1,\"z\":1}," +
+            "\"footprintSize\":{\"x\":1,\"y\":1,\"z\":1},\"isGround\":false," +
+            "\"hasWireEndpointMask\":false,\"wireEndpointMask\":0,\"hasSourceState\":false,\"sourceState\":0}]}"
+        );
+
+        Assert.IsTrue(
+            WorldSaveSystem.TryImportWorld(sourcePath, importedWorldName, out string error),
+            error
+        );
+
+        string importedJson = File.ReadAllText(destinationPath);
+        StringAssert.Contains("\"worldName\": \"TC_ImportedWorld\"", importedJson);
+        StringAssert.Contains("\"prefabName\": \"Cube\"", importedJson);
+    }
+
+    [TestCase("")]
+    [TestCase("not json")]
+    [TestCase("[]")]
+    [TestCase("{\"version\":4,\"worldName\":\"Missing blocks\"}")]
+    [TestCase("{\"version\":5,\"worldName\":\"Unsupported\",\"blocks\":[]}")]
+    [TestCase("{\"version\":4,\"worldName\":\"Bad transform\",\"blocks\":[{}]}")]
+    public void WorldJsonValidationRejectsInvalidStructures(string json)
+    {
+        Assert.IsFalse(WorldFileValidator.TryValidate(json, out string error));
+        Assert.IsNotEmpty(error);
+    }
+
+    [Test]
+    public void WorldJsonValidationAcceptsACompleteSave()
+    {
+        const string json =
+            "{\"version\":4,\"worldName\":\"Valid world\",\"blocks\":[{" +
+            "\"prefabName\":\"Cube\",\"position\":{\"x\":0,\"y\":1,\"z\":2}," +
+            "\"rotation\":{\"x\":0,\"y\":0,\"z\":0,\"w\":1},\"scale\":{\"x\":1,\"y\":1,\"z\":1}," +
+            "\"footprintSize\":{\"x\":1,\"y\":1,\"z\":1},\"isGround\":false," +
+            "\"hasWireEndpointMask\":false,\"wireEndpointMask\":0,\"hasSourceState\":false,\"sourceState\":0}]}";
+
+        Assert.IsTrue(WorldFileValidator.TryValidate(json, out string error), error);
+    }
+
+    [Test]
+    public void WorldJsonValidationRejectsExcessiveFileSizeAndBlockCount()
+    {
+        string oversizedJson = "{" + new string(' ', WorldFileValidator.MaxFileSizeBytes) + "}";
+        Assert.IsFalse(WorldFileValidator.TryValidate(oversizedJson, out string sizeError));
+        StringAssert.Contains("smaller", sizeError);
+
+        string tooManyBlocks =
+            "{\"version\":4,\"worldName\":\"Too many\",\"blocks\":[" +
+            string.Join(",", Enumerable.Repeat("null", WorldFileValidator.MaxBlocks + 1)) + "]}";
+        Assert.IsFalse(WorldFileValidator.TryValidate(tooManyBlocks, out string blockError));
+        StringAssert.Contains("too many blocks", blockError);
     }
 
     // ---------------------------------------------------------

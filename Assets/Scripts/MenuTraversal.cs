@@ -61,6 +61,9 @@ public class MenuTraversal : MonoBehaviour
         {
             menuStyler.Apply();
         }
+
+        string loadError = WorldSaveSystem.ConsumePendingLoadError();
+        if (!string.IsNullOrWhiteSpace(loadError)) ShowWorldNameError(loadError);
     }
 
     private void EnsureStyler()
@@ -102,6 +105,11 @@ public class MenuTraversal : MonoBehaviour
         if (worldName.Length > MaxWorldNameCharacters)
         {
             ShowWorldNameError($"Limit: {MaxWorldNameCharacters} characters");
+            return;
+        }
+        if (string.Equals(worldName, WorldSaveSystem.TutorialWorldName, System.StringComparison.OrdinalIgnoreCase))
+        {
+            ShowWorldNameError("This world name is reserved");
             return;
         }
         if (savedWorldNames.Contains(worldName)) {
@@ -593,6 +601,58 @@ public class MenuTraversal : MonoBehaviour
     public void openAccessibilityTab()
     {
         OpenSettingsTab("Accessibility");
+    }
+
+    public void openTutorial()
+    {
+        WorldSaveSystem.PendingWorldName = WorldSaveSystem.TutorialWorldName;
+        SceneManager.LoadScene(gameplaySceneName);
+    }
+
+    public void loadFromFile()
+    {
+        string worldName = worldNameInput == null ? "World" : worldNameInput.text.Trim();
+        worldName = string.IsNullOrWhiteSpace(worldName) ? "World" : worldName;
+        if (worldName.Length > MaxWorldNameCharacters)
+        {
+            ShowWorldNameError($"Limit: {MaxWorldNameCharacters} characters");
+            return;
+        }
+        if (string.Equals(worldName, WorldSaveSystem.TutorialWorldName, System.StringComparison.OrdinalIgnoreCase))
+        {
+            ShowWorldNameError("This world name is reserved");
+            return;
+        }
+        if (WorldSaveSystem.GetSavedWorldNames().Contains(worldName))
+        {
+            ShowWorldNameError("World Name Already Exists");
+            return;
+        }
+
+        string sourcePath;
+        try
+        {
+            sourcePath = WorldFileDialog.OpenWorldFile();
+        }
+        catch (System.Exception exception)
+        {
+            Debug.LogError($"Could not open the world file dialog: {exception.Message}");
+            ShowWorldNameError("Could not open the world file dialog");
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(sourcePath)) return;
+        if (!WorldSaveSystem.TryImportWorld(sourcePath, worldName, out string error))
+        {
+            Debug.LogError($"Could not import world '{worldName}': {error}");
+            ShowWorldNameError(error);
+            return;
+        }
+
+        if (duplicateWorldNameMessage != null) duplicateWorldNameMessage.SetActive(false);
+        WorldSaveSystem.MarkImportedWorldPending(worldName);
+        WorldSaveSystem.PendingWorldName = worldName;
+        SceneManager.LoadScene(gameplaySceneName);
     }
 
     public void quitGame()

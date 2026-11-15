@@ -3,10 +3,12 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class WorldSaveSystem : MonoBehaviour
 {
     public const int CurrentSaveVersion = 4;
+    public const string TutorialWorldName = "tutorial";
 
     [Serializable]
     public class SavedBlock
@@ -49,6 +51,20 @@ public class WorldSaveSystem : MonoBehaviour
 
     public static WorldSaveSystem Instance { get; private set; }
     public static string PendingWorldName { get; set; }
+    public static string PendingLoadError { get; private set; }
+    private static string pendingImportedWorldName;
+
+    public static string ConsumePendingLoadError()
+    {
+        string error = PendingLoadError;
+        PendingLoadError = null;
+        return error;
+    }
+
+    internal static void MarkImportedWorldPending(string worldName)
+    {
+        pendingImportedWorldName = worldName;
+    }
 
     [Header("Register every placeable prefab, including the floor cube")]
     [SerializeField] private GameObject[] blockPrefabs = Array.Empty<GameObject>();
@@ -156,6 +172,87 @@ public class WorldSaveSystem : MonoBehaviour
         savePending = false;
     }
 
+    public void ExportWorld(string destinationPath)
+    {
+        if (string.IsNullOrWhiteSpace(destinationPath))
+        {
+            throw new ArgumentException("A destination path is required.", nameof(destinationPath));
+        }
+        if (isLoading || saveBlocked)
+        {
+            throw new InvalidOperationException("The world cannot be exported while its save is unavailable.");
+        }
+
+        SaveNow();
+        string sourcePath = GetSavePath(WorldName);
+        if (!File.Exists(sourcePath))
+        {
+            throw new IOException($"The save file for world '{WorldName}' was not created.");
+        }
+
+        File.Copy(sourcePath, destinationPath, true);
+    }
+
+    public static bool TryImportWorld(string sourcePath, string worldName, out string error)
+    {
+        error = null;
+        if (string.IsNullOrWhiteSpace(sourcePath) || !File.Exists(sourcePath))
+        {
+            error = "The selected world file could not be found.";
+            return false;
+        }
+        if (string.IsNullOrWhiteSpace(worldName))
+        {
+            error = "Enter a name for the imported world.";
+            return false;
+        }
+
+        if (!WorldFileValidator.TryReadFile(sourcePath, out string json, out error) ||
+            !WorldFileValidator.TryValidate(json, out error))
+        {
+            return false;
+        }
+
+        string saveDirectory = Path.Combine(Application.persistentDataPath, "Worlds");
+        string destinationPath = Path.Combine(saveDirectory, SanitizeFileName(worldName) + ".json");
+        if (File.Exists(destinationPath))
+        {
+            error = "World Name Already Exists";
+            return false;
+        }
+
+        string temporaryPath = destinationPath + "." + Guid.NewGuid().ToString("N") + ".tmp";
+        try
+        {
+            LoadedWorld save = JsonUtility.FromJson<LoadedWorld>(json);
+            save.worldName = worldName.Trim();
+            Directory.CreateDirectory(saveDirectory);
+            File.WriteAllText(temporaryPath, JsonUtility.ToJson(save, true));
+            File.Move(temporaryPath, destinationPath);
+            return true;
+        }
+        catch (Exception exception)
+        {
+            error = $"Could not import the selected world: {exception.Message}";
+            Debug.LogError(error);
+            return false;
+        }
+        finally
+        {
+            if (File.Exists(temporaryPath))
+            {
+                try
+                {
+                    File.Delete(temporaryPath);
+                }
+                catch (Exception exception)
+                {
+                    Debug.LogError($"Could not remove temporary world import file '{temporaryPath}': {exception.Message}");
+                }
+            }
+        }
+    }
+
     private static SavedBlock CaptureBlock(Block block)
     {
         LogicWireBlock wire = block.GetComponent<LogicWireBlock>();
@@ -187,7 +284,11 @@ public class WorldSaveSystem : MonoBehaviour
             try
             {
                 SavedWorld save = JsonUtility.FromJson<SavedWorld>(File.ReadAllText(path));
-                if (save != null && !string.IsNullOrWhiteSpace(save.worldName)) names.Add(save.worldName);
+                if (save != null && !string.IsNullOrWhiteSpace(save.worldName) &&
+                    !string.Equals(save.worldName, TutorialWorldName, StringComparison.OrdinalIgnoreCase))
+                {
+                    names.Add(save.worldName);
+                }
             }
             catch (Exception exception)
             {
@@ -225,34 +326,126 @@ public class WorldSaveSystem : MonoBehaviour
     {
         yield return null;
 
-        LoadedWorld save;
-        try
+        if (!WorldFileValidator.TryReadFile(filePath, out string json, out string error) ||
+            !WorldFileValidator.TryValidate(json, out error))
         {
-            save = JsonUtility.FromJson<LoadedWorld>(File.ReadAllText(filePath));
-        }
-        catch (Exception exception)
-        {
-            saveBlocked = true;
-            isLoading = false;
-            Debug.LogError($"Could not load world '{WorldName}': {exception.Message}");
+            AbortWorldLoad($"The world file failed validation: {error}");
             yield break;
         }
 
-        if (save == null || save.blocks == null || save.version > CurrentSaveVersion)
+        LoadedWorld save;
+        try
         {
-            saveBlocked = true;
-            isLoading = false;
-            Debug.LogError($"Could not load world '{WorldName}': invalid or unsupported save format. The original file is preserved.");
+            save = JsonUtility.FromJson<LoadedWorld>(json);
+        }
+        catch (Exception exception)
+        {
+            AbortWorldLoad($"The world file could not be decoded: {exception.Message}");
             yield break;
         }
-        // Validate references before removing anything. Silently dropping an
-        // unavailable prefab would destroy authored content on the next save.
-        foreach (SavedBlock savedBlock in save.blocks)
+
+        if (save == null || save.blocks == null)
         {
-            if (savedBlock != null && FindPrefab(savedBlock.prefabName) != null) continue;
-            saveBlocked = true;
-            isLoading = false;
-            Debug.LogError($"Could not load world '{WorldName}': a saved prefab is unavailable. The original file is preserved.");
+            AbortWorldLoad("The world file could not be decoded into a Silicon Sandbox save.");
+            yield break;
+        }
+
+        if (!string.Equals(save.worldName, WorldName, StringComparison.OrdinalIgnoreCase))
+        {
+            AbortWorldLoad("The save's worldName does not match the selected world.");
+            yield break;
+        }
+
+        int gateCount = 0;
+        int wireCount = 0;
+        var occupiedCells = new Dictionary<Vector3Int, string>();
+        foreach (LegacySavedBlock savedBlock in save.blocks)
+        {
+            GameObject prefab = FindPrefab(savedBlock.prefabName);
+            if (prefab == null)
+            {
+                AbortWorldLoad(
+                    $"The world references an unrecognized block '{savedBlock.prefabName}'. " +
+                    "Edit the JSON to remove that block entry, then import the file again."
+                );
+                yield break;
+            }
+
+            if (prefab.GetComponent<Block>() == null)
+            {
+                AbortWorldLoad(
+                    $"The world references '{savedBlock.prefabName}', which is not a valid placeable block prefab."
+                );
+                yield break;
+            }
+
+            if (savedBlock.hasSourceState && prefab.GetComponent<LogicSignalSource>() == null)
+            {
+                AbortWorldLoad(
+                    $"Block '{savedBlock.prefabName}' contains source state, but its prefab is not a signal source."
+                );
+                yield break;
+            }
+
+            LogicWireBlock savedWire = prefab.GetComponent<LogicWireBlock>();
+            if ((savedBlock.hasWireEndpointMask || savedBlock.hasWireJoinMask) && savedWire == null)
+            {
+                AbortWorldLoad(
+                    $"Block '{savedBlock.prefabName}' contains wire data, but its prefab is not a wire."
+                );
+                yield break;
+            }
+
+            Block savedPrefabBlock = prefab.GetComponent<Block>();
+            Vector3Int anchor = Vector3Int.RoundToInt(savedBlock.position);
+            foreach (Vector3Int cell in savedPrefabBlock.OccupiedCells(anchor, savedBlock.rotation))
+            {
+                if (!occupiedCells.TryAdd(cell, savedBlock.prefabName))
+                {
+                    AbortWorldLoad(
+                        $"Blocks '{savedBlock.prefabName}' and '{occupiedCells[cell]}' overlap at cell {cell}."
+                    );
+                    yield break;
+                }
+            }
+
+            GateBlock gate = prefab.GetComponent<GateBlock>();
+            if (gate != null)
+            {
+                try
+                {
+                    GatePorts.For(gate.GateType);
+                }
+                catch (ArgumentException)
+                {
+                    AbortWorldLoad(
+                        $"The gate prefab '{savedBlock.prefabName}' has an unsupported gate type. " +
+                        "The world was not loaded."
+                    );
+                    yield break;
+                }
+
+                gateCount++;
+            }
+            if (savedWire != null) wireCount++;
+        }
+
+        if (gateCount > WorldFileValidator.MaxGates)
+        {
+            AbortWorldLoad(
+                $"The world contains {gateCount} gates; the development limit is {WorldFileValidator.MaxGates}."
+            );
+            yield break;
+        }
+        if (wireCount > WorldFileValidator.MaxWireBlocks)
+        {
+            AbortWorldLoad($"The world contains {wireCount} wire blocks; the development limit is {WorldFileValidator.MaxWireBlocks}.");
+            yield break;
+        }
+
+        if (!ValidateCircuitComplexity(save, out error))
+        {
+            AbortWorldLoad(error);
             yield break;
         }
 
@@ -295,8 +488,94 @@ public class WorldSaveSystem : MonoBehaviour
         }
 
         RestoreWireTopology(restoredWires, save.version);
+        pendingImportedWorldName = null;
         savePending = false;
         isLoading = false;
+    }
+
+    private bool ValidateCircuitComplexity(LoadedWorld save, out string error)
+    {
+        error = null;
+        GameObject stagingRoot = new GameObject("WorldValidationStaging");
+        stagingRoot.SetActive(false);
+        try
+        {
+            var logicBlocks = new List<LogicSignalBlock>();
+            foreach (LegacySavedBlock savedBlock in save.blocks)
+            {
+                GameObject prefab = FindPrefab(savedBlock.prefabName);
+                GameObject stagedBlock = Instantiate(
+                    prefab,
+                    savedBlock.position,
+                    savedBlock.rotation,
+                    stagingRoot.transform
+                );
+                bool nativeArt =
+                    prefab.GetComponent<BlockModelVisual>() != null ||
+                    prefab.GetComponent<WireModelVisual>() != null;
+                stagedBlock.transform.localScale = nativeArt
+                    ? Vector3.one
+                    : savedBlock.scale == Vector3.zero ? Vector3.one : savedBlock.scale;
+
+                Block block = stagedBlock.GetComponent<Block>();
+                if (block != null &&
+                    savedBlock.footprintSize != Vector3Int.zero)
+                {
+                    block.footprintSize = savedBlock.footprintSize;
+                }
+
+                LogicWireBlock wire = stagedBlock.GetComponent<LogicWireBlock>();
+                if (wire != null && savedBlock.hasWireEndpointMask)
+                {
+                    wire.SetEndpointMask(savedBlock.wireEndpointMask);
+                }
+
+                LogicSignalBlock logicBlock = stagedBlock.GetComponent<LogicSignalBlock>();
+                if (logicBlock != null) logicBlocks.Add(logicBlock);
+            }
+
+            Netlist netlist = NetlistBuilder.FromBlocks(logicBlocks);
+            if (netlist.NodeCount > WorldFileValidator.MaxLogicNodes)
+            {
+                error = $"The world contains too many logic nodes. The development limit is {WorldFileValidator.MaxLogicNodes}.";
+                return false;
+            }
+            if (netlist.Connections.Length > WorldFileValidator.MaxConnections)
+            {
+                error = $"The world contains too many logic connections. The development limit is {WorldFileValidator.MaxConnections}.";
+                return false;
+            }
+
+            return true;
+        }
+        catch (Exception exception)
+        {
+            error = $"The world circuit could not be validated: {exception.Message}";
+            return false;
+        }
+        finally
+        {
+            Destroy(stagingRoot);
+        }
+    }
+
+    private void AbortWorldLoad(string reason)
+    {
+        saveBlocked = true;
+        isLoading = false;
+        string cleanupMessage = string.Empty;
+        if (string.Equals(pendingImportedWorldName, WorldName, StringComparison.Ordinal))
+        {
+            if (File.Exists(GetSavePath(WorldName)) && !DeleteSavedWorld(WorldName))
+            {
+                cleanupMessage = " The imported copy could not be removed; delete it before re-importing.";
+            }
+            pendingImportedWorldName = null;
+        }
+
+        PendingLoadError = $"Could not load world '{WorldName}': {reason}{cleanupMessage}";
+        Debug.LogError(PendingLoadError);
+        SceneManager.LoadScene("MainMenu");
     }
 
     private static void RestoreSourceState(LogicSignalSource source, LegacySavedBlock saved)
@@ -384,6 +663,11 @@ public class WorldSaveSystem : MonoBehaviour
     private string GetSavePath(string worldName)
     {
         return Path.Combine(SaveDirectory, SanitizeFileName(worldName) + ".json");
+    }
+
+    public static string SanitizeExportFileName(string worldName)
+    {
+        return SanitizeFileName(worldName) + ".json";
     }
 
     private static string GetPrefabName(GameObject block)
