@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -249,6 +250,181 @@ public class WorldSaveSystem : MonoBehaviour
                 {
                     Debug.LogError($"Could not remove temporary world import file '{temporaryPath}': {exception.Message}");
                 }
+            }
+        }
+    }
+
+    public static bool TryCopySavedWorld(string sourceWorldName, string copyWorldName, out string error)
+    {
+        error = null;
+        if (!IsValidWorldName(copyWorldName, out error)) return false;
+
+        string directory = Path.Combine(Application.persistentDataPath, "Worlds");
+        string sourcePath = Path.Combine(directory, SanitizeFileName(sourceWorldName) + ".json");
+        string destinationPath = Path.Combine(directory, SanitizeFileName(copyWorldName) + ".json");
+        if (!File.Exists(sourcePath))
+        {
+            error = $"Could not find the saved world '{sourceWorldName}'.";
+            return false;
+        }
+        if (GetSavedWorldNames().Any(name =>
+                string.Equals(name, copyWorldName.Trim(), StringComparison.OrdinalIgnoreCase)) ||
+            File.Exists(destinationPath))
+        {
+            error = "World Name Already Exists";
+            return false;
+        }
+
+        if (!WorldFileValidator.TryReadFile(sourcePath, out string json, out error) ||
+            !WorldFileValidator.TryValidate(json, out error))
+        {
+            return false;
+        }
+
+        string temporaryPath = destinationPath + "." + Guid.NewGuid().ToString("N") + ".tmp";
+        try
+        {
+            LoadedWorld save = JsonUtility.FromJson<LoadedWorld>(json);
+            if (save == null || save.blocks == null)
+            {
+                error = $"The saved world '{sourceWorldName}' could not be decoded.";
+                return false;
+            }
+
+            save.worldName = copyWorldName.Trim();
+            File.WriteAllText(temporaryPath, JsonUtility.ToJson(save, true));
+            File.Move(temporaryPath, destinationPath);
+            return true;
+        }
+        catch (Exception exception)
+        {
+            error = $"Could not copy world '{sourceWorldName}': {exception.Message}";
+            Debug.LogError(error);
+            return false;
+        }
+        finally
+        {
+            if (File.Exists(temporaryPath))
+            {
+                try
+                {
+                    File.Delete(temporaryPath);
+                }
+                catch (Exception exception)
+                {
+                    Debug.LogError($"Could not remove temporary world copy '{temporaryPath}': {exception.Message}");
+                }
+            }
+        }
+    }
+
+    public bool TryRenameWorld(string newWorldName, out string error)
+    {
+        if (!IsValidWorldName(newWorldName, out error)) return false;
+        if (isLoading || saveBlocked)
+        {
+            error = "The world cannot be renamed while its save is unavailable.";
+            return false;
+        }
+
+        newWorldName = newWorldName.Trim();
+        if (string.Equals(WorldName, newWorldName, StringComparison.Ordinal)) return true;
+
+        string sourcePath = GetSavePath(WorldName);
+        string destinationPath = GetSavePath(newWorldName);
+        bool samePath = string.Equals(sourcePath, destinationPath, StringComparison.OrdinalIgnoreCase);
+        if (GetSavedWorldNames().Any(name =>
+                !string.Equals(name, WorldName, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(name, newWorldName, StringComparison.OrdinalIgnoreCase)) ||
+            (File.Exists(destinationPath) && !samePath))
+        {
+            error = "World Name Already Exists";
+            return false;
+        }
+
+        try
+        {
+            SaveNow();
+        }
+        catch (Exception exception)
+        {
+            error = $"Could not save world '{WorldName}' before renaming: {exception.Message}";
+            Debug.LogError(error);
+            return false;
+        }
+
+        if (!File.Exists(sourcePath))
+        {
+            error = $"Could not find the save file for world '{WorldName}'.";
+            return false;
+        }
+
+        string temporaryPath = destinationPath + "." + Guid.NewGuid().ToString("N") + ".tmp";
+        string backupPath = sourcePath + "." + Guid.NewGuid().ToString("N") + ".rename-backup";
+        bool sourceMoved = false;
+        try
+        {
+            LoadedWorld save = JsonUtility.FromJson<LoadedWorld>(File.ReadAllText(sourcePath));
+            if (save == null || save.blocks == null)
+            {
+                error = $"The save file for world '{WorldName}' could not be decoded.";
+                return false;
+            }
+
+            save.worldName = newWorldName;
+            File.WriteAllText(temporaryPath, JsonUtility.ToJson(save, true));
+            File.Move(sourcePath, backupPath);
+            sourceMoved = true;
+            try
+            {
+                File.Move(temporaryPath, destinationPath);
+            }
+            catch
+            {
+                File.Move(backupPath, sourcePath);
+                sourceMoved = false;
+                throw;
+            }
+
+            WorldName = newWorldName;
+            savePending = false;
+            try
+            {
+                File.Delete(backupPath);
+                sourceMoved = false;
+            }
+            catch (Exception exception)
+            {
+                Debug.LogError($"World '{newWorldName}' was renamed, but the old save backup could not be removed: {exception.Message}");
+                sourceMoved = false;
+            }
+
+            error = null;
+            return true;
+        }
+        catch (Exception exception)
+        {
+            error = $"Could not rename world '{WorldName}': {exception.Message}";
+            Debug.LogError(error);
+            return false;
+        }
+        finally
+        {
+            if (File.Exists(temporaryPath))
+            {
+                try
+                {
+                    File.Delete(temporaryPath);
+                }
+                catch (Exception exception)
+                {
+                    Debug.LogError($"Could not remove temporary world rename file '{temporaryPath}': {exception.Message}");
+                }
+            }
+
+            if (sourceMoved && File.Exists(backupPath))
+            {
+                Debug.LogError($"The original world save remains at '{backupPath}' after an unsuccessful rename.");
             }
         }
     }
@@ -687,6 +863,38 @@ public class WorldSaveSystem : MonoBehaviour
         }
 
         return result;
+    }
+
+    private static bool IsValidWorldName(string worldName, out string error)
+    {
+        error = null;
+        if (string.IsNullOrWhiteSpace(worldName))
+        {
+            error = "Enter a name for the world.";
+            return false;
+        }
+
+        worldName = worldName.Trim();
+        if (worldName.Length > MenuTraversal.MaxWorldNameCharacters)
+        {
+            error = $"Limit: {MenuTraversal.MaxWorldNameCharacters} characters";
+            return false;
+        }
+        if (string.Equals(worldName, TutorialWorldName, StringComparison.OrdinalIgnoreCase))
+        {
+            error = "This world name is reserved";
+            return false;
+        }
+        foreach (char character in worldName)
+        {
+            if (char.IsControl(character) || Path.GetInvalidFileNameChars().Contains(character))
+            {
+                error = "World names cannot contain control characters or file-name symbols.";
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private void OnApplicationQuit()

@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 using TMPro;
+using UnityEngine.UI;
 
 public class PauseManager : MonoBehaviour
 {
@@ -12,6 +13,10 @@ public class PauseManager : MonoBehaviour
     [SerializeField] private GameObject settingsAccessibilityPage;
     private MainMenuStyler menuStyler;
     private TMP_Text currentWorldNameLabel;
+    private TMP_InputField worldNameEditField;
+    private TMP_Text worldNameEditError;
+    private Button editWorldNameButton;
+    private GameObject worldNameEditRoot;
 
     public static bool IsPaused { get; private set; }
     public bool IsSettingsOpen => settingsPanel != null && settingsPanel.activeSelf;
@@ -217,6 +222,231 @@ public class PauseManager : MonoBehaviour
         WorldSaveSystem saveSystem = WorldSaveSystem.Instance;
         string worldName = saveSystem != null ? saveSystem.WorldName : WorldSaveSystem.PendingWorldName;
         currentWorldNameLabel.text = string.IsNullOrWhiteSpace(worldName) ? "World" : worldName;
+        EnsureWorldNameEditor();
+        if (editWorldNameButton != null)
+        {
+            editWorldNameButton.gameObject.SetActive(
+                !string.Equals(worldName, WorldSaveSystem.TutorialWorldName, System.StringComparison.OrdinalIgnoreCase)
+            );
+        }
+    }
+
+    private void EnsureWorldNameEditor()
+    {
+        if (worldNameEditField != null || currentWorldNameLabel == null) return;
+        RectTransform labelRect = currentWorldNameLabel.rectTransform;
+
+        editWorldNameButton = CreateWorldNameActionButton(
+            currentWorldNameLabel.transform.parent,
+            "EditWorldNameButton",
+            "Edit",
+            labelRect.anchorMin,
+            labelRect.anchoredPosition + new Vector2(320f, 0f),
+            new Vector2(100f, 56f),
+            BeginWorldNameEdit,
+            new Color(0.22f, 0.38f, 0.52f, 1f)
+        );
+
+        worldNameEditRoot = new GameObject(
+            "WorldNameEditField",
+            typeof(RectTransform),
+            typeof(CanvasRenderer),
+            typeof(Image),
+            typeof(TMP_InputField)
+        );
+        worldNameEditRoot.transform.SetParent(currentWorldNameLabel.transform.parent, false);
+        RectTransform editRect = worldNameEditRoot.GetComponent<RectTransform>();
+        editRect.anchorMin = labelRect.anchorMin;
+        editRect.anchorMax = labelRect.anchorMax;
+        editRect.pivot = labelRect.pivot;
+        editRect.anchoredPosition = labelRect.anchoredPosition;
+        editRect.sizeDelta = labelRect.sizeDelta;
+        editRect.localRotation = Quaternion.identity;
+        editRect.localScale = Vector3.one;
+
+        Image editBackground = worldNameEditRoot.GetComponent<Image>();
+        editBackground.color = new Color(0.12f, 0.22f, 0.31f, 1f);
+        editBackground.raycastTarget = true;
+
+        RectTransform viewport = CreateRectTransform("TextViewport", worldNameEditRoot.transform);
+        viewport.anchorMin = new Vector2(0.03f, 0.12f);
+        viewport.anchorMax = new Vector2(0.60f, 0.88f);
+        viewport.offsetMin = Vector2.zero;
+        viewport.offsetMax = Vector2.zero;
+        viewport.gameObject.AddComponent<RectMask2D>();
+
+        TMP_Text editText = Instantiate(currentWorldNameLabel, viewport);
+        editText.gameObject.name = "Text";
+        editText.raycastTarget = false;
+        editText.alignment = TextAlignmentOptions.Left;
+        RectTransform textRect = editText.rectTransform;
+        textRect.anchorMin = Vector2.zero;
+        textRect.anchorMax = Vector2.one;
+        textRect.offsetMin = Vector2.zero;
+        textRect.offsetMax = Vector2.zero;
+
+        worldNameEditField = worldNameEditRoot.GetComponent<TMP_InputField>();
+        worldNameEditField.targetGraphic = editBackground;
+        worldNameEditField.textViewport = viewport;
+        worldNameEditField.textComponent = editText;
+        worldNameEditField.lineType = TMP_InputField.LineType.SingleLine;
+        worldNameEditField.characterLimit = MenuTraversal.MaxWorldNameCharacters;
+
+        Button confirmButton = CreateWorldNameActionButton(
+            currentWorldNameLabel.transform.parent,
+            "ConfirmWorldNameButton",
+            "Save",
+            labelRect.anchorMin,
+            labelRect.anchoredPosition + new Vector2(170f, 0f),
+            new Vector2(110f, 56f),
+            ConfirmWorldNameEdit,
+            new Color(0.2f, 0.52f, 0.34f, 1f)
+        );
+        Button cancelButton = CreateWorldNameActionButton(
+            currentWorldNameLabel.transform.parent,
+            "CancelWorldNameButton",
+            "Cancel",
+            labelRect.anchorMin,
+            labelRect.anchoredPosition + new Vector2(290f, 0f),
+            new Vector2(110f, 56f),
+            CancelWorldNameEdit,
+            new Color(0.58f, 0.28f, 0.27f, 1f)
+        );
+        confirmButton.gameObject.SetActive(false);
+        cancelButton.gameObject.SetActive(false);
+
+        worldNameEditError = Instantiate(currentWorldNameLabel, currentWorldNameLabel.transform.parent);
+        worldNameEditError.gameObject.name = "WorldNameEditError";
+        worldNameEditError.text = string.Empty;
+        worldNameEditError.fontSize = 18f;
+        worldNameEditError.color = new Color(1f, 0.72f, 0.62f, 1f);
+        worldNameEditError.alignment = TextAlignmentOptions.Center;
+        RectTransform errorRect = worldNameEditError.rectTransform;
+        errorRect.anchoredPosition = labelRect.anchoredPosition + new Vector2(0f, -58f);
+        errorRect.sizeDelta = new Vector2(labelRect.sizeDelta.x, 40f);
+        worldNameEditError.gameObject.SetActive(false);
+        worldNameEditRoot.SetActive(false);
+    }
+
+    private RectTransform CreateRectTransform(string objectName, Transform parent)
+    {
+        GameObject child = new GameObject(objectName, typeof(RectTransform));
+        child.transform.SetParent(parent, false);
+        return child.GetComponent<RectTransform>();
+    }
+
+    private Button CreateWorldNameActionButton(
+        Transform parent,
+        string objectName,
+        string caption,
+        Vector2 anchor,
+        Vector2 anchoredPosition,
+        Vector2 size,
+        System.Action action,
+        Color backgroundColor)
+    {
+        GameObject buttonObject = new GameObject(
+            objectName,
+            typeof(RectTransform),
+            typeof(CanvasRenderer),
+            typeof(Image),
+            typeof(Button)
+        );
+        buttonObject.transform.SetParent(parent, false);
+        RectTransform buttonRect = buttonObject.GetComponent<RectTransform>();
+        buttonRect.anchorMin = anchor;
+        buttonRect.anchorMax = anchor;
+        buttonRect.pivot = new Vector2(0.5f, 0.5f);
+        buttonRect.anchoredPosition = anchoredPosition;
+        buttonRect.sizeDelta = size;
+
+        Image background = buttonObject.GetComponent<Image>();
+        background.color = backgroundColor;
+        Button button = buttonObject.GetComponent<Button>();
+        button.targetGraphic = background;
+        ColorBlock colors = button.colors;
+        colors.normalColor = backgroundColor;
+        colors.highlightedColor = Color.Lerp(backgroundColor, Color.white, 0.2f);
+        colors.selectedColor = colors.highlightedColor;
+        button.colors = colors;
+        button.onClick.AddListener(() => action());
+
+        GameObject captionObject = new GameObject(
+            "Caption",
+            typeof(RectTransform),
+            typeof(CanvasRenderer),
+            typeof(TextMeshProUGUI)
+        );
+        captionObject.transform.SetParent(buttonObject.transform, false);
+        TextMeshProUGUI captionText = captionObject.GetComponent<TextMeshProUGUI>();
+        captionText.font = currentWorldNameLabel.font;
+        captionText.fontSize = 22f;
+        captionText.color = Color.white;
+        captionText.text = caption;
+        captionText.alignment = TextAlignmentOptions.Center;
+        captionText.textWrappingMode = TextWrappingModes.NoWrap;
+        captionText.raycastTarget = false;
+        RectTransform captionRect = captionText.rectTransform;
+        captionRect.anchorMin = Vector2.zero;
+        captionRect.anchorMax = Vector2.one;
+        captionRect.pivot = new Vector2(0.5f, 0.5f);
+        captionRect.offsetMin = Vector2.zero;
+        captionRect.offsetMax = Vector2.zero;
+        return button;
+    }
+
+    private void BeginWorldNameEdit()
+    {
+        if (worldNameEditField == null || currentWorldNameLabel == null) return;
+        worldNameEditError.gameObject.SetActive(false);
+        worldNameEditField.text = currentWorldNameLabel.text;
+        currentWorldNameLabel.enabled = false;
+        editWorldNameButton.gameObject.SetActive(false);
+        pausePanel.transform.Find("ConfirmWorldNameButton").gameObject.SetActive(true);
+        pausePanel.transform.Find("CancelWorldNameButton").gameObject.SetActive(true);
+        worldNameEditRoot.SetActive(true);
+        worldNameEditField.Select();
+        worldNameEditField.ActivateInputField();
+    }
+
+    private void ConfirmWorldNameEdit()
+    {
+        WorldSaveSystem saveSystem = WorldSaveSystem.Instance;
+        if (saveSystem == null)
+        {
+            ShowWorldNameEditError("The world save system is unavailable.");
+            return;
+        }
+
+        if (!saveSystem.TryRenameWorld(worldNameEditField.text, out string error))
+        {
+            ShowWorldNameEditError(error);
+            return;
+        }
+
+        FinishWorldNameEdit();
+        UpdateCurrentWorldNameLabel();
+    }
+
+    private void CancelWorldNameEdit()
+    {
+        FinishWorldNameEdit();
+    }
+
+    private void FinishWorldNameEdit()
+    {
+        currentWorldNameLabel.enabled = true;
+        worldNameEditRoot.SetActive(false);
+        worldNameEditError.gameObject.SetActive(false);
+        editWorldNameButton.gameObject.SetActive(true);
+        pausePanel.transform.Find("ConfirmWorldNameButton").gameObject.SetActive(false);
+        pausePanel.transform.Find("CancelWorldNameButton").gameObject.SetActive(false);
+    }
+
+    private void ShowWorldNameEditError(string message)
+    {
+        worldNameEditError.text = message;
+        worldNameEditError.gameObject.SetActive(true);
     }
 
     public void ResumeGame()

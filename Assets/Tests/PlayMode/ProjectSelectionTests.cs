@@ -443,6 +443,33 @@ public class ProjectSelectionTests
         Assert.AreEqual(worldName, saveSystem.WorldName);
     }
 
+    [UnityTest]
+    public IEnumerator SavedWorldCopyButtonCopiesWorldWithoutLeavingLoadScreen()
+    {
+        const string worldName = "TC_CopyButton";
+        string sourcePath = Path.Combine(worldsDirectory, worldName + ".json");
+        string copyPath = Path.Combine(worldsDirectory, worldName + "_2.json");
+        File.WriteAllText(sourcePath, "{\"version\":4,\"worldName\":\"" + worldName + "\",\"blocks\":[]}");
+
+        yield return LoadMainMenu();
+
+        MenuTraversal menu = GetMenu();
+        menu.openLoad();
+        Transform row = menu.savedWorldContainer.Find("SavedWorldRow_" + worldName);
+        Assert.IsNotNull(row);
+
+        Button copyButton = row.Find("CopyWorldButton").GetComponent<Button>();
+        Assert.IsNotNull(copyButton);
+        Assert.AreNotEqual(Color.red, copyButton.colors.normalColor);
+        copyButton.onClick.Invoke();
+
+        Assert.AreEqual(MainMenuScene, SceneManager.GetActiveScene().name);
+        Assert.IsTrue(File.Exists(sourcePath));
+        Assert.IsTrue(File.Exists(copyPath));
+        StringAssert.Contains("\"worldName\": \"TC_CopyButton_2\"", File.ReadAllText(copyPath));
+        Assert.IsNotNull(menu.savedWorldContainer.Find("SavedWorldRow_" + worldName + "_2"));
+    }
+
     // ---------------------------------------------------------
     // TC-1.2.4
     // Saved project exists in filesystem
@@ -490,6 +517,91 @@ public class ProjectSelectionTests
 
         Assert.IsTrue(File.Exists(exportPath));
         StringAssert.Contains("\"worldName\": \"TC_ExportSource\"", File.ReadAllText(exportPath));
+    }
+
+    [Test]
+    public void CopySavedWorldCreatesRenamedSaveAndPreservesOriginal()
+    {
+        const string sourceWorldName = "TC_CopySource";
+        const string copyWorldName = "TC_CopySource_2";
+        string sourcePath = Path.Combine(worldsDirectory, sourceWorldName + ".json");
+        string copyPath = Path.Combine(worldsDirectory, copyWorldName + ".json");
+        File.WriteAllText(
+            sourcePath,
+            "{\"version\":4,\"worldName\":\"TC_CopySource\",\"blocks\":[{" +
+            "\"prefabName\":\"Cube\",\"position\":{\"x\":0,\"y\":0,\"z\":0}," +
+            "\"rotation\":{\"x\":0,\"y\":0,\"z\":0,\"w\":1},\"scale\":{\"x\":1,\"y\":1,\"z\":1}," +
+            "\"footprintSize\":{\"x\":1,\"y\":1,\"z\":1},\"isGround\":false," +
+            "\"hasWireEndpointMask\":false,\"wireEndpointMask\":0,\"hasSourceState\":false,\"sourceState\":0}]}"
+        );
+
+        Assert.IsTrue(
+            WorldSaveSystem.TryCopySavedWorld(sourceWorldName, copyWorldName, out string error),
+            error
+        );
+        Assert.IsTrue(File.Exists(sourcePath));
+        Assert.IsTrue(File.Exists(copyPath));
+        StringAssert.Contains("\"worldName\": \"TC_CopySource_2\"", File.ReadAllText(copyPath));
+        StringAssert.Contains("\"prefabName\": \"Cube\"", File.ReadAllText(copyPath));
+
+        Assert.IsFalse(WorldSaveSystem.TryCopySavedWorld(sourceWorldName, copyWorldName, out error));
+        StringAssert.Contains("Already Exists", error);
+    }
+
+    [UnityTest]
+    public IEnumerator RenameWorldUpdatesItsSaveNameAndPath()
+    {
+        const string originalName = "TC_RenameSource";
+        const string renamedName = "TC_RenameTarget";
+        WorldSaveSystem.PendingWorldName = originalName;
+
+        yield return LoadGameplay();
+
+        WorldSaveSystem saveSystem = Object.FindFirstObjectByType<WorldSaveSystem>();
+        Assert.IsNotNull(saveSystem);
+        saveSystem.SaveNow();
+
+        Assert.IsTrue(saveSystem.TryRenameWorld(renamedName, out string error), error);
+        Assert.AreEqual(renamedName, saveSystem.WorldName);
+        Assert.IsFalse(File.Exists(Path.Combine(worldsDirectory, originalName + ".json")));
+
+        string renamedPath = Path.Combine(worldsDirectory, renamedName + ".json");
+        Assert.IsTrue(File.Exists(renamedPath));
+        StringAssert.Contains("\"worldName\": \"TC_RenameTarget\"", File.ReadAllText(renamedPath));
+    }
+
+    [UnityTest]
+    public IEnumerator PauseMenuCanRenameWorldFromItsTitle()
+    {
+        const string originalName = "TC_PauseRename";
+        const string renamedName = "TC_PauseRenamed";
+        WorldSaveSystem.PendingWorldName = originalName;
+
+        yield return LoadGameplay();
+
+        PauseManager pauseManager = Object.FindFirstObjectByType<PauseManager>();
+        Assert.IsNotNull(pauseManager);
+        pauseManager.PauseGame();
+
+        Transform pausePanel = GameObject.Find("PausePanel").transform;
+        Button editButton = pausePanel.Find("EditWorldNameButton").GetComponent<Button>();
+        Assert.AreEqual("Edit", editButton.GetComponentInChildren<TMPro.TMP_Text>().text);
+        editButton.onClick.Invoke();
+
+        Transform editRoot = pausePanel.Find("WorldNameEditField");
+        TMPro.TMP_InputField input = editRoot.GetComponent<TMPro.TMP_InputField>();
+        Assert.IsNotNull(input);
+        input.text = renamedName;
+        Button confirmButton = pausePanel.Find("ConfirmWorldNameButton").GetComponent<Button>();
+        Assert.AreEqual("Save", confirmButton.GetComponentInChildren<TMPro.TMP_Text>().text);
+        Assert.Greater(confirmButton.GetComponent<RectTransform>().rect.width, 90f);
+        confirmButton.onClick.Invoke();
+
+        WorldSaveSystem saveSystem = Object.FindFirstObjectByType<WorldSaveSystem>();
+        Assert.AreEqual(renamedName, saveSystem.WorldName);
+        Assert.IsTrue(File.Exists(Path.Combine(worldsDirectory, renamedName + ".json")));
+        Assert.IsFalse(File.Exists(Path.Combine(worldsDirectory, originalName + ".json")));
+        pauseManager.ResumeGame();
     }
 
     [Test]
