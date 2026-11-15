@@ -91,14 +91,41 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
+      # macOS: test the committed dylib, then rebuild it from source and test that.
+      # A failure here only means the committed copy is stale; the last step reports it.
+      - name: Check committed Mac plugin
+        id: committed_mac
+        if: runner.os == 'macOS'
+        continue-on-error: true
+        run: dotnet run -c Release --project native/SiliconPlugin/tests/PluginCheck
+
+      - name: Build Mac plugin from source
+        if: runner.os == 'macOS'
+        run: bash native/SiliconPlugin/build-macos.sh
+
+      - name: Upload freshly built Mac plugin
+        if: runner.os == 'macOS'
+        uses: actions/upload-artifact@v4
+        with:
+          name: libSiliconPlugin-macOS
+          path: Assets/Plugins/macOS/libSiliconPlugin.dylib
+          if-no-files-found: error
+
       - name: Verify universal Mac binary and signature
         if: runner.os == 'macOS'
         run: |
           xcrun lipo Assets/Plugins/macOS/libSiliconPlugin.dylib -verify_arch arm64 x86_64
           codesign --verify --strict Assets/Plugins/macOS/libSiliconPlugin.dylib
 
-      - name: Check committed native plugin through managed wrapper
+      # Windows: committed DLL. macOS: the dylib just built from source.
+      - name: Check native plugin through managed wrapper
         run: dotnet run -c Release --project native/SiliconPlugin/tests/PluginCheck
+
+      - name: Fail if committed Mac plugin is out of date
+        if: runner.os == 'macOS' && steps.committed_mac.outcome == 'failure'
+        run: |
+          echo "::error file=Assets/Plugins/macOS/libSiliconPlugin.dylib::The committed Mac plugin is out of date with native/SiliconPlugin/src. Download the libSiliconPlugin-macOS artifact from this run and commit it to Assets/Plugins/macOS/ (keep the existing .meta)."
+          exit 1
 
   build:
     name: Build Windows Game
