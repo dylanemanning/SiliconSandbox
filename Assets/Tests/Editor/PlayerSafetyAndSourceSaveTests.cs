@@ -43,6 +43,34 @@ public class PlayerSafetyTests
     }
 
     [Test]
+    public void CurrentPositionIsRecheckedWhenABlockAppearsAfterInitialSpawn()
+    {
+        CreatePlayer();
+        player.EnsureCurrentPositionIsSafe();
+        Assert.That(IsClear(body.position), Is.True);
+
+        obstacle = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        obstacle.transform.position = Vector3.up;
+        Physics.SyncTransforms();
+
+        player.EnsureCurrentPositionIsSafe();
+
+        Assert.That(body.position, Is.Not.EqualTo(Vector3.zero));
+        Assert.That(IsClear(body.position), Is.True);
+        Assert.That(
+            Physics.ComputePenetration(
+                playerObject.GetComponent<CapsuleCollider>(),
+                playerObject.transform.position,
+                playerObject.transform.rotation,
+                obstacle.GetComponent<Collider>(),
+                obstacle.transform.position,
+                obstacle.transform.rotation,
+                out _,
+                out _),
+            Is.False);
+    }
+
+    [Test]
     public void FlightDoesNotChangeGlobalGravityAndRestoresPlayerGravity()
     {
         CreatePlayer();

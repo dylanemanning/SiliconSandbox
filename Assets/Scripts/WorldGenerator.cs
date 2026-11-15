@@ -29,5 +29,8 @@ public class FlatWorldGenerator : MonoBehaviour
             groundBlock.breakable = false;
             groundBlock.placementGridSize = cubeSize;
         }
+
+        Player player = FindFirstObjectByType<Player>();
+        if (player != null) player.EnsureCurrentPositionIsSafe();
     }
 }

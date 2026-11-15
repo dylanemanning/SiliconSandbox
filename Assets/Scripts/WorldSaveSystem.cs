@@ -667,6 +667,9 @@ public class WorldSaveSystem : MonoBehaviour
         pendingImportedWorldName = null;
         savePending = false;
         isLoading = false;
+
+        Player player = FindFirstObjectByType<Player>();
+        if (player != null) player.EnsureCurrentPositionIsSafe();
     }
 
     private bool ValidateCircuitComplexity(LoadedWorld save, out string error)

@@ -197,6 +197,31 @@ public partial class Player : MonoBehaviour
         return false;
     }
 
+    public void EnsureCurrentPositionIsSafe()
+    {
+        if (rb == null) rb = GetComponent<Rigidbody>();
+
+        Vector3 currentPosition = rb != null ? rb.position : transform.position;
+        if (!TryFindSafeSpawnPosition(currentPosition, out Vector3 safePosition))
+        {
+            if (!spawnSafetyWarningLogged)
+            {
+                Debug.LogError("No safe player spawn position was found near the current position.", this);
+                spawnSafetyWarningLogged = true;
+            }
+            return;
+        }
+
+        if (rb != null)
+        {
+            rb.position = safePosition;
+        }
+        else
+        {
+            transform.position = safePosition;
+        }
+    }
+
     private bool IsSpawnPositionClear(Vector3 candidatePosition)
     {
         CapsuleCollider capsule = GetComponent<CapsuleCollider>();
@@ -214,11 +239,12 @@ public partial class Player : MonoBehaviour
                 : axisIndex == 1
                     ? Mathf.Max(Mathf.Abs(scale.x), Mathf.Abs(scale.z))
                     : Mathf.Max(Mathf.Abs(scale.x), Mathf.Abs(scale.y));
-            float radius = Mathf.Max(0.01f, capsule.radius * radiusScale - 0.02f);
-            float height = Mathf.Max(capsule.height * axisScale, radius * 2f);
+            float capsuleRadius = capsule.radius * radiusScale;
+            float radius = Mathf.Max(0.01f, capsuleRadius + 0.01f);
+            float height = Mathf.Max(capsule.height * axisScale, capsuleRadius * 2f);
             Vector3 centerOffset = transform.rotation * Vector3.Scale(capsule.center, scale);
             Vector3 center = candidatePosition + centerOffset;
-            float halfSegment = Mathf.Max(0f, height * 0.5f - radius);
+            float halfSegment = Mathf.Max(0f, height * 0.5f - capsuleRadius);
             overlapCount = Physics.OverlapCapsuleNonAlloc(
                 center + axis * halfSegment,
                 center - axis * halfSegment,
@@ -249,7 +275,7 @@ public partial class Player : MonoBehaviour
         for (int index = 0; index < overlapCount; index++)
         {
             Collider other = spawnOverlapBuffer[index];
-            if (other == null || other.attachedRigidbody == rb ||
+            if (other == null || (rb != null && other.attachedRigidbody == rb) ||
                 other.transform == transform || other.transform.IsChildOf(transform)) continue;
             return false;
         }
