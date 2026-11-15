@@ -139,11 +139,9 @@ jobs:
           buildName: Game
           buildPath: build
 
-      # NEW: Install Syft for dependency scanning
       - name: Install Syft
         uses: anchore/sbom-action/download-syft@v0
 
-      # NEW: Confirm the build directory exists
       - name: Verify Windows build output
         run: |
           find build -maxdepth 5 -type f \( -name 'Game.exe' -o -name 'UnityPlayer.dll' \) -print
@@ -153,19 +151,16 @@ jobs:
             exit 1
           }
 
-      # MODIFIED: Generate the Unity SBOM as an intermediate file
       - name: Generate Unity package SBOM
         run: |
           mkdir -p doc/sbom-parts
-          python3 Assets/Scripts/generate_unity_sbom.py --output doc/sbom-parts/unity.json
+          python3 toolScripts/generate_unity_sbom.py --output doc/sbom-parts/unity.json
 
-      # NEW: Scan the compiled Windows game
       - name: Scan built Windows game
         run: |
           syft dir:build/StandaloneWindows64 \
             -o spdx-json=doc/sbom-parts/windows.json
 
-      # NEW: Scan additional plugins and native source
       - name: Scan project plugins and native source
         run: |
           if [ -d Assets/Plugins ]; then
@@ -178,15 +173,13 @@ jobs:
               -o spdx-json=doc/sbom-parts/native.json
           fi
 
-      # NEW: Merge the scans into one final SPDX SBOM
       - name: Merge SPDX package inventories
         run: |
-          python3 Assets/Scripts/merge_sboms.py \
+          python3 toolScripts/merge_sboms.py \
             --unity doc/sbom-parts/unity.json \
             --scans doc/sbom-parts/windows.json doc/sbom-parts/plugins.json doc/sbom-parts/native.json \
             --output doc/SBOM.json
 
-      # MODIFIED: Upload final and intermediate SBOM files
       - name: Upload SBOM artifact
         uses: actions/upload-artifact@v4
         with:
@@ -195,7 +188,6 @@ jobs:
             doc/SBOM.json
             doc/sbom-parts/*.json
 
-      # MODIFIED: Commit only on main/dev branch pushes
       - name: Commit and push updated SBOM
         if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev')
         run: |

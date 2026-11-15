@@ -81,21 +81,26 @@ public partial class Player : MonoBehaviour
         CheckJump();
         CheckTargetBlock();
 
-        //bool routeWasActive = wireRouteAnchor != null;
-        //if (routeWasActive && !IsWireSelected())
-        //{
-        //    CancelWireRoute();
-        //}
-
-        //if (wireRouteAnchor != null)
-        //{
-        //    UpdateWireRoutePreview();
-        //}
+        if (KeybindSettings.WasPressedThisFrame(KeybindSettings.Jump))
+        {
+            if (waitingForSecondSpacePress && Time.time - lastSpacePressTime <= doublePressTime)
+            {
+                ToggleFlight();
+                waitingForSecondSpacePress = false;
+            }
+            else
+            {
+                lastSpacePressTime = Time.time;
+                waitingForSecondSpacePress = true;
+            }
+        }
 
         bool packagingWandSelected = hotbar != null && hotbar.IsPackagingWandSelected;
         packagingWandController.HandleTool(packagingWandSelected, targetBlock, targetRaycastHit);
         if (packagingWandSelected)
         {
+            CancelWireRoute();
+
             waitingForSecondSpacePress = false;
             if (blockHighlighter != null) blockHighlighter.SetActive(false);
             breakSeconds = 0f;
