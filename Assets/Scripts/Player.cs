@@ -29,7 +29,11 @@ public partial class Player : MonoBehaviour
 
     [Header("Crouch")]
     [Range(0.1f, 1f)] public float crouchEyeHeightScale = 0.5f;
+    [Tooltip("Collider height while crouching, as a share of the standing height.")]
+    [Range(0.3f, 1f)] public float crouchColliderHeightScale = 0.6f;
     public float crouchTransitionSpeed = 10f;
+    [Tooltip("How far below the feet still counts as ground for crouch edge protection.")]
+    public float crouchEdgeDrop = 0.55f;
 
     public float reachDistance = 15f;
     public float fallThreshold = -10f;
@@ -53,6 +57,10 @@ public partial class Player : MonoBehaviour
     private float nextJumpTime;
     private bool isCrouching;
     private float standingEyeHeight = -1f;
+    private CapsuleCollider bodyCollider;
+    private float standingColliderHeight = -1f;
+    private Vector3 standingColliderCenter;
+    private readonly Collider[] crouchOverlap = new Collider[16];
 
     public bool IsFlying => isFlying;
     public bool IsCrouching => isCrouching;
@@ -103,6 +111,7 @@ public partial class Player : MonoBehaviour
         CheckCrouch();
         CheckFlightSpeedScroll();
         CheckMovement();
+        KeepCrouchingPlayerOnEdges();
         CheckJump();
         CheckTargetBlock();
 
@@ -272,7 +281,12 @@ public partial class Player : MonoBehaviour
     void CheckCrouch()
     {
         // Crouching shares the descend key; while flying that key descends instead.
-        isCrouching = !isFlying && KeybindSettings.IsPressed(KeybindSettings.FlyDown);
+        bool wantsCrouch = !isFlying && KeybindSettings.IsPressed(KeybindSettings.FlyDown);
+        // As in Minecraft, stay crouched under a low ceiling until there is room to stand.
+        if (!wantsCrouch && isCrouching && !isFlying && !CanStandUp()) wantsCrouch = true;
+        isCrouching = wantsCrouch;
+        ApplyCrouchCollider();
+
         if (cameraSettings.camera == null) return;
         Transform view = cameraSettings.camera.transform;
         if (standingEyeHeight < 0f) standingEyeHeight = view.localPosition.y;
@@ -281,6 +295,89 @@ public partial class Player : MonoBehaviour
         local.y = Mathf.MoveTowards(local.y, targetHeight,
             crouchTransitionSpeed * standingEyeHeight * Time.deltaTime);
         view.localPosition = local;
+    }
+
+    private bool ResolveBodyCollider()
+    {
+        if (bodyCollider == null) bodyCollider = GetComponent<CapsuleCollider>();
+        if (bodyCollider == null) return false;
+        if (standingColliderHeight < 0f)
+        {
+            standingColliderHeight = bodyCollider.height;
+            standingColliderCenter = bodyCollider.center;
+        }
+        return true;
+    }
+
+    // Shrinks the hitbox from the top while crouching; the feet stay where they are.
+    private void ApplyCrouchCollider()
+    {
+        if (!ResolveBodyCollider()) return;
+        float height = isCrouching ? standingColliderHeight * crouchColliderHeightScale : standingColliderHeight;
+        if (Mathf.Approximately(bodyCollider.height, height)) return;
+        float feet = standingColliderCenter.y - standingColliderHeight * .5f;
+        bodyCollider.height = height;
+        bodyCollider.center = new Vector3(standingColliderCenter.x, feet + height * .5f, standingColliderCenter.z);
+    }
+
+    /// <summary>True when the standing hitbox would not overlap any solid block.</summary>
+    public bool CanStandUp()
+    {
+        if (!ResolveBodyCollider()) return true;
+        float radius = Mathf.Max(.01f, bodyCollider.radius - .02f);
+        Vector3 feet = transform.position + Vector3.up * (standingColliderCenter.y - standingColliderHeight * .5f);
+        Vector3 bottom = feet + Vector3.up * (radius + .05f);
+        Vector3 top = feet + Vector3.up * (standingColliderHeight - radius - .01f);
+        return !OverlapsSolid(Physics.OverlapCapsuleNonAlloc(bottom, top, radius, crouchOverlap,
+            Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore));
+    }
+
+    private bool OverlapsSolid(int count)
+    {
+        for (int i = 0; i < count; i++)
+        {
+            Collider other = crouchOverlap[i];
+            if (other == null || other.attachedRigidbody == rb || other.transform.IsChildOf(transform)) continue;
+            return true;
+        }
+        return false;
+    }
+
+    // Minecraft-style sneaking: a crouching player on the ground cannot walk off an
+    // edge. Each horizontal direction is stopped when the step would leave nothing
+    // under the player's footprint within crouchEdgeDrop.
+    void KeepCrouchingPlayerOnEdges()
+    {
+        if (!isCrouching || isFlying || rb == null) return;
+        // Probe the ground directly: the trigger-based isGrounded flag clears when any
+        // trigger contact ends, even while the player still stands on a block.
+        if (rb.linearVelocity.y > .1f || !HasGroundBelow(rb.position)) return;
+        Vector3 velocity = rb.linearVelocity;
+        float lookAhead = Mathf.Max(Time.deltaTime, Time.fixedDeltaTime) * 2f;
+        // The capsule's rounded bottom rolls off a corner once its centre passes the
+        // edge, so keep the centre (plus a small margin) over the block.
+        float Ahead(float speedAlongAxis) => speedAlongAxis == 0f ? 0f
+            : Mathf.Sign(speedAlongAxis) * Mathf.Max(Mathf.Abs(speedAlongAxis) * lookAhead, CrouchEdgeMargin);
+        Vector3 position = rb.position;
+        float aheadX = Ahead(velocity.x), aheadZ = Ahead(velocity.z);
+        if (aheadX != 0f && !HasGroundBelow(position + new Vector3(aheadX, 0f, 0f))) velocity.x = 0f;
+        if (aheadZ != 0f && !HasGroundBelow(position + new Vector3(0f, 0f, aheadZ))) velocity.z = 0f;
+        if (velocity.x != 0f && velocity.z != 0f && !HasGroundBelow(position + new Vector3(aheadX, 0f, aheadZ)))
+            velocity.x = velocity.z = 0f;
+        rb.linearVelocity = velocity;
+    }
+
+    private const float CrouchEdgeMargin = .1f;
+
+    private bool HasGroundBelow(Vector3 playerPosition)
+    {
+        if (!ResolveBodyCollider()) return true;
+        const float halfWidth = .05f; // a narrow probe under the body's centre
+        Vector3 feet = playerPosition + Vector3.up * (standingColliderCenter.y - standingColliderHeight * .5f);
+        Vector3 center = feet - Vector3.up * (crouchEdgeDrop * .5f + .02f);
+        var extents = new Vector3(halfWidth, crouchEdgeDrop * .5f, halfWidth);
+        return OverlapsSolid(Physics.OverlapBoxNonAlloc(center, extents, crouchOverlap, Quaternion.identity,
+            Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore));
     }
 
     void CheckFlightSpeedScroll()

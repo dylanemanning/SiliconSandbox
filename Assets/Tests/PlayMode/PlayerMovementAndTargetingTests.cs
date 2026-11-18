@@ -181,4 +181,66 @@ public class PlayerMovementAndTargetingTests : InputTestFixture
         }
         finally { Object.Destroy(floor); Object.Destroy(wireObject); }
     }
+
+    private IEnumerator WaitSeconds(float seconds)
+    {
+        float until = Time.time + seconds;
+        while (Time.time < until) yield return null;
+    }
+
+    [UnityTest]
+    public IEnumerator CrouchShrinksTheHitboxAndStaysCrouchedUnderALowCeiling()
+    {
+        yield return LoadGameplay();
+        yield return Settle();
+        var capsule = player.GetComponent<CapsuleCollider>();
+        float standing = capsule.height;
+        float feet = capsule.center.y - standing * .5f;
+        Press(keyboard.leftShiftKey);
+        yield return WaitSeconds(.2f);
+        Assert.That(capsule.height, Is.EqualTo(standing * player.crouchColliderHeightScale).Within(.001f));
+        Assert.That(capsule.center.y - capsule.height * .5f, Is.EqualTo(feet).Within(.001f), "The feet stay on the ground.");
+
+        // A block at head height: releasing Crouch must not push the player into it.
+        var ceiling = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        Vector3 top = body.position + Vector3.up * 1.9f;
+        ceiling.transform.position = new Vector3(Mathf.Round(body.position.x), Mathf.Round(top.y), Mathf.Round(body.position.z));
+        Physics.SyncTransforms();
+        Release(keyboard.leftShiftKey);
+        yield return WaitSeconds(.2f);
+        Assert.That(player.IsCrouching, Is.True, "Stay crouched while there is no room to stand.");
+        Assert.That(capsule.height, Is.LessThan(standing));
+
+        Object.Destroy(ceiling);
+        yield return null;
+        yield return WaitSeconds(.2f);
+        Assert.That(player.IsCrouching, Is.False);
+        Assert.That(capsule.height, Is.EqualTo(standing).Within(.001f));
+    }
+
+    [UnityTest]
+    public IEnumerator CrouchingStopsAtPlatformEdgesButWalkingFallsOff()
+    {
+        yield return LoadGameplay();
+        var platform = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        platform.transform.position = new Vector3(10, 1, 10); // top surface at y = 1.5
+        Physics.SyncTransforms();
+        body.position = new Vector3(10, 1.6f, 10);
+        body.linearVelocity = Vector3.zero;
+        player.transform.rotation = Quaternion.identity;
+        SetField(player, "yRotation", 0f);
+        yield return new WaitForSeconds(.8f);
+        Assert.That(body.position.y, Is.GreaterThan(1.4f), "Starts standing on the platform.");
+
+        Press(keyboard.leftShiftKey); yield return null;
+        Press(keyboard.wKey);
+        yield return WaitSeconds(1.5f);
+        Assert.That(body.position.y, Is.GreaterThan(1.4f), "A crouching player does not walk off the edge.");
+        Assert.That(body.position.z, Is.GreaterThan(10.3f), "It still walks up to the edge.");
+        Release(keyboard.leftShiftKey);
+        yield return WaitSeconds(1.5f);
+        Release(keyboard.wKey);
+        Assert.That(body.position.y, Is.LessThan(1.2f), "Without crouching the player walks off.");
+        Object.Destroy(platform);
+    }
 }
