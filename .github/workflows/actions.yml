@@ -99,14 +99,41 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
+      # macOS: test the committed dylib, then rebuild it from source and test that.
+      # A failure here only means the committed copy is stale; the last step reports it.
+      - name: Check committed Mac plugin
+        id: committed_mac
+        if: runner.os == 'macOS'
+        continue-on-error: true
+        run: dotnet run -c Release --project native/SiliconPlugin/tests/PluginCheck
+
+      - name: Build Mac plugin from source
+        if: runner.os == 'macOS'
+        run: bash native/SiliconPlugin/build-macos.sh
+
+      - name: Upload freshly built Mac plugin
+        if: runner.os == 'macOS'
+        uses: actions/upload-artifact@v4
+        with:
+          name: libSiliconPlugin-macOS
+          path: Assets/Plugins/macOS/libSiliconPlugin.dylib
+          if-no-files-found: error
+
       - name: Verify universal Mac binary and signature
         if: runner.os == 'macOS'
         run: |
           xcrun lipo Assets/Plugins/macOS/libSiliconPlugin.dylib -verify_arch arm64 x86_64
           codesign --verify --strict Assets/Plugins/macOS/libSiliconPlugin.dylib
 
-      - name: Check committed native plugin through managed wrapper
+      # Windows: committed DLL. macOS: the dylib just built from source.
+      - name: Check native plugin through managed wrapper
         run: dotnet run -c Release --project native/SiliconPlugin/tests/PluginCheck
+
+      - name: Fail if committed Mac plugin is out of date
+        if: runner.os == 'macOS' && steps.committed_mac.outcome == 'failure'
+        run: |
+          echo "::error file=Assets/Plugins/macOS/libSiliconPlugin.dylib::The committed Mac plugin is out of date with native/SiliconPlugin/src. Download the libSiliconPlugin-macOS artifact from this run and commit it to Assets/Plugins/macOS/ (keep the existing .meta)."
+          exit 1
 
   build:
     name: Build Windows Game
@@ -212,3 +239,53 @@ jobs:
         with:
           name: SiliconSandbox-${{ github.event.number || github.run_number }}-Windows
           path: build
+
+  build-mac:
+    name: Build macOS Game
+    needs: [test, native-plugin]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Cache Unity Library
+        uses: actions/cache@v4
+        with:
+          path: Library
+          key: Unity-Library-${{ runner.os }}-StandaloneOSX-${{ hashFiles('Packages/packages-lock.json', 'ProjectSettings/ProjectVersion.txt') }}
+          restore-keys: |
+            Unity-Library-${{ runner.os }}-StandaloneOSX-
+
+      - name: Build macOS application
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          unityVersion: 6000.3.8f1
+          targetPlatform: StandaloneOSX
+          buildName: Game
+          buildsPath: build
+
+      - name: Return license
+        uses: game-ci/unity-return-license@v2
+        if: always()
+
+      # upload-artifact zips files without Unix permissions, which breaks the .app
+      # (the executable inside loses its +x bit). Tar it first so it survives.
+      - name: Package macOS app
+        run: |
+          sudo chmod -R a+rX build/StandaloneOSX
+          sudo chmod +x build/StandaloneOSX/Game.app/Contents/MacOS/*
+          tar -czf SiliconSandbox-macOS.tar.gz -C build/StandaloneOSX Game.app
+
+      - name: Upload macOS build
+        uses: actions/upload-artifact@v4
+        with:
+          name: SiliconSandbox-${{ github.event.number || github.run_number }}-macOS
+          path: SiliconSandbox-macOS.tar.gz
+          if-no-files-found: error

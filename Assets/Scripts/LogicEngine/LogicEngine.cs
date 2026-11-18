@@ -1,9 +1,10 @@
 // LogicEngine.cs — managed wrapper over the SiliconPlugin native logic engine.
 //
 // This is the only file in the project that talks to the native plugin. Gameplay
-// code calls LogicEngine.Evaluate (one gate) or LogicEngine.EvaluateCircuit (a
-// whole netlist, #12) and never sees a DllImport, a raw return code, or a native
-// exception type.
+// code calls LogicEngine.Evaluate (one gate), LogicEngine.EvaluateCircuit (a
+// whole netlist in one zero-delay pass, #12), or LoadCircuit + Tick (the
+// unit-delay simulation the game runs, #10), and never sees a DllImport, a raw
+// return code, or a native exception type.
 //
 // Several types below MIRROR the native headers, and nothing checks that
 // correspondence at compile time; a mismatch surfaces as wrong behaviour rather
@@ -75,9 +76,9 @@ public enum NetlistStatus
 }
 
 /// <summary>
-/// Codes the whole-circuit evaluator returns (#12). Mirrors SimulateStatus in
-/// simulator.h. Ok and HasCycle are successes; the negatives are failures and
-/// never collide with GateStatus or NetlistStatus.
+/// Codes the whole-circuit evaluator (#12) and the tick (#10) return. Mirrors
+/// SimulateStatus in simulator.h. Ok and HasCycle are successes; the negatives
+/// are failures and never collide with GateStatus or NetlistStatus.
 /// </summary>
 public enum SimulationStatus
 {
@@ -85,19 +86,23 @@ public enum SimulationStatus
     HasCycle   =   1,
     NullStates = -20,
     GateFailed = -21,
-    Internal   = -22
+    Internal   = -22,
+    NotLoaded  = -23,
+    NodeCount  = -24
 }
 
-/// <summary>How a successful EvaluateCircuit call went.</summary>
+/// <summary>How a successful EvaluateCircuit or LoadCircuit call went.</summary>
 public enum CircuitResult
 {
-    /// <summary>Every node was evaluated.</summary>
+    /// <summary>Every node was evaluated (EvaluateCircuit) or the circuit has no
+    /// loops (LoadCircuit).</summary>
     Complete,
 
     /// <summary>
-    /// The circuit has a feedback loop. Nodes on the loop, or downstream of it,
-    /// read 0. Loops need state between evaluations, which arrives with #10's
-    /// tick; until then they are reported rather than simulated.
+    /// The circuit has a feedback loop. From EvaluateCircuit, nodes on the loop
+    /// or downstream of it read 0, because a single zero-delay pass has no state.
+    /// From LoadCircuit this is information only: the unit-delay tick simulates
+    /// loops (latches, oscillators) correctly.
     /// </summary>
     HasFeedbackLoop
 }
@@ -205,6 +210,25 @@ public static class LogicEngine
         [In] NetlistConnection[] connections, int connectionCount,
         [In, Out] int[] states);
 
+    // The unit-delay simulation (#10). The DLL keeps the parsed circuit between
+    // calls; the signal values stay in the caller's states array.
+    [DllImport(PluginName,
+               EntryPoint = "Silicon_LoadCircuit",
+               CallingConvention = CallingConvention.Cdecl)]
+    private static extern int Silicon_LoadCircuit(
+        [In] NetlistNode[] nodes, int nodeCount,
+        [In] NetlistConnection[] connections, int connectionCount);
+
+    [DllImport(PluginName,
+               EntryPoint = "Silicon_Tick",
+               CallingConvention = CallingConvention.Cdecl)]
+    private static extern int Silicon_Tick([In, Out] int[] states, int nodeCount);
+
+    [DllImport(PluginName,
+               EntryPoint = "Silicon_UnloadCircuit",
+               CallingConvention = CallingConvention.Cdecl)]
+    private static extern void Silicon_UnloadCircuit();
+
     /// <summary>
     /// Evaluates one logic gate.
     /// </summary>
@@ -300,7 +324,112 @@ public static class LogicEngine
             case SimulationStatus.HasCycle: return CircuitResult.HasFeedbackLoop;
         }
 
-        throw new LogicEngineException(DescribeCircuitFailure(status), status);
+        throw new LogicEngineException(DescribeCircuitFailure(status, "Silicon_EvaluateCircuit"), status);
+    }
+
+    /// <summary>
+    /// Loads a circuit for the unit-delay simulation (#10), replacing whatever was
+    /// loaded before. Call it when the circuit's structure changes (a block
+    /// placed, broken or rewired), not when a source is toggled.
+    /// </summary>
+    /// <param name="nodes">Every source, gate and LED in the circuit.</param>
+    /// <param name="connections">Every wire run. Null is treated as none.</param>
+    /// <returns>Complete, or HasFeedbackLoop (information only: loops are
+    /// simulated correctly by <see cref="Tick"/>).</returns>
+    /// <exception cref="ArgumentNullException">nodes is null.</exception>
+    /// <exception cref="LogicEngineException">The netlist was rejected (StatusCode
+    /// holds the NetlistStatus; nothing is loaded afterwards), or the plugin is
+    /// unavailable.</exception>
+    public static CircuitResult LoadCircuit(NetlistNode[] nodes, NetlistConnection[] connections)
+    {
+        if (nodes == null) throw new ArgumentNullException(nameof(nodes));
+        if (connections == null) connections = Array.Empty<NetlistConnection>();
+
+        int status;
+        try
+        {
+            status = Silicon_LoadCircuit(nodes, nodes.Length, connections, connections.Length);
+        }
+        catch (DllNotFoundException inner)
+        {
+            throw PluginMissing(inner);
+        }
+        catch (EntryPointNotFoundException inner)
+        {
+            throw ExportMissing("Silicon_LoadCircuit", inner);
+        }
+
+        switch ((SimulationStatus)status)
+        {
+            case SimulationStatus.Ok:       return CircuitResult.Complete;
+            case SimulationStatus.HasCycle: return CircuitResult.HasFeedbackLoop;
+        }
+
+        throw new LogicEngineException(DescribeCircuitFailure(status, "Silicon_LoadCircuit"), status);
+    }
+
+    /// <summary>
+    /// Advances the loaded circuit by one tick of the unit-delay simulation (#10):
+    /// every gate's new output is computed from its inputs' values before the
+    /// tick (one tick of propagation delay per gate). Sources and LEDs have no
+    /// delay. Same model as a Verilog gate-level simulation with #1 on every gate.
+    /// </summary>
+    /// <param name="states">One slot per node of the loaded circuit, indexed like
+    /// the nodes given to <see cref="LoadCircuit"/>. It holds the circuit's state
+    /// and is kept by the caller between ticks. In: every node's value now, with
+    /// each Source set to the player's current value (non-zero = 1). Out: every
+    /// node's value one tick later, 0 or 1.</param>
+    /// <returns>How many nodes changed. 0 means the circuit has settled and needs
+    /// no more ticks until a source or the circuit changes.</returns>
+    /// <exception cref="ArgumentNullException">states is null.</exception>
+    /// <exception cref="LogicEngineException">Nothing is loaded, states is not the
+    /// loaded circuit's length (states untouched in both cases), or the plugin is
+    /// unavailable.</exception>
+    public static int Tick(int[] states)
+    {
+        if (states == null) throw new ArgumentNullException(nameof(states));
+
+        int changed;
+        try
+        {
+            // The native side checks the length against the loaded circuit before
+            // writing, so a wrong-length array is refused rather than overrun.
+            changed = Silicon_Tick(states, states.Length);
+        }
+        catch (DllNotFoundException inner)
+        {
+            throw PluginMissing(inner);
+        }
+        catch (EntryPointNotFoundException inner)
+        {
+            throw ExportMissing("Silicon_Tick", inner);
+        }
+
+        if (changed < 0)
+        {
+            throw new LogicEngineException(DescribeCircuitFailure(changed, "Silicon_Tick"), changed);
+        }
+        return changed;
+    }
+
+    /// <summary>
+    /// Frees the loaded circuit. Safe to call when nothing is loaded, and a no-op
+    /// when the plugin is missing (so it is safe from OnDestroy on any platform).
+    /// </summary>
+    public static void UnloadCircuit()
+    {
+        try
+        {
+            Silicon_UnloadCircuit();
+        }
+        catch (DllNotFoundException)
+        {
+            // No plugin, so nothing can be loaded in it.
+        }
+        catch (EntryPointNotFoundException)
+        {
+            // An old binary without the tick exports never loaded a circuit either.
+        }
     }
 
     // The supported desktop builds ship separate Windows and universal Mac
@@ -319,7 +448,7 @@ public static class LogicEngine
             "The committed binary is probably out of date; rebuild it from " +
             "native/SiliconPlugin/.", inner);
 
-    private static string DescribeCircuitFailure(int status)
+    private static string DescribeCircuitFailure(int status, string entryPoint)
     {
         switch (status)
         {
@@ -360,16 +489,23 @@ public static class LogicEngine
             case (int)SimulationStatus.Internal:
                 return "The plugin caught an unexpected C++ exception while evaluating the circuit.";
 
+            case (int)SimulationStatus.NotLoaded:
+                return "Tick was called with no circuit loaded. Call LoadCircuit first " +
+                       "(and again after a load fails).";
+
+            case (int)SimulationStatus.NodeCount:
+                return "The states array is not the same length as the loaded circuit's node list. " +
+                       "It needs exactly one slot per node of the circuit last given to LoadCircuit.";
+
             default:
-                return $"Silicon_EvaluateCircuit returned unrecognised status {status}. " +
+                return $"{entryPoint} returned unrecognised status {status}. " +
                        "The native headers and LogicEngine.cs are out of sync.";
         }
     }
 
     // Turns a native status code into a message that names the actual problem.
-    // Worth the few lines: by the time #10's propagation tick is calling this
-    // thousands of times per second, "node returned -2" is not a useful thing to
-    // read in the console.
+    // Worth the few lines: "node returned -2" is not a useful thing to read in
+    // the console.
     private static string Describe(GateStatus status, GateType gateType, int[] inputs)
     {
         switch (status)
