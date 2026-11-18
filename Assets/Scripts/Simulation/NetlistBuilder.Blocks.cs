@@ -44,9 +44,17 @@ public static partial class NetlistBuilder
         var parts = new List<CircuitPart>(ordered.Count);
         var partBlocks = new List<LogicSignalBlock>(ordered.Count);
         var warnings = new List<string>();
+        var expansion = new PackageExpansion();
 
         foreach (LogicSignalBlock block in ordered)
         {
+            if (block is PackageBlock package)
+            {
+                // A placed package becomes its own private copy of the packaged circuit.
+                AddPackage(package.Definition, package.GridPosition, package.transform.rotation,
+                    package, true, parts, partBlocks, warnings, expansion, 0);
+                continue;
+            }
             CircuitPart part = ToPart(block, warnings);
             if (part == null) continue;
             parts.Add(part);
@@ -56,6 +64,7 @@ public static partial class NetlistBuilder
         Netlist netlist = FromParts(parts);
         netlist.Blocks = partBlocks;
         netlist.Warnings.InsertRange(0, warnings);
+        expansion.Publish(netlist);
         return netlist;
     }
 

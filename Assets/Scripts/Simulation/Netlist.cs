@@ -152,6 +152,16 @@ public sealed class Netlist
     /// </summary>
     public List<(int led, int driver)> ExtraOutputFeeds = new List<(int, int)>();
 
+    /// <summary>Values of sources captured inside packages, by node. They have no block of their own.</summary>
+    public Dictionary<int, int> FixedSourceStates = new Dictionary<int, int>();
+
+    /// <summary>Each top-level package port's bridge node, so the driver can colour its pin.</summary>
+    public List<(PackageBlock block, int port, int node)> PackagePorts = new List<(PackageBlock, int, int)>();
+
+    /// <summary>The parts and cell lookup the netlist was built from, when the caller keeps them (packaging analysis).</summary>
+    public IReadOnlyList<CircuitPart> PartList;
+    public Dictionary<Vector3Int, int> CellToPart;
+
     public int NodeCount => Nodes.Length;
 
     /// <summary>The block behind a node. Only valid when built from blocks.</summary>

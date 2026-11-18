@@ -123,7 +123,8 @@ public class SimulationDriver : MonoBehaviour
         if (states.Length != netlist.NodeCount) states = new int[netlist.NodeCount];
         for (int node = 0; node < netlist.NodeCount; node++)
         {
-            states[node] = netlist.NodeBlock(node) is LogicSignalSource source ? source.SignalState : 0;
+            states[node] = netlist.FixedSourceStates.TryGetValue(node, out int fixedState) ? fixedState
+                : netlist.NodeBlock(node) is LogicSignalSource source ? source.SignalState : 0;
         }
 
         LastResult = Evaluate(netlist);
@@ -196,6 +197,9 @@ public class SimulationDriver : MonoBehaviour
                     break;
             }
         }
+
+        foreach ((PackageBlock package, int port, int node) in netlist.PackagePorts)
+            if (package != null && node < states.Length) package.SetPortState(port, states[node]);
 
         foreach (WireNetwork network in netlist.Networks)
         {

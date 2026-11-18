@@ -18,16 +18,20 @@ public class InventoryItem
     [SerializeField] private Block prefab;
     [SerializeField] private Sprite icon;
     [SerializeField] private InventoryItemType itemType;
+    [Tooltip("Optional short text drawn over the icon, such as a package's marking.")]
+    [SerializeField] private string label;
 
     public string Id => id;
     public string DisplayName => displayName;
     public Block Prefab => prefab;
     public Sprite Icon => icon;
     public InventoryItemType ItemType => itemType;
+    public string Label => label;
 
     public InventoryItem(string id, string name, Block prefab, Sprite icon,
-        InventoryItemType itemType = InventoryItemType.Block)
+        InventoryItemType itemType = InventoryItemType.Block, string label = null)
     {
+        this.label = label;
         this.id = id;
         displayName = name;
         this.prefab = prefab;
@@ -46,6 +50,8 @@ public class InventoryCatalog : ScriptableObject
     public InventoryItem FindForPrefab(Block prefab)
     {
         if (prefab == null) return null;
+        var package = prefab.GetComponent<PackageBlock>();
+        if (package != null) return PackageLibrary.ItemFor(package.PackageId);
         var exact = items.FirstOrDefault(item => item != null && item.Prefab == prefab);
         if (exact != null) return exact;
         // Variants share a thumbnail, but keep their original placement prefab.

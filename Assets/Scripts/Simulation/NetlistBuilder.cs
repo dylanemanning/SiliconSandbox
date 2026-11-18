@@ -145,16 +145,29 @@ public static partial class NetlistBuilder
         }
         var directLinks = new List<(int from, int to, int pin)>();
 
+        // Every input port by the cell it sits on. A component's pins can be on any
+        // of its cells (the second cell of a 2-wide gate, a package's face), so a
+        // direct link looks up the facing cell here rather than by a part's anchor.
+        var inputsAtCell = new Dictionary<Vector3Int, List<(int node, PartPort port)>>();
+        for (int node = 0; node < nodes.Count; node++)
+        {
+            foreach (PartPort port in PortsOf(parts[nodeParts[node]]))
+            {
+                if (port.IsOutput) continue;
+                if (!inputsAtCell.TryGetValue(port.OnCell, out var list))
+                    inputsAtCell.Add(port.OnCell, list = new List<(int, PartPort)>());
+                list.Add((node, port));
+            }
+        }
+
         for (int node = 0; node < nodes.Count; node++)
         {
             CircuitPart part = parts[nodeParts[node]];
             foreach (PartPort port in PortsOf(part))
             {
-                if (!partAt.TryGetValue(port.FacingCell, out int other)) continue;
-
-                int network = networkOfPart[other];
-                if (network >= 0)
+                if (partAt.TryGetValue(port.FacingCell, out int other) && networkOfPart[other] >= 0)
                 {
+                    int network = networkOfPart[other];
                     Vector3Int face = port.OnCell - port.FacingCell;
                     if (!WireExposes(parts[other], face)) continue;
                     if (port.IsOutput)
@@ -170,12 +183,10 @@ public static partial class NetlistBuilder
                     continue;
                 }
 
-                int otherNode = nodeOfPart[other];
-                if (!port.IsOutput || otherNode < 0) continue;
-
-                foreach (PartPort back in PortsOf(parts[other]))
+                if (!port.IsOutput || !inputsAtCell.TryGetValue(port.FacingCell, out var facing)) continue;
+                foreach ((int otherNode, PartPort back) in facing)
                 {
-                    if (!back.IsOutput && back.FacingCell == port.OnCell && back.OnCell == port.FacingCell)
+                    if (otherNode != node && back.FacingCell == port.OnCell)
                     {
                         directLinks.Add((node, otherNode, back.Pin));
                     }

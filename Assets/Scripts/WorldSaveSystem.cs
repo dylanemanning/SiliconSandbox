@@ -19,6 +19,8 @@ public class WorldSaveSystem : MonoBehaviour
         public bool isGround;
         public bool hasWireEndpointMask;
         public int wireEndpointMask;
+        /// <summary>Set for a placed package: its definition's id.</summary>
+        public string packageId;
     }
 
     // Read-only compatibility fields. New saves serialize SavedBlock instead,
@@ -36,6 +38,9 @@ public class WorldSaveSystem : MonoBehaviour
         public int version;
         public string worldName;
         public List<SavedBlock> blocks = new List<SavedBlock>();
+        // Every package definition the world uses (including nested ones), so the
+        // world loads even where the global package library lacks them.
+        public List<PackageDefinition> packages = new List<PackageDefinition>();
     }
 
     [Serializable]
@@ -44,6 +49,7 @@ public class WorldSaveSystem : MonoBehaviour
         public int version;
         public string worldName;
         public List<LegacySavedBlock> blocks = new List<LegacySavedBlock>();
+        public List<PackageDefinition> packages = new List<PackageDefinition>();
     }
 
     public static WorldSaveSystem Instance { get; private set; }
@@ -145,10 +151,14 @@ public class WorldSaveSystem : MonoBehaviour
         // when the application quits while loading or after a load failure.
         if (isLoading || saveBlocked) return;
         SavedWorld save = new SavedWorld { version = CurrentSaveVersion, worldName = WorldName };
+        var packageIds = new HashSet<string>();
         foreach (Block block in FindObjectsByType<Block>(FindObjectsSortMode.None))
         {
-            save.blocks.Add(CaptureBlock(block));
+            SavedBlock saved = CaptureBlock(block);
+            save.blocks.Add(saved);
+            if (!string.IsNullOrEmpty(saved.packageId)) packageIds.Add(saved.packageId);
         }
+        save.packages = PackageLibrary.Closure(packageIds);
 
         Directory.CreateDirectory(SaveDirectory);
         File.WriteAllText(GetSavePath(WorldName), JsonUtility.ToJson(save, true));
@@ -158,9 +168,11 @@ public class WorldSaveSystem : MonoBehaviour
     private static SavedBlock CaptureBlock(Block block)
     {
         LogicWireBlock wire = block.GetComponent<LogicWireBlock>();
+        PackageBlock package = block.GetComponent<PackageBlock>();
         return new SavedBlock
         {
-            prefabName = GetPrefabName(block.gameObject),
+            prefabName = package != null ? "Package" : GetPrefabName(block.gameObject),
+            packageId = package != null ? package.PackageId : null,
             position = block.transform.position,
             rotation = block.transform.rotation,
             scale = block.transform.localScale,
@@ -243,9 +255,14 @@ public class WorldSaveSystem : MonoBehaviour
         }
         // Validate references before removing anything. Silently dropping an
         // unavailable prefab would destroy authored content on the next save.
+        // Restore package definitions the library is missing from the world's own copies.
+        if (save.packages != null)
+            foreach (PackageDefinition definition in save.packages) PackageLibrary.Import(definition);
         foreach (SavedBlock savedBlock in save.blocks)
         {
-            if (savedBlock != null && FindPrefab(savedBlock.prefabName) != null) continue;
+            if (savedBlock != null && !string.IsNullOrEmpty(savedBlock.packageId) &&
+                PackageLibrary.Get(savedBlock.packageId) != null) continue;
+            if (savedBlock != null && string.IsNullOrEmpty(savedBlock.packageId) && FindPrefab(savedBlock.prefabName) != null) continue;
             saveBlocked = true;
             isLoading = false;
             Debug.LogError($"Could not load world '{WorldName}': a saved prefab is unavailable. The original file is preserved.");
@@ -261,6 +278,12 @@ public class WorldSaveSystem : MonoBehaviour
         var restoredWires = new Dictionary<LogicWireBlock, LegacySavedBlock>();
         foreach (LegacySavedBlock savedBlock in save.blocks)
         {
+            if (!string.IsNullOrEmpty(savedBlock.packageId))
+            {
+                PackageLibrary.CreateInstance(PackageLibrary.Get(savedBlock.packageId),
+                    savedBlock.position, savedBlock.rotation, worldRoot);
+                continue;
+            }
             GameObject prefab = FindPrefab(savedBlock.prefabName);
             if (prefab == null)
             {

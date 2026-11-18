@@ -130,6 +130,18 @@ public partial class Player
             }
             if (bestDistance < float.PositiveInfinity) pin = gate;
         }
+        else if (targetBlock.TryGetComponent<PackageBlock>(out var package))
+        {
+            float bestDistance = float.PositiveInfinity;
+            foreach (var port in package.WorldPorts())
+            {
+                if (port.face != axis || !HitsCellFace(targetRaycastHit.point, port.cell, port.face)) continue;
+                float distance = ((Vector3)port.cell + (Vector3)port.face * .5f - targetRaycastHit.point).sqrMagnitude;
+                if (distance >= bestDistance) continue;
+                bestDistance = distance; pinCell = port.cell; face = port.face; input = port.port.isInput;
+            }
+            if (bestDistance < float.PositiveInfinity) pin = package;
+        }
         else if (targetBlock.TryGetComponent<LogicSignalSource>(out var source))
         {
             pinCell = source.GridPosition;

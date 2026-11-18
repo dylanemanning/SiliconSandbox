@@ -494,6 +494,13 @@ public partial class Player : MonoBehaviour
             return;
         }
 
+        var packageTemplate = prefabToPlace.GetComponent<PackageBlock>();
+        if (packageTemplate != null)
+        {
+            TryPlacePackage(prefabToPlace, packageTemplate.Definition);
+            return;
+        }
+
         float playerYaw = transform.eulerAngles.y;
         Quaternion spawnRotation = Quaternion.identity;
         // Every circuit component (gates, signal sources, clocks, LEDs) faces the way
@@ -525,6 +532,20 @@ public partial class Player : MonoBehaviour
         }
         // A wire end already pointing at one of the new block's pins joins it.
         WireTopology.ConnectFacingDeadEnds(placedBlockObject.GetComponent<LogicSignalBlock>());
+        WorldSaveSystem.Instance?.MarkDirty();
+    }
+
+    // Places a copy of a package, facing the way the player looks like a gate.
+    private void TryPlacePackage(Block template, PackageDefinition definition)
+    {
+        if (definition == null) { ShowPlayerStatus("That package's definition is missing."); return; }
+        Quaternion rotation = Quaternion.Euler(0, Mathf.Round(transform.eulerAngles.y / 90f) * 90f, 0);
+        if (!BlockPlacement.TryGetAnchor(template, targetRaycastHit.point, targetRaycastHit.normal, rotation,
+                out Vector3Int anchor)) return;
+        foreach (Vector3Int cell in template.OccupiedCells(anchor, rotation))
+            if (Block.IsCellOccupied(cell)) return;
+        var package = PackageLibrary.CreateInstance(definition, anchor, rotation);
+        WireTopology.ConnectFacingDeadEnds(package);
         WorldSaveSystem.Instance?.MarkDirty();
     }
 
