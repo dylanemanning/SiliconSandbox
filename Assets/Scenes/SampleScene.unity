@@ -831,10 +831,9 @@ MonoBehaviour:
     camera: {fileID: 330585545}
     sensitivityX: 40
     sensitivityY: 40
-  speed: 5
-  jumpForce: 5
-  flightStep: 1
-  reachDistance: 5
+  speed: 7.5
+  flightStep: 4.5
+  reachDistance: 15
   fallThreshold: -4
   respawnPoint: {fileID: 0}
   hotbar: {fileID: 1648371517}

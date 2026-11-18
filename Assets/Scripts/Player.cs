@@ -7,10 +7,31 @@ using UnityEngine.UI;
 public partial class Player : MonoBehaviour
 {
     public CameraSettings cameraSettings;
-    public float speed = 10f;
-    public float jumpForce = 5f;
-    public float flightStep = 10f;
-    public float reachDistance = 5f;
+    [Header("Walking (blocks per second)")]
+    public float speed = 7.5f;
+    public float sprintMultiplier = 1.3f;
+    public float crouchSpeedMultiplier = 0.3f;
+    public float groundAcceleration = 70f;
+    public float airAcceleration = 20f;
+
+    [Header("Jumping")]
+    public float jumpHeight = 1.25f;
+    public float gravity = 32f;
+    public float maxFallSpeed = 78f;
+    public float jumpCooldown = 0.2f;
+
+    [Header("Flight (blocks per second)")]
+    public float flightStep = 4.5f; // vertical flight speed
+    public float flightSpeed = 15f; // default horizontal flight speed
+    public float maxFlightSpeedMultiplier = 3f;
+    public int flightSpeedScrollSteps = 20;
+    public float flightAcceleration = 45f;
+
+    [Header("Crouch")]
+    [Range(0.1f, 1f)] public float crouchEyeHeightScale = 0.5f;
+    public float crouchTransitionSpeed = 10f;
+
+    public float reachDistance = 15f;
     public float fallThreshold = -10f;
     public Transform respawnPoint;
     public HotbarManager hotbar;
@@ -28,6 +49,16 @@ public partial class Player : MonoBehaviour
     private float lastSpacePressTime = 0f;
     private bool waitingForSecondSpacePress = false;
     private bool isFlying = false;
+    private float currentFlightSpeed = -1f;
+    private float nextJumpTime;
+    private bool isCrouching;
+    private float standingEyeHeight = -1f;
+
+    public bool IsFlying => isFlying;
+    public bool IsCrouching => isCrouching;
+    public float CurrentFlightSpeed => currentFlightSpeed > 0f ? currentFlightSpeed : flightSpeed;
+    public float MinFlightSpeed => speed;
+    public float MaxFlightSpeed => flightSpeed * maxFlightSpeedMultiplier;
 
     Block targetBlock;
     Block breakingBlock;
@@ -41,6 +72,11 @@ public partial class Player : MonoBehaviour
             packagingWandController = gameObject.AddComponent<PackagingWandController>();
         rb = GetComponent<Rigidbody>();
         rb.freezeRotation = true; // Crucial for player controllers
+        // Player gravity is applied in FixedUpdate so jumps follow Minecraft-like
+        // timing without changing global gravity for every other rigidbody.
+        rb.useGravity = false;
+        currentFlightSpeed = flightSpeed;
+        if (cameraSettings.camera != null) standingEyeHeight = cameraSettings.camera.transform.localPosition.y;
         spawnPosition = transform.position;
         spawnRotation = transform.rotation;
         Cursor.lockState = CursorLockMode.Locked;
@@ -64,6 +100,8 @@ public partial class Player : MonoBehaviour
 
         CheckFall();
         CheckRotation();
+        CheckCrouch();
+        CheckFlightSpeedScroll();
         CheckMovement();
         CheckJump();
         CheckTargetBlock();
@@ -157,33 +195,108 @@ public partial class Player : MonoBehaviour
         float moveX = 0;
         float moveZ = 0;
 
-        if (KeybindSettings.IsPressed(KeybindSettings.MoveForward)) moveZ = 1;
-        if (KeybindSettings.IsPressed(KeybindSettings.MoveBackward)) moveZ = -1;
-        if (KeybindSettings.IsPressed(KeybindSettings.MoveLeft)) moveX = -1;
-        if (KeybindSettings.IsPressed(KeybindSettings.MoveRight)) moveX = 1;
+        if (KeybindSettings.IsPressed(KeybindSettings.MoveForward)) moveZ += 1;
+        if (KeybindSettings.IsPressed(KeybindSettings.MoveBackward)) moveZ -= 1;
+        if (KeybindSettings.IsPressed(KeybindSettings.MoveLeft)) moveX -= 1;
+        if (KeybindSettings.IsPressed(KeybindSettings.MoveRight)) moveX += 1;
 
-        Vector3 move = (transform.forward * moveZ + transform.right * moveX).normalized * speed;
-        rb.linearVelocity = new Vector3(move.x, rb.linearVelocity.y, move.z);
+        Vector3 direction = (transform.forward * moveZ + transform.right * moveX).normalized;
+        float targetSpeed;
+        float acceleration;
+        if (isFlying)
+        {
+            targetSpeed = CurrentFlightSpeed;
+            acceleration = flightAcceleration;
+        }
+        else
+        {
+            targetSpeed = speed;
+            if (isCrouching) targetSpeed *= crouchSpeedMultiplier;
+            else if (moveZ > 0 && KeybindSettings.IsPressed(KeybindSettings.Sprint)) targetSpeed *= sprintMultiplier;
+            acceleration = isGrounded ? groundAcceleration : airAcceleration;
+        }
+
+        // Accelerate toward the requested velocity instead of snapping to it:
+        // quick on the ground, with carried momentum in the air and in flight.
+        Vector3 velocity = rb.linearVelocity;
+        Vector3 horizontal = Vector3.MoveTowards(new Vector3(velocity.x, 0f, velocity.z),
+            direction * targetSpeed, acceleration * Time.deltaTime);
+        rb.linearVelocity = new Vector3(horizontal.x, velocity.y, horizontal.z);
     }
 
     void CheckJump()
     {
-        if(!isFlying) {
-            if (isGrounded && KeybindSettings.WasPressedThisFrame(KeybindSettings.Jump))
-            {
-                rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
-            }
-        } else
+        if (!isFlying)
         {
-                float verticalInput = (KeybindSettings.IsPressed(KeybindSettings.Jump) ? 1f : 0f)
-                    - (KeybindSettings.IsPressed(KeybindSettings.FlyDown) ? 1f : 0f);
-                MoveWhileFlying(verticalInput);
+            // Holding jump keeps jumping on each landing, as in Minecraft.
+            if (isGrounded && Time.time >= nextJumpTime && rb.linearVelocity.y <= 0.1f &&
+                KeybindSettings.IsPressed(KeybindSettings.Jump))
+            {
+                Vector3 velocity = rb.linearVelocity;
+                rb.linearVelocity = new Vector3(velocity.x, JumpVelocity, velocity.z);
+                nextJumpTime = Time.time + jumpCooldown;
+            }
+            return;
         }
+
+        float verticalInput = (KeybindSettings.IsPressed(KeybindSettings.Jump) ? 1f : 0f)
+            - (KeybindSettings.IsPressed(KeybindSettings.FlyDown) ? 1f : 0f);
+        // Touching the ground while descending ends flight, as in Minecraft creative mode.
+        if (verticalInput < 0f && isGrounded)
+        {
+            ToggleFlight();
+            return;
+        }
+        MoveWhileFlying(verticalInput);
     }
 
-        void MoveWhileFlying(float verticalInput)
+    /// <summary>Launch speed that reaches jumpHeight under this player's gravity.</summary>
+    public float JumpVelocity => Mathf.Sqrt(2f * Mathf.Max(0.01f, gravity) * Mathf.Max(0f, jumpHeight));
+
+    void MoveWhileFlying(float verticalInput)
     {
-            rb.linearVelocity = new Vector3(rb.linearVelocity.x, verticalInput * flightStep, rb.linearVelocity.z);
+        Vector3 velocity = rb.linearVelocity;
+        float vertical = Mathf.MoveTowards(velocity.y, verticalInput * flightStep,
+            flightAcceleration * Time.deltaTime);
+        rb.linearVelocity = new Vector3(velocity.x, vertical, velocity.z);
+    }
+
+    private void FixedUpdate()
+    {
+        if (rb == null || isFlying || rb.isKinematic) return;
+        Vector3 velocity = rb.linearVelocity;
+        velocity.y = Mathf.Max(velocity.y - gravity * Time.fixedDeltaTime, -maxFallSpeed);
+        rb.linearVelocity = velocity;
+    }
+
+    void CheckCrouch()
+    {
+        // Crouching shares the descend key; while flying that key descends instead.
+        isCrouching = !isFlying && KeybindSettings.IsPressed(KeybindSettings.FlyDown);
+        if (cameraSettings.camera == null) return;
+        Transform view = cameraSettings.camera.transform;
+        if (standingEyeHeight < 0f) standingEyeHeight = view.localPosition.y;
+        float targetHeight = isCrouching ? standingEyeHeight * crouchEyeHeightScale : standingEyeHeight;
+        Vector3 local = view.localPosition;
+        local.y = Mathf.MoveTowards(local.y, targetHeight,
+            crouchTransitionSpeed * standingEyeHeight * Time.deltaTime);
+        view.localPosition = local;
+    }
+
+    void CheckFlightSpeedScroll()
+    {
+        if (!isFlying || !KeybindSettings.FlightSpeedModifierHeld) return;
+        float scroll = KeybindSettings.ReadScroll();
+        if (scroll == 0f) return;
+        AdjustFlightSpeed(scroll > 0f ? 1 : -1);
+    }
+
+    /// <summary>One scroll notch changes flight speed by a fixed step between walking pace and the maximum.</summary>
+    public void AdjustFlightSpeed(int notches)
+    {
+        float step = (MaxFlightSpeed - MinFlightSpeed) / Mathf.Max(1, flightSpeedScrollSteps);
+        currentFlightSpeed = Mathf.Clamp(CurrentFlightSpeed + notches * step, MinFlightSpeed, MaxFlightSpeed);
+        ShowPlayerStatus($"Flight speed: {currentFlightSpeed / flightSpeed:0.0#}x");
     }
 
     void CheckTargetBlock() 
@@ -335,15 +448,7 @@ public partial class Player : MonoBehaviour
     void ToggleFlight()
     {
         rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
-        if(!isFlying)
-        {
-            Physics.gravity = new Vector3(0f, 0f, 0f);
-            isFlying = true;
-        } else
-        {
-            Physics.gravity = new Vector3(0f, -9.81f, 0f);
-            isFlying = false;
-        }
+        isFlying = !isFlying;
     }
 
     private void OnTriggerStay(Collider other) => isGrounded = true;

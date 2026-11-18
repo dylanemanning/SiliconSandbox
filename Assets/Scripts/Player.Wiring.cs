@@ -95,7 +95,7 @@ public partial class Player
 
     private static bool HotbarSelectionPressed()
     {
-        if (Mouse.current != null && Mouse.current.scroll.ReadValue().y != 0) return true;
+        if (KeybindSettings.ReadHotbarScroll() != 0) return true;
         for (int i = 0; i < 9; i++)
             if (KeybindSettings.WasPressedThisFrame((Key)((int)Key.Digit1 + i))) return true;
         return false;
@@ -312,6 +312,9 @@ public partial class Player
         wireGuide.SetPosition(1, (Vector3)path[path.Count - 1] + (end.Wire != null ? Vector3.zero : (Vector3)direction * .5f));
         wireGuide.enabled = true;
     }
+
+    /// <summary>Short on-screen message for player feedback, such as flight speed.</summary>
+    public void ShowPlayerStatus(string text) => SetWireStatus(text);
 
     private void SetWireStatus(string text, bool error = false)
     {

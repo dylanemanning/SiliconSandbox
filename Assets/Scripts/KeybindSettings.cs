@@ -48,6 +48,7 @@ public static class KeybindSettings
     private const string MoveRightKey = "Keybind.MoveRight";
     private const string JumpKey = "Keybind.Jump";
     private const string FlyDownKey = "Keybind.FlyDown";
+    private const string SprintKey = "Keybind.Sprint";
     private const string PauseKey = "Keybind.Pause";
     private const string InteractKey = "Keybind.Interact";
     private const string PlaceMouseButtonKey = "Keybind.PlaceMouseButton";
@@ -58,7 +59,9 @@ public static class KeybindSettings
     public static Key MoveLeft => GetKey(MoveLeftKey, Key.A);
     public static Key MoveRight => GetKey(MoveRightKey, Key.D);
     public static Key Jump => GetKey(JumpKey, Key.Space);
+    /// <summary>Crouch while walking; descend while flying.</summary>
     public static Key FlyDown => GetKey(FlyDownKey, Key.LeftShift);
+    public static Key Sprint => GetKey(SprintKey, Key.LeftCtrl);
     public static Key Pause => GetKey(PauseKey, Key.Escape);
     public static Key Interact => GetKey(InteractKey, Key.F);
     public static int PlaceMouseButton => PlayerPrefs.GetInt(PlaceMouseButtonKey, 1);
@@ -127,6 +130,24 @@ public static class KeybindSettings
         }
         catch (ArgumentException) { return fallback; }
     }
+
+    /// <summary>Holding Ctrl turns the scroll wheel into the flight-speed control.</summary>
+    public static bool FlightSpeedModifierHeld => WireMouseChord.ControlHeld;
+
+    /// <summary>
+    /// Vertical scroll. macOS reports Shift + wheel as horizontal scrolling, so a
+    /// horizontal value stands in when there is no vertical one (descending in
+    /// flight holds Shift).
+    /// </summary>
+    public static float ReadScroll()
+    {
+        if (Mouse.current == null) return 0f;
+        Vector2 scroll = Mouse.current.scroll.ReadValue();
+        return scroll.y != 0f ? scroll.y : scroll.x;
+    }
+
+    /// <summary>Scroll intended for the hotbar: none while Ctrl adjusts flight speed.</summary>
+    public static float ReadHotbarScroll() => FlightSpeedModifierHeld ? 0f : ReadScroll();
 
     public static bool IsPressed(Key key)
     {

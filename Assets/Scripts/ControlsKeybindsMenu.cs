@@ -19,7 +19,8 @@ public class ControlsKeybindsMenu : MonoBehaviour
         FlyDown,
         ManualWire,
         DeleteWireRun,
-        Interact
+        Interact,
+        Sprint
     }
 
     private Button moveForwardButton;
@@ -35,6 +36,7 @@ public class ControlsKeybindsMenu : MonoBehaviour
     private Button deleteWireRunButton;
     private TMP_Text bindingFeedback;
     private Button interactButton;
+    private Button sprintButton;
     private Button saveButton;
     private Button exitButton;
     private MenuTraversal menuTraversal;
@@ -146,6 +148,10 @@ public class ControlsKeybindsMenu : MonoBehaviour
                 KeybindSettings.SetKey("Keybind.FlyDown", key);
                 FinishRebinding();
                 break;
+            case BindingType.Sprint:
+                KeybindSettings.SetKey("Keybind.Sprint", key);
+                FinishRebinding();
+                break;
         }
 
         RefreshLabels();
@@ -164,12 +170,15 @@ public class ControlsKeybindsMenu : MonoBehaviour
         downButton = FindButton("FlyDownRow/ShiftButton");
         interactButton = FindButton("InteractRow/InteractButton");
         if (interactButton == null) interactButton = CreateInteractRow();
+        SetRowCaption(downButton, "Crouch / Fly down");
+        sprintButton = FindButton("SprintRow/SprintButton");
+        if (sprintButton == null) sprintButton = CreateKeyRow("SprintRow", "Sprint", "SprintButton");
         manualWireButton = AddWireRow("ManualWireRow", "Manual wire (click or drag)", "ManualWireButton");
         deleteWireRunButton = AddWireRow("DeleteWireRunRow", "Delete wire run", "DeleteWireRunButton");
         Button resetWireButton = AddWireRow("ResetWireBindingsRow", "Wire controls", "ResetWireBindingsButton");
         foreach (Button bindingButton in new[] { moveForwardButton, moveBackwardButton, moveLeftButton,
             moveRightButton, placeButton, breakButton, pauseButton, jumpButton, downButton, interactButton,
-            manualWireButton, deleteWireRunButton, resetWireButton })
+            sprintButton, manualWireButton, deleteWireRunButton, resetWireButton })
             FitRowCaption(bindingButton);
         SetLabel(resetWireButton, "Restore defaults");
         AddListener(resetWireButton, () => { KeybindSettings.ResetWireBindings(); FinishRebinding(); });
@@ -190,6 +199,7 @@ public class ControlsKeybindsMenu : MonoBehaviour
         AddListener(jumpButton, () => BeginRebinding(BindingType.Jump));
         AddListener(downButton, () => BeginRebinding(BindingType.FlyDown));
         AddListener(interactButton, () => BeginRebinding(BindingType.Interact));
+        AddListener(sprintButton, () => BeginRebinding(BindingType.Sprint));
         AddListener(saveButton, SaveBindings);
         AddListener(exitButton, ExitControls);
     }
@@ -211,6 +221,29 @@ public class ControlsKeybindsMenu : MonoBehaviour
             if (!label.transform.IsChildOf(button.transform)) label.text = "Interact";
         }
         return button;
+    }
+
+    private Button CreateKeyRow(string rowName, string caption, string buttonName)
+    {
+        if (downButton == null) return null;
+        Transform template = downButton.transform.parent;
+        GameObject row = Instantiate(template.gameObject, template.parent);
+        row.name = rowName;
+        row.transform.SetSiblingIndex(template.GetSiblingIndex() + 1);
+        Button button = row.GetComponentInChildren<Button>(true);
+        button.name = buttonName;
+        button.onClick = new Button.ButtonClickedEvent();
+        SetRowCaption(button, caption);
+        return button;
+    }
+
+    private static void SetRowCaption(Button button, string caption)
+    {
+        if (button == null) return;
+        foreach (TMP_Text label in button.transform.parent.GetComponentsInChildren<TMP_Text>(true))
+        {
+            if (!label.transform.IsChildOf(button.transform)) label.text = caption;
+        }
     }
 
     private Button FindButton(string path)
@@ -273,6 +306,7 @@ public class ControlsKeybindsMenu : MonoBehaviour
         SetLabel(jumpButton, FormatKey(KeybindSettings.Jump));
         SetLabel(downButton, FormatKey(KeybindSettings.FlyDown));
         SetLabel(interactButton, FormatKey(KeybindSettings.Interact));
+        SetLabel(sprintButton, FormatKey(KeybindSettings.Sprint));
         SetLabel(manualWireButton, KeybindSettings.ManualWireBinding.ToString());
         SetLabel(deleteWireRunButton, KeybindSettings.DeleteWireRunBinding.ToString());
     }

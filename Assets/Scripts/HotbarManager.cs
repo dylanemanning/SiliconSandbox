@@ -76,9 +76,9 @@ public class HotbarManager : MonoBehaviour
         {
             SelectSlot(8);
         }
-        else if (Mouse.current != null && slots != null && slots.Length > 0)
+        else if (slots != null && slots.Length > 0)
         {
-            float scroll = Mouse.current.scroll.ReadValue().y;
+            float scroll = KeybindSettings.ReadHotbarScroll();
 
             if (scroll > 0)
             {
