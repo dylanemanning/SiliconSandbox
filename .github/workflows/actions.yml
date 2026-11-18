@@ -167,3 +167,53 @@ jobs:
         with:
           name: SiliconSandbox-${{ github.event.number || github.run_number }}-Windows
           path: build
+
+  build-mac:
+    name: Build macOS Game
+    needs: [test, native-plugin]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Cache Unity Library
+        uses: actions/cache@v4
+        with:
+          path: Library
+          key: Unity-Library-${{ runner.os }}-StandaloneOSX-${{ hashFiles('Packages/packages-lock.json', 'ProjectSettings/ProjectVersion.txt') }}
+          restore-keys: |
+            Unity-Library-${{ runner.os }}-StandaloneOSX-
+
+      - name: Build macOS application
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          unityVersion: 6000.3.8f1
+          targetPlatform: StandaloneOSX
+          buildName: Game
+          buildsPath: build
+
+      - name: Return license
+        uses: game-ci/unity-return-license@v2
+        if: always()
+
+      # upload-artifact zips files without Unix permissions, which breaks the .app
+      # (the executable inside loses its +x bit). Tar it first so it survives.
+      - name: Package macOS app
+        run: |
+          sudo chmod -R a+rX build/StandaloneOSX
+          sudo chmod +x build/StandaloneOSX/Game.app/Contents/MacOS/*
+          tar -czf SiliconSandbox-macOS.tar.gz -C build/StandaloneOSX Game.app
+
+      - name: Upload macOS build
+        uses: actions/upload-artifact@v4
+        with:
+          name: SiliconSandbox-${{ github.event.number || github.run_number }}-macOS
+          path: SiliconSandbox-macOS.tar.gz
+          if-no-files-found: error
