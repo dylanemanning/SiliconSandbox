@@ -57,6 +57,7 @@ public class InventoryGrid : MonoBehaviour
     private void OnEnable()
     {
         instance = this;
+        PackageLibrary.Changed += RefreshImages;
         open = false;
         if (panel != null) panel.SetActive(false);
         foreach (var label in GetComponentsInChildren<TMP_Text>(true))
@@ -65,12 +66,16 @@ public class InventoryGrid : MonoBehaviour
         RefreshImages();
     }
 
+    /// <summary>Shows the catalog, then every package the player has created.</summary>
     public void RefreshImages()
     {
         ClearHoveredSlot(hoveredSlot);
+        var entries = new System.Collections.Generic.List<InventoryItem>();
+        if (catalog != null) entries.AddRange(catalog.Items);
+        entries.AddRange(PackageLibrary.InventoryItems);
         var slots = GetComponentsInChildren<InventorySlotImage>(true);
         for (int i = 0; i < slots.Length; i++)
-            slots[i].SetItem(catalog != null && i < catalog.Items.Count ? catalog.Items[i] : null);
+            slots[i].SetItem(i < entries.Count ? entries[i] : null);
     }
 
     private void Update()
@@ -402,6 +407,7 @@ public class InventoryGrid : MonoBehaviour
 
     private void OnDisable()
     {
+        PackageLibrary.Changed -= RefreshImages;
         if (instance != this) return;
         if (open) SetOpen(false);
         instance = null;

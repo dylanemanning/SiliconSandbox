@@ -50,14 +50,18 @@ public class PackagingWandTests
         Assert.That(Time.timeScale, Is.EqualTo(1f));
         yield return null;
 
+        // An empty box opens the packaging window with a problem and Create disabled.
         controller.SelectCorner(new Vector3Int(-2, 0, 1));
+        Assert.That(PackagingWandController.IsConfirmationOpen, Is.True);
+        Assert.That(controller.LastDraft.IsValid, Is.False);
+        Assert.That(GameObject.Find("ConfirmButton").GetComponent<Button>().interactable, Is.False);
         GameObject.Find("ConfirmButton").GetComponent<Button>().onClick.Invoke();
-        Assert.That(controller.IsAreaConfirmed, Is.True);
+        Assert.That(controller.IsAreaConfirmed, Is.False, "Nothing is packaged from an invalid box.");
         Assert.That(controller.SecondCorner, Is.EqualTo(new Vector3Int(-2, 0, 1)));
-        Assert.That(PackagingWandController.IsConfirmationOpen, Is.False);
-        Assert.That(controller.GetComponentsInChildren<LineRenderer>(), Is.Empty);
 
         controller.CancelSelection();
+        Assert.That(PackagingWandController.IsConfirmationOpen, Is.False);
+        yield return null;
         controller.SelectCorner(new Vector3Int(1, 2, 3));
         Assert.That(controller.HasFirstCorner, Is.True);
         Assert.That(controller.GetComponentsInChildren<LineRenderer>().Length, Is.EqualTo(12));

@@ -1,6 +1,4 @@
-using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 public sealed class PackagingWandController : MonoBehaviour
 {
@@ -24,7 +22,7 @@ public sealed class PackagingWandController : MonoBehaviour
     private bool confirmedArea;
     private bool toolActive;
     private GameObject outlineRoot;
-    private GameObject confirmationCanvas;
+    private PackagingPanel panel;
     private Material outlineMaterial;
     private float previousTimeScale = 1f;
     private CursorLockMode previousCursorLockState;
@@ -35,6 +33,9 @@ public sealed class PackagingWandController : MonoBehaviour
     public bool IsAreaConfirmed => confirmedArea;
     public Vector3Int FirstCorner => firstCorner;
     public Vector3Int SecondCorner => secondCorner;
+    public PackagingPanel Panel => panel;
+    public PackageDraft LastDraft { get; private set; }
+    public PackageDefinition LastCreated { get; private set; }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     private static void ResetStaticState()
@@ -87,22 +88,16 @@ public sealed class PackagingWandController : MonoBehaviour
         ShowConfirmation();
     }
 
+    /// <summary>Creates the package from the open window (same as its Create package button).</summary>
     public void ConfirmSelection()
     {
-        if (!IsConfirmationOpen) return;
-
-        CloseConfirmation();
-        confirmedArea = true;
-        RemoveOutline();
+        if (IsConfirmationOpen && panel != null) panel.Create();
     }
 
+    /// <summary>Closes the window and keeps the first corner (same as its Back button).</summary>
     public void RejectSelection()
     {
-        if (!IsConfirmationOpen) return;
-
-        CloseConfirmation();
-        hasSecondCorner = false;
-        UpdateOutline(firstCorner);
+        if (IsConfirmationOpen && panel != null) panel.Back();
     }
 
     public void CancelSelection()
@@ -179,83 +174,11 @@ public sealed class PackagingWandController : MonoBehaviour
         return true;
     }
 
+    // Opens the package configuration window for the selected box.
     private void ShowConfirmation()
     {
-        confirmationCanvas = new GameObject(
-            "PackagingConfirmation",
-            typeof(Canvas),
-            typeof(CanvasScaler),
-            typeof(GraphicRaycaster));
-        Canvas canvas = confirmationCanvas.GetComponent<Canvas>();
-        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-        canvas.sortingOrder = 100;
-
-        CanvasScaler scaler = confirmationCanvas.GetComponent<CanvasScaler>();
-        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        scaler.referenceResolution = new Vector2(1920f, 1080f);
-
-        TMP_FontAsset font = TMP_Settings.defaultFontAsset;
-        MainMenuStyler styler = FindFirstObjectByType<MainMenuStyler>(FindObjectsInactive.Include);
-        if (styler != null) font = styler.fontAsset;
-
-        GameObject overlay = CreateImage("Overlay", confirmationCanvas.transform,
-            new Color(0f, 0f, 0f, 0.62f), Vector2.zero, Vector2.one);
-        overlay.GetComponent<RectTransform>().offsetMin = Vector2.zero;
-        overlay.GetComponent<RectTransform>().offsetMax = Vector2.zero;
-        overlay.GetComponent<Image>().raycastTarget = true;
-
-        Color panelColor = styler != null
-            ? styler.pauseBackground
-            : new Color(0.035f, 0.07f, 0.09f, 1f);
-        GameObject dialog = CreateImage(
-            "Dialog",
-            overlay.transform,
-            panelColor,
-            new Vector2(0.5f, 0.5f),
-            new Vector2(0.5f, 0.5f));
-        RectTransform dialogRect = dialog.GetComponent<RectTransform>();
-        dialogRect.sizeDelta = new Vector2(560f, 260f);
-
-        TMP_Text message = CreateText("Message", dialog.transform, font,
-            "Packaging is a visual preview only.\nConfirm this cuboid?");
-        RectTransform messageRect = message.rectTransform;
-        messageRect.anchorMin = new Vector2(0.08f, 0.4f);
-        messageRect.anchorMax = new Vector2(0.92f, 0.92f);
-        messageRect.offsetMin = Vector2.zero;
-        messageRect.offsetMax = Vector2.zero;
-        message.alignment = TextAlignmentOptions.Center;
-        message.verticalAlignment = VerticalAlignmentOptions.Middle;
-        message.textWrappingMode = TextWrappingModes.Normal;
-        message.enableAutoSizing = true;
-        message.fontSize = 28f;
-        message.fontSizeMin = 18f;
-        message.fontSizeMax = 28f;
-        message.color = Color.white;
-        message.raycastTarget = false;
-
-        GameObject buttonRow = new GameObject(
-            "Buttons",
-            typeof(RectTransform),
-            typeof(HorizontalLayoutGroup));
-        buttonRow.transform.SetParent(dialog.transform, false);
-        RectTransform buttonRowRect = buttonRow.GetComponent<RectTransform>();
-        buttonRowRect.anchorMin = new Vector2(0.12f, 0.08f);
-        buttonRowRect.anchorMax = new Vector2(0.88f, 0.36f);
-        buttonRowRect.offsetMin = Vector2.zero;
-        buttonRowRect.offsetMax = Vector2.zero;
-
-        HorizontalLayoutGroup layout = buttonRow.GetComponent<HorizontalLayoutGroup>();
-        layout.spacing = 16f;
-        layout.childAlignment = TextAnchor.MiddleCenter;
-        layout.childControlWidth = true;
-        layout.childControlHeight = true;
-        layout.childForceExpandWidth = true;
-        layout.childForceExpandHeight = true;
-
-        CreateDialogButton(buttonRow.transform, "Yes", "ConfirmButton", font,
-            new Color(0.35f, 0.69f, 0.63f, 1f), ConfirmSelection);
-        CreateDialogButton(buttonRow.transform, "No", "RejectButton", font,
-            new Color(0.72f, 0.24f, 0.22f, 1f), RejectSelection);
+        LastDraft = PackageCompiler.Analyze(firstCorner, secondCorner);
+        panel = PackagingPanel.Open(LastDraft, "Package " + (PackageLibrary.All.Count + 1), OnPackageCreated, OnPanelBack);
 
         previousTimeScale = Time.timeScale;
         previousCursorLockState = Cursor.lockState;
@@ -266,57 +189,25 @@ public sealed class PackagingWandController : MonoBehaviour
         IsConfirmationOpen = true;
     }
 
-    private static GameObject CreateImage(string name, Transform parent, Color color,
-        Vector2 anchorMin, Vector2 anchorMax)
+    private void OnPackageCreated(PackageDefinition definition)
     {
-        GameObject imageObject = new GameObject(name, typeof(RectTransform), typeof(Image));
-        imageObject.transform.SetParent(parent, false);
-        RectTransform rect = imageObject.GetComponent<RectTransform>();
-        rect.anchorMin = anchorMin;
-        rect.anchorMax = anchorMax;
-        rect.pivot = new Vector2(0.5f, 0.5f);
-        imageObject.GetComponent<Image>().color = color;
-        return imageObject;
+        panel = null;
+        CloseConfirmation();
+        PackageLibrary.Add(definition);
+        LastCreated = definition;
+        confirmedArea = true;
+        RemoveOutline();
+        var player = GetComponent<Player>();
+        if (player != null)
+            player.ShowPlayerStatus($"Created package \"{definition.name}\". Find it in the inventory (E).");
     }
 
-    private static TMP_Text CreateText(string name, Transform parent, TMP_FontAsset font, string value)
+    private void OnPanelBack()
     {
-        GameObject textObject = new GameObject(name, typeof(RectTransform), typeof(TextMeshProUGUI));
-        textObject.transform.SetParent(parent, false);
-        TMP_Text text = textObject.GetComponent<TMP_Text>();
-        if (font != null) text.font = font;
-        text.text = value;
-        return text;
-    }
-
-    private static void CreateDialogButton(Transform parent, string label, string name,
-        TMP_FontAsset font, Color color, UnityEngine.Events.UnityAction onClick)
-    {
-        GameObject buttonObject = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
-        buttonObject.transform.SetParent(parent, false);
-        Image image = buttonObject.GetComponent<Image>();
-        image.color = color;
-
-        Button button = buttonObject.GetComponent<Button>();
-        button.targetGraphic = image;
-        button.onClick.AddListener(onClick);
-        ColorBlock colors = button.colors;
-        colors.normalColor = color;
-        colors.highlightedColor = Color.Lerp(color, Color.white, 0.2f);
-        colors.selectedColor = colors.highlightedColor;
-        colors.pressedColor = Color.Lerp(color, Color.black, 0.2f);
-        button.colors = colors;
-
-        TMP_Text buttonText = CreateText("Label", buttonObject.transform, font, label);
-        buttonText.alignment = TextAlignmentOptions.Center;
-        buttonText.verticalAlignment = VerticalAlignmentOptions.Middle;
-        buttonText.color = Color.white;
-        buttonText.raycastTarget = false;
-        RectTransform textRect = buttonText.rectTransform;
-        textRect.anchorMin = Vector2.zero;
-        textRect.anchorMax = Vector2.one;
-        textRect.offsetMin = Vector2.zero;
-        textRect.offsetMax = Vector2.zero;
+        panel = null;
+        CloseConfirmation();
+        hasSecondCorner = false;
+        UpdateOutline(firstCorner);
     }
 
     private void CloseConfirmation()
@@ -325,8 +216,8 @@ public sealed class PackagingWandController : MonoBehaviour
         Time.timeScale = previousTimeScale;
         Cursor.lockState = previousCursorLockState;
         Cursor.visible = previousCursorVisible;
-        if (confirmationCanvas != null) Destroy(confirmationCanvas);
-        confirmationCanvas = null;
+        if (panel != null) Destroy(panel.gameObject);
+        panel = null;
     }
 
     private void ClearSelection()

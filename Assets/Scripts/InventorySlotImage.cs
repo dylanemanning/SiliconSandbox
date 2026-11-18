@@ -49,6 +49,7 @@ public class InventorySlotImage : MonoBehaviour, IPointerEnterHandler, IPointerE
     {
         SetImage(value != null ? value.Icon : null,value != null ? value.DisplayName : "");
         item=value;
+        ItemIconLabel.Apply(iconImage, value != null ? value.Label : null);
     }
 
     public void SetImage(Sprite sprite, string label = "")

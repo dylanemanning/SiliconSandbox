@@ -19,6 +19,7 @@ public class HotbarSlot : MonoBehaviour
     {
         Item = catalog != null ? catalog.FindForPrefab(blockPrefab) : null;
         SetIcon(Item != null ? Item.Icon : null);
+        ItemIconLabel.Apply(blockIcon, Item != null ? Item.Label : null);
     }
 
     public void SetItem(InventoryItem item)
@@ -27,6 +28,7 @@ public class HotbarSlot : MonoBehaviour
         Item = item;
         blockPrefab = item != null ? item.Prefab : null;
         SetIcon(item != null ? item.Icon : null);
+        ItemIconLabel.Apply(blockIcon, item != null ? item.Label : null);
     }
 
     public void SetSelected(bool selected)
