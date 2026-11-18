@@ -65,6 +65,7 @@ public class GameplayModelIntegrationTests
         if(!SimulationDriver.SimulationAvailable)
             Assert.Ignore("Needs the native SiliconPlugin (Windows or macOS) to evaluate the circuit.");
         var source=Object.Instantiate(Prefab("Voltage Source"),new Vector3(30,1,30),Quaternion.identity);
+        source.GetComponent<LogicSignalSource>().SetState(1); // Placed sources start off.
         var wire=Object.Instantiate(Prefab("Wires"),new Vector3(30,1,31),Quaternion.identity);
         var led=Object.Instantiate(Prefab("Viewer Block"),new Vector3(30,1,32),Quaternion.identity);
         wire.GetComponent<LogicWireBlock>().SetEndpointMask(

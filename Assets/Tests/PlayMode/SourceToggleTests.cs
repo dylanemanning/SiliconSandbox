@@ -4,6 +4,7 @@ using NUnit.Framework;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Controls;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using UnityEngine.UI;
@@ -14,22 +15,22 @@ public class SourceToggleTests : InputTestFixture
     private Mouse mouse;
     private LogicSignalSource source;
     private bool hadInteractBinding;
-    private int previousInteractBinding;
+    private string previousInteractBinding;
 
     public override void Setup()
     {
         base.Setup();
         keyboard = InputSystem.AddDevice<Keyboard>();
         mouse = InputSystem.AddDevice<Mouse>();
-        hadInteractBinding = PlayerPrefs.HasKey("Keybind.Interact");
-        previousInteractBinding = PlayerPrefs.GetInt("Keybind.Interact");
-        PlayerPrefs.DeleteKey("Keybind.Interact");
+        hadInteractBinding = PlayerPrefs.HasKey(KeybindSettings.InteractBindingPreference);
+        previousInteractBinding = PlayerPrefs.GetString(KeybindSettings.InteractBindingPreference);
+        PlayerPrefs.DeleteKey(KeybindSettings.InteractBindingPreference);
     }
 
     public override void TearDown()
     {
-        if (hadInteractBinding) PlayerPrefs.SetInt("Keybind.Interact", previousInteractBinding);
-        else PlayerPrefs.DeleteKey("Keybind.Interact");
+        if (hadInteractBinding) PlayerPrefs.SetString(KeybindSettings.InteractBindingPreference, previousInteractBinding);
+        else PlayerPrefs.DeleteKey(KeybindSettings.InteractBindingPreference);
         PlayerPrefs.Save();
         base.TearDown();
     }
@@ -84,44 +85,57 @@ public class SourceToggleTests : InputTestFixture
         return menu.GetComponentsInChildren<Button>(true).Single(b => b.name == name);
     }
 
-    [UnityTest]
-    public IEnumerator InteractDefaultsToFAndTogglesOnceWithoutPlacementOrUiInputLeakage()
+    private IEnumerator Click(ButtonControl button)
     {
-        Assert.That(KeybindSettings.Interact, Is.EqualTo(Key.F));
+        Press(button);
+        yield return null;
+        yield return null;
+        Release(button);
+        yield return null;
+    }
+
+    [UnityTest]
+    public IEnumerator InteractDefaultsToRightClickAndTogglesOnceWithoutPlacementOrUiInputLeakage()
+    {
+        Assert.That(KeybindSettings.InteractBinding, Is.EqualTo(KeybindSettings.DefaultInteract));
+        Assert.That(KeybindSettings.InteractBinding.ToString(), Is.EqualTo("Right Click"));
         yield return LoadTargetedSource();
         int count = Object.FindObjectsByType<Block>(FindObjectsSortMode.None).Length;
-        Press(keyboard.fKey);
+        Press(mouse.rightButton);
         yield return null;
         yield return null;
         Assert.That(source.SignalState, Is.EqualTo(1));
         yield return null;
         yield return null;
         Assert.That(source.SignalState, Is.EqualTo(1), "Holding Interact must not toggle every frame.");
-        Assert.That(Object.FindObjectsByType<Block>(FindObjectsSortMode.None).Length, Is.EqualTo(count));
-        Release(keyboard.fKey);
+        Assert.That(Object.FindObjectsByType<Block>(FindObjectsSortMode.None).Length, Is.EqualTo(count),
+            "Interacting must not also place the selected block.");
+        Release(mouse.rightButton);
         yield return null;
-        yield return Tap(Key.F);
+        yield return Click(mouse.rightButton);
         Assert.That(source.SignalState, Is.EqualTo(0));
 
         var inventory = Object.FindFirstObjectByType<InventoryGrid>();
         inventory.SetOpen(true);
-        yield return Tap(Key.F);
+        yield return Click(mouse.rightButton);
         Assert.That(source.SignalState, Is.EqualTo(0), "Inventory input must not affect the world.");
         inventory.SetOpen(false);
         yield return null;
         yield return Tap(KeybindSettings.Pause);
         Assert.That(PauseManager.IsPaused, Is.True);
-        yield return Tap(Key.F);
+        yield return Click(mouse.rightButton);
         Assert.That(source.SignalState, Is.EqualTo(0), "Pause input must not affect the world.");
         Object.FindFirstObjectByType<PauseManager>().ResumeGame();
         yield return null;
 
+        // Keep the view still while crouching so the click aims at the same source.
+        Object.FindFirstObjectByType<Player>().crouchEyeHeightScale = 1f;
         Press(keyboard.leftShiftKey);
-        Press(mouse.rightButton);
         yield return null;
-        yield return null;
-        Assert.That(source.SignalState, Is.EqualTo(0), "Shift-right-click must no longer toggle a source.");
-        Release(mouse.rightButton);
+        yield return Click(mouse.rightButton);
+        Assert.That(source.SignalState, Is.EqualTo(0), "Shift + right click must not toggle a source.");
+        Assert.That(Object.FindObjectsByType<Block>(FindObjectsSortMode.None).Length, Is.EqualTo(count + 1),
+            "Shift + right click places the selected block against the source instead.");
         Release(keyboard.leftShiftKey);
         LogAssert.NoUnexpectedReceived();
     }
@@ -136,7 +150,7 @@ public class SourceToggleTests : InputTestFixture
         traversal.openSettings();
         var controls = traversal.settingsControlsPanel.GetComponent<ControlsKeybindsMenu>();
         var button = ButtonNamed(controls, "InteractButton");
-        Assert.That(button.GetComponentInChildren<TMP_Text>().text, Is.EqualTo("F"));
+        Assert.That(button.GetComponentInChildren<TMP_Text>().text, Is.EqualTo("Right Click"));
         Assert.That(button.transform.parent.GetComponentsInChildren<TMP_Text>().Any(t => t.text == "Interact"), Is.True);
         Canvas.ForceUpdateCanvases();
         // The extra row must fit within the existing layout instead of overlapping the footer.
@@ -150,7 +164,7 @@ public class SourceToggleTests : InputTestFixture
         yield return null;
         yield return null;
         yield return Tap(Key.G);
-        Assert.That(KeybindSettings.Interact, Is.EqualTo(Key.G));
+        Assert.That(KeybindSettings.InteractBinding.Key, Is.EqualTo(Key.G));
         Assert.That(button.GetComponentInChildren<TMP_Text>().text, Is.EqualTo("G"));
         ButtonNamed(controls, "SaveButton").onClick.Invoke();
         traversal.closeSettings();
@@ -165,11 +179,14 @@ public class SourceToggleTests : InputTestFixture
         traversal.openSettings();
         controls = traversal.settingsControlsPanel.GetComponent<ControlsKeybindsMenu>();
         Assert.That(ButtonNamed(controls, "InteractButton").GetComponentInChildren<TMP_Text>().text, Is.EqualTo("G"));
-        Assert.That(KeybindSettings.Interact, Is.EqualTo(Key.G));
+        Assert.That(KeybindSettings.InteractBinding.Key, Is.EqualTo(Key.G));
 
         yield return LoadTargetedSource();
-        yield return Tap(Key.F);
-        Assert.That(source.SignalState, Is.EqualTo(0), "The previous key must stop interacting after a rebind.");
+        // Empty the selected slot so the old right click cannot place a block in front of the source.
+        var hotbar = Object.FindFirstObjectByType<Player>().hotbar;
+        hotbar.GetSlot(hotbar.SelectedSlotIndex).SetItem(null);
+        yield return Click(mouse.rightButton);
+        Assert.That(source.SignalState, Is.EqualTo(0), "The previous binding must stop interacting after a rebind.");
         yield return Tap(Key.G);
         Assert.That(source.SignalState, Is.EqualTo(1));
         yield return Tap(Key.G);

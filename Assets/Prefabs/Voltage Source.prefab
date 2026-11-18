@@ -67,7 +67,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dee2025ba0fba1442ba40483da784236, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LogicSignalSource
-  outputState: 1
+  outputState: 0
 --- !u!65 &8853293174615596824
 BoxCollider:
   m_ObjectHideFlags: 0

@@ -356,7 +356,10 @@ public partial class Player : MonoBehaviour
 
     private bool TryToggleSource()
     {
-        if (!KeybindSettings.WasPressedThisFrame(KeybindSettings.Interact)) return false;
+        if (!KeybindSettings.InteractPressedThisFrame()) return false;
+        // Holding Crouch overrides interaction, so Shift + right click places a block
+        // against an interactive one, as in Minecraft.
+        if (KeybindSettings.CrouchHeld) return false;
         if (targetBlock == null || !targetBlock.TryGetComponent<LogicSignalSource>(out var source) ||
             source is LogicClockSource) return false;
 
@@ -384,7 +387,9 @@ public partial class Player : MonoBehaviour
 
         float playerYaw = transform.eulerAngles.y;
         Quaternion spawnRotation = Quaternion.identity;
-        if (prefabToPlace.GetComponent<GateBlock>() != null)
+        // Every circuit component (gates, signal sources, clocks, LEDs) faces the way
+        // the player looks when it is placed.
+        if (prefabToPlace.GetComponent<LogicSignalBlock>() != null)
         {
             spawnRotation = Quaternion.Euler(0, Mathf.Round(playerYaw / 90f) * 90f, 0);
         }

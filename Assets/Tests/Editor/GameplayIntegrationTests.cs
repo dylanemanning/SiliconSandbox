@@ -54,8 +54,8 @@ public class GameplayIntegrationTests
         var slots = Enumerable.Range(0,configured.arraySize)
             .Select(i=>(HotbarSlot)configured.GetArrayElementAtIndex(i).objectReferenceValue).ToArray();
         Assert.That(slots.Length,Is.EqualTo(9));
-        Assert.That(slots.Count(s=>s.BlockPrefab.name=="Block"),Is.EqualTo(5));
-        foreach(string name in new[]{"Voltage Source","Ground Source","Wires","Viewer Block"})
-            Assert.That(slots.Count(s=>s.BlockPrefab.name==name),Is.EqualTo(1));
+        // Default order: Constant Signal, Clock, Wire, NOT, AND, OR, XOR, LED, Building Block.
+        Assert.That(slots.Select(s=>s.BlockPrefab.name), Is.EqualTo(new[]{
+            "Voltage Source","Clock","Wires","NOT Gate","AND Gate","OR Gate","XOR Gate","Viewer Block","Block"}));
     }
 }

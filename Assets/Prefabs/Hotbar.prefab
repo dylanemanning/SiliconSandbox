@@ -741,7 +741,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 414ff02f63c3fd3409c35ec5238d7c3b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: SiliconSandbox.Game::HotbarSlot
-  blockPrefab: {fileID: 1955800274510326494, guid: 7cd4cfb305b363944b40eb4e99671f9c, type: 3}
+  blockPrefab: {fileID: 1955800274510326494, guid: cda98205b888b9f40af417668a20e6e9, type: 3}
   background: {fileID: 1541549513201102354}
   blockIcon: {fileID: 7014665986242711911}
   normalColor: {r: 0.42, g: 0.46, b: 0.51, a: 1}
@@ -1065,7 +1065,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 414ff02f63c3fd3409c35ec5238d7c3b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: SiliconSandbox.Game::HotbarSlot
-  blockPrefab: {fileID: 1955800274510326494, guid: c229e5dc942464245a58c793fa64e54a, type: 3}
+  blockPrefab: {fileID: 1955800274510326494, guid: 00f1c5b33edc24543b4be80d9936dfc8, type: 3}
   background: {fileID: 949753596741224318}
   blockIcon: {fileID: 8130483291566395383}
   normalColor: {r: 0.42, g: 0.46, b: 0.51, a: 1}
@@ -1161,7 +1161,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 414ff02f63c3fd3409c35ec5238d7c3b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: SiliconSandbox.Game::HotbarSlot
-  blockPrefab: {fileID: 1955800274510326494, guid: d6af9b211590f8748b324601faa6fd20, type: 3}
+  blockPrefab: {fileID: 1955800274510326494, guid: f8d1fcebaa60446469516aaf495b0e47, type: 3}
   background: {fileID: 5535008752152485579}
   blockIcon: {fileID: 3012036690620720417}
   normalColor: {r: 0.42, g: 0.46, b: 0.51, a: 1}
@@ -2563,7 +2563,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 414ff02f63c3fd3409c35ec5238d7c3b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: SiliconSandbox.Game::HotbarSlot
-  blockPrefab: {fileID: 1955800274510326494, guid: 47ac02fb44cd432409140b8227c11f53, type: 3}
+  blockPrefab: {fileID: 6641178468809095237, guid: 69d6dd4b60a8942eaa9403033b472348, type: 3}
   background: {fileID: 679635715072797349}
   blockIcon: {fileID: 3241358293872833569}
   normalColor: {r: 0.42, g: 0.46, b: 0.51, a: 1}
@@ -3112,7 +3112,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 414ff02f63c3fd3409c35ec5238d7c3b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: SiliconSandbox.Game::HotbarSlot
-  blockPrefab: {fileID: 1955800274510326494, guid: cda98205b888b9f40af417668a20e6e9, type: 3}
+  blockPrefab: {fileID: 1955800274510326494, guid: 5a4c782a9874cc446b66d236ebd4848b, type: 3}
   background: {fileID: 2103975323748035354}
   blockIcon: {fileID: 60385619052114674}
   normalColor: {r: 0.42, g: 0.46, b: 0.51, a: 1}
@@ -3208,7 +3208,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 414ff02f63c3fd3409c35ec5238d7c3b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: SiliconSandbox.Game::HotbarSlot
-  blockPrefab: {fileID: 1955800274510326494, guid: c229e5dc942464245a58c793fa64e54a, type: 3}
+  blockPrefab: {fileID: 1955800274510326494, guid: 47ac02fb44cd432409140b8227c11f53, type: 3}
   background: {fileID: 8096425446129912773}
   blockIcon: {fileID: 8178968757558282390}
   normalColor: {r: 0.42, g: 0.46, b: 0.51, a: 1}
@@ -3722,7 +3722,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 414ff02f63c3fd3409c35ec5238d7c3b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: SiliconSandbox.Game::HotbarSlot
-  blockPrefab: {fileID: 1955800274510326494, guid: c229e5dc942464245a58c793fa64e54a, type: 3}
+  blockPrefab: {fileID: 1955800274510326494, guid: 344dfe2f338fde049ac04ad837838274, type: 3}
   background: {fileID: 6664646187044243360}
   blockIcon: {fileID: 979326614481585581}
   normalColor: {r: 0.42, g: 0.46, b: 0.51, a: 1}
@@ -4167,7 +4167,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 414ff02f63c3fd3409c35ec5238d7c3b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: SiliconSandbox.Game::HotbarSlot
-  blockPrefab: {fileID: 1955800274510326494, guid: c229e5dc942464245a58c793fa64e54a, type: 3}
+  blockPrefab: {fileID: 1955800274510326494, guid: d6af9b211590f8748b324601faa6fd20, type: 3}
   background: {fileID: 3184621311301967773}
   blockIcon: {fileID: 3344581997972306283}
   normalColor: {r: 0.42, g: 0.46, b: 0.51, a: 1}

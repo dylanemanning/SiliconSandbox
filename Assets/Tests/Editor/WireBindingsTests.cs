@@ -53,20 +53,46 @@ public class WireBindingsTests
     }
 
     [Test]
-    public void InteractKeyIsReservedAndOldSourceMouseChordIsAvailable()
+    public void InteractKeyAndShiftPlaceClickAreReservedForWireActions()
     {
-        bool hadInteract = PlayerPrefs.HasKey("Keybind.Interact");
-        int previous = PlayerPrefs.GetInt("Keybind.Interact");
+        bool hadInteract = PlayerPrefs.HasKey(KeybindSettings.InteractBindingPreference);
+        string previous = PlayerPrefs.GetString(KeybindSettings.InteractBindingPreference);
         try
         {
-            KeybindSettings.SetKey("Keybind.Interact", UnityEngine.InputSystem.Key.F9);
+            Assert.That(KeybindSettings.TrySetInteractBinding(new WireMouseChord { Key = UnityEngine.InputSystem.Key.F9 }, out _), Is.True);
             Assert.That(KeybindSettings.TrySetWireBinding(true, new WireMouseChord { Key = UnityEngine.InputSystem.Key.F9 }, out _), Is.False);
-            Assert.That(KeybindSettings.TrySetWireBinding(true, new WireMouseChord { MouseButton = 1, Shift = true }, out _), Is.True);
+            // Shift + the place button places against interactive blocks.
+            Assert.That(KeybindSettings.TrySetWireBinding(true, new WireMouseChord { MouseButton = KeybindSettings.PlaceMouseButton, Shift = true }, out _), Is.False);
+            Assert.That(KeybindSettings.TrySetWireBinding(true, new WireMouseChord { MouseButton = 1, Control = true }, out _), Is.True);
         }
         finally
         {
-            if (hadInteract) PlayerPrefs.SetInt("Keybind.Interact", previous);
-            else PlayerPrefs.DeleteKey("Keybind.Interact");
+            if (hadInteract) PlayerPrefs.SetString(KeybindSettings.InteractBindingPreference, previous);
+            else PlayerPrefs.DeleteKey(KeybindSettings.InteractBindingPreference);
+            KeybindSettings.ResetWireBindings();
+            PlayerPrefs.Save();
+        }
+    }
+
+    [Test]
+    public void InteractDefaultsToRightClickAndRejectsReservedControls()
+    {
+        bool hadInteract = PlayerPrefs.HasKey(KeybindSettings.InteractBindingPreference);
+        string previous = PlayerPrefs.GetString(KeybindSettings.InteractBindingPreference);
+        try
+        {
+            PlayerPrefs.DeleteKey(KeybindSettings.InteractBindingPreference);
+            Assert.That(KeybindSettings.InteractBinding.Key, Is.EqualTo(UnityEngine.InputSystem.Key.None));
+            Assert.That(KeybindSettings.InteractBinding.MouseButton, Is.EqualTo(1));
+            Assert.That(KeybindSettings.TrySetInteractBinding(new WireMouseChord { MouseButton = KeybindSettings.BreakMouseButton }, out _), Is.False);
+            Assert.That(KeybindSettings.TrySetInteractBinding(new WireMouseChord { Key = UnityEngine.InputSystem.Key.W }, out _), Is.False);
+            Assert.That(KeybindSettings.TrySetInteractBinding(new WireMouseChord { Key = UnityEngine.InputSystem.Key.G }, out _), Is.True);
+            Assert.That(KeybindSettings.InteractBinding.Key, Is.EqualTo(UnityEngine.InputSystem.Key.G));
+        }
+        finally
+        {
+            if (hadInteract) PlayerPrefs.SetString(KeybindSettings.InteractBindingPreference, previous);
+            else PlayerPrefs.DeleteKey(KeybindSettings.InteractBindingPreference);
             PlayerPrefs.Save();
         }
     }

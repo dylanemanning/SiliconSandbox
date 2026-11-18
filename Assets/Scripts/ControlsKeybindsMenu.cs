@@ -93,6 +93,11 @@ public class ControlsKeybindsMenu : MonoBehaviour
                 if (KeybindSettings.TrySetMouseButton("Keybind.PlaceMouseButton", mouseButton, out string error)) FinishRebinding();
                 else ShowBindingFeedback(error);
             }
+            else if (rebinding == BindingType.Interact)
+            {
+                if (KeybindSettings.TrySetInteractBinding(new WireMouseChord { MouseButton = mouseButton }, out string error)) FinishRebinding();
+                else ShowBindingFeedback(error);
+            }
             else if (rebinding == BindingType.Break)
             {
                 if (KeybindSettings.TrySetMouseButton("Keybind.BreakMouseButton", mouseButton, out string error)) FinishRebinding();
@@ -141,8 +146,8 @@ public class ControlsKeybindsMenu : MonoBehaviour
                 FinishRebinding();
                 break;
             case BindingType.Interact:
-                KeybindSettings.SetKey("Keybind.Interact", key);
-                FinishRebinding();
+                if (KeybindSettings.TrySetInteractBinding(new WireMouseChord { Key = key }, out string interactError)) FinishRebinding();
+                else ShowBindingFeedback(interactError);
                 break;
             case BindingType.FlyDown:
                 KeybindSettings.SetKey("Keybind.FlyDown", key);
@@ -305,7 +310,7 @@ public class ControlsKeybindsMenu : MonoBehaviour
         SetLabel(pauseButton, FormatKey(KeybindSettings.Pause));
         SetLabel(jumpButton, FormatKey(KeybindSettings.Jump));
         SetLabel(downButton, FormatKey(KeybindSettings.FlyDown));
-        SetLabel(interactButton, FormatKey(KeybindSettings.Interact));
+        SetLabel(interactButton, KeybindSettings.InteractBinding.ToString());
         SetLabel(sprintButton, FormatKey(KeybindSettings.Sprint));
         SetLabel(manualWireButton, KeybindSettings.ManualWireBinding.ToString());
         SetLabel(deleteWireRunButton, KeybindSettings.DeleteWireRunBinding.ToString());

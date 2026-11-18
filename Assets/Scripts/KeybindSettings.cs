@@ -50,7 +50,7 @@ public static class KeybindSettings
     private const string FlyDownKey = "Keybind.FlyDown";
     private const string SprintKey = "Keybind.Sprint";
     private const string PauseKey = "Keybind.Pause";
-    private const string InteractKey = "Keybind.Interact";
+    public const string InteractBindingPreference = "Keybind.InteractBinding";
     private const string PlaceMouseButtonKey = "Keybind.PlaceMouseButton";
     private const string BreakMouseButtonKey = "Keybind.BreakMouseButton";
 
@@ -63,7 +63,16 @@ public static class KeybindSettings
     public static Key FlyDown => GetKey(FlyDownKey, Key.LeftShift);
     public static Key Sprint => GetKey(SprintKey, Key.LeftCtrl);
     public static Key Pause => GetKey(PauseKey, Key.Escape);
-    public static Key Interact => GetKey(InteractKey, Key.F);
+    /// <summary>
+    /// Interact (toggle a Constant Signal). A key or a mouse button; right click by
+    /// default, like opening a block in Minecraft. Holding Crouch skips interaction
+    /// so the same click places the selected block instead.
+    /// </summary>
+    public static WireMouseChord InteractBinding => LoadBinding(InteractBindingPreference, DefaultInteract, IsValidInteractBinding);
+    public static WireMouseChord DefaultInteract => new WireMouseChord { MouseButton = 1 };
+    public static bool InteractPressedThisFrame() => InteractBinding.Key == Key.None
+        ? WasMouseButtonPressedThisFrame(InteractBinding.MouseButton) : WasPressedThisFrame(InteractBinding.Key);
+    public static bool CrouchHeld => IsPressed(FlyDown);
     public static int PlaceMouseButton => PlayerPrefs.GetInt(PlaceMouseButtonKey, 1);
     public static int BreakMouseButton => PlayerPrefs.GetInt(BreakMouseButtonKey, 0);
     public static WireMouseChord ManualWireBinding => LoadWireBinding(ManualWirePreference, DefaultManualWire);
@@ -110,25 +119,59 @@ public static class KeybindSettings
         {
             Key key = binding.Key;
             return key != MoveForward && key != MoveBackward && key != MoveLeft && key != MoveRight &&
-                key != Jump && key != FlyDown && key != Pause && key != Interact && key != Key.Escape && key != Key.E &&
+                key != Jump && key != FlyDown && key != Sprint && key != Pause && key != InteractBinding.Key && key != Key.Escape && key != Key.E &&
                 key != Key.Enter && key != Key.NumpadEnter && !(key >= Key.Digit1 && key <= Key.Digit9);
         }
         if (binding.MouseButton < 0 || binding.MouseButton > 2) return false;
         if ((binding.MouseButton == PlaceMouseButton || binding.MouseButton == BreakMouseButton) &&
             !binding.Control && !binding.Shift && !binding.Alt) return false;
+        // Crouch (Shift) + the place button places a block against interactive blocks.
+        bool crouchIsShift = FlyDown == Key.LeftShift || FlyDown == Key.RightShift;
+        if (crouchIsShift && binding.Shift && binding.MouseButton == PlaceMouseButton) return false;
         return true;
     }
 
     private static WireMouseChord LoadWireBinding(string preference, WireMouseChord fallback)
+        => LoadBinding(preference, fallback, IsValidWireBinding);
+
+    private static WireMouseChord LoadBinding(string preference, WireMouseChord fallback, Func<WireMouseChord, bool> isValid)
     {
         string json = PlayerPrefs.GetString(preference, "");
         if (string.IsNullOrEmpty(json)) return fallback;
         try
         {
             WireMouseChord binding = JsonUtility.FromJson<WireMouseChord>(json);
-            return IsValidWireBinding(binding) ? binding : fallback;
+            return isValid(binding) ? binding : fallback;
         }
         catch (ArgumentException) { return fallback; }
+    }
+
+    private static bool IsValidInteractBinding(WireMouseChord binding)
+    {
+        if (binding.Control || binding.Shift || binding.Alt) return false;
+        if (!Enum.IsDefined(typeof(Key), binding.Key) || IsModifier(binding.Key)) return false;
+        if (binding.Key == Key.None)
+            return binding.MouseButton >= 0 && binding.MouseButton <= 2 && binding.MouseButton != BreakMouseButton;
+        Key key = binding.Key;
+        return key != MoveForward && key != MoveBackward && key != MoveLeft && key != MoveRight &&
+            key != Jump && key != FlyDown && key != Sprint && key != Pause && key != Key.Escape && key != Key.E &&
+            key != Key.Enter && key != Key.NumpadEnter && !(key >= Key.Digit1 && key <= Key.Digit9);
+    }
+
+    public static bool TrySetInteractBinding(WireMouseChord binding, out string error)
+    {
+        binding.Control = binding.Shift = binding.Alt = false;
+        // Wire keys are checked here, not in IsValidInteractBinding, because wire
+        // validation reads the Interact binding (loading either must not recurse).
+        if (!IsValidInteractBinding(binding) || binding.Key != Key.None && IsWirePrimaryKey(binding.Key))
+        {
+            error = "That control is reserved. Choose another key or mouse button.";
+            return false;
+        }
+        PlayerPrefs.SetString(InteractBindingPreference, JsonUtility.ToJson(binding));
+        PlayerPrefs.Save();
+        error = null;
+        return true;
     }
 
     /// <summary>Holding Ctrl turns the scroll wheel into the flight-speed control.</summary>

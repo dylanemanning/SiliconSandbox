@@ -55,7 +55,7 @@ public class HotbarPresentationTests : InputTestFixture
         Assert.That(panel.color, Is.EqualTo(inventoryRow.transform.parent.GetComponent<Image>().color));
         Assert.That(panel.rectTransform.rect.size-row.GetComponent<RectTransform>().rect.size, Is.EqualTo(new Vector2(48,48)));
         Assert.That(hotbar.GetComponent<CanvasScaler>().referenceResolution, Is.EqualTo(inventory.GetComponent<CanvasScaler>().referenceResolution));
-        var expected = new[]{"Block","Voltage Source","Ground Source","Wires","Viewer Block","Block","Block","Block","Block"};
+        var expected = new[]{"Voltage Source","Clock","Wires","NOT Gate","AND Gate","OR Gate","XOR Gate","Viewer Block","Block"};
         for (int i=0;i<9;i++)
         {
             var slot = hotbar.GetSlot(i);
@@ -66,8 +66,11 @@ public class HotbarPresentationTests : InputTestFixture
             Assert.That(slot.GetComponent<RectTransform>().rect.size, Is.EqualTo(Vector2.one*80));
             Assert.That(slot.GetComponentInChildren<TMP_Text>().text, Is.EqualTo((i+1).ToString()));
         }
-        Assert.That(hotbar.GetSlot(2).BlockPrefab.GetComponent<LogicSignalSource>().SignalState, Is.Zero,
-            "The low source may share the Constant Signal image, but its placement prefab must stay low.");
+        Assert.That(hotbar.GetSlot(0).BlockPrefab.GetComponent<LogicSignalSource>().SignalState, Is.Zero,
+            "A newly placed Constant Signal starts off.");
+        Assert.That(Enumerable.Range(0, 9).Count(i => hotbar.GetSlot(i).BlockPrefab.GetComponent<LogicSignalSource>() != null &&
+            hotbar.GetSlot(i).BlockPrefab.GetComponent<LogicClockSource>() == null), Is.EqualTo(1),
+            "The default hotbar holds one Constant Signal.");
         Assert.That(hotbar.GetSlot(0).Frame.color, Is.Not.EqualTo(hotbar.GetSlot(1).Frame.color));
         Assert.That(Object.FindObjectsByType<Camera>(FindObjectsSortMode.None).Length, Is.EqualTo(1));
         LogAssert.NoUnexpectedReceived();
