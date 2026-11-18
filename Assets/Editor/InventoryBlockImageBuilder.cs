@@ -39,8 +39,13 @@ public static class InventoryBlockImageBuilder
         Debug.Log("INVENTORY_IMAGES_BUILD_PASS: 14 catalog entries including the packaging wand, top-down block sprites and an angled wire sprite, 22 empty slots.");
     }
 
-    static void GenerateIcons()
+    static void GenerateIcons() => GenerateIcons(Models);
+
+    /// <summary>Re-renders only the named icons (entries of Models), leaving the others untouched.</summary>
+    public static void GenerateIcons(params string[] names)
     {
+        foreach(string name in names)
+            if(Array.IndexOf(Models,name)<0) throw new ArgumentException("Unknown inventory icon: "+name);
         Directory.CreateDirectory(IconFolder);
         var oldScene=UnityEngine.SceneManagement.SceneManager.GetActiveScene().path;
         var pipeline=(UniversalRenderPipelineAsset)GraphicsSettings.currentRenderPipeline;
@@ -67,7 +72,7 @@ public static class InventoryBlockImageBuilder
             camera.clearFlags=CameraClearFlags.SolidColor;camera.backgroundColor=Color.clear;camera.allowHDR=true;
             camera.nearClipPlane=.05f;camera.farClipPlane=100;
             camera.GetUniversalAdditionalCameraData().renderPostProcessing=true;
-            foreach(string modelName in Models)
+            foreach(string modelName in names)
             {
                 var path=modelName=="building_block"?"Assets/Prefabs/Block.prefab":"Assets/Models/Prefabs/"+modelName+".prefab";
                 var prefab=AssetDatabase.LoadAssetAtPath<GameObject>(path);
@@ -82,6 +87,12 @@ public static class InventoryBlockImageBuilder
                     {
                         camera.transform.position=bounds.center+new Vector3(4,6,-8).normalized*8;
                         camera.transform.LookAt(bounds.center);
+                    }
+                    else if(modelName=="constant_signal_on")
+                    {
+                        // Seen as the player sees a placed source: its front (+Z) away from the viewer.
+                        camera.transform.position=bounds.center+Vector3.up*8;
+                        camera.transform.rotation=Quaternion.LookRotation(Vector3.down,Vector3.forward);
                     }
                     else
                     {
@@ -109,7 +120,7 @@ public static class InventoryBlockImageBuilder
             if(!string.IsNullOrEmpty(oldScene)) EditorSceneManager.OpenScene(oldScene);
         }
         AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
-        foreach(string name in Models)
+        foreach(string name in names)
         {
             var importer=(TextureImporter)AssetImporter.GetAtPath(IconFolder+"/"+name+".png");
             importer.textureType=TextureImporterType.Sprite;importer.spriteImportMode=SpriteImportMode.Single;
