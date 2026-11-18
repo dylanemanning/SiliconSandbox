@@ -95,7 +95,8 @@ public partial class Player
 
     private static bool HotbarSelectionPressed()
     {
-        if (KeybindSettings.ReadHotbarScroll() != 0) return true;
+        // Scrolling is not checked here: stray trackpad scrolls cancelled wires mid-gesture.
+        // A scroll that changes the slot cancels through the selected-block check instead.
         for (int i = 0; i < 9; i++)
             if (KeybindSettings.WasPressedThisFrame((Key)((int)Key.Digit1 + i))) return true;
         return false;
@@ -106,7 +107,12 @@ public partial class Player
         endpoint = default; axis = Vector3Int.RoundToInt(SnapToCardinalAxis(targetRaycastHit.normal));
         if (targetBlock == null) return false;
         if (targetBlock.TryGetComponent<LogicWireBlock>(out var wire))
-        { endpoint = new WireEndpoint(wire.GridPosition, wire); return true; }
+        {
+            // Branch from the clicked side of the wire unless an arm already leaves there.
+            var approach = wire.HasEndpointTowards(wire.GridPosition + axis) ? Vector3Int.zero : axis;
+            endpoint = new WireEndpoint(wire.GridPosition, wire, approach);
+            return true;
+        }
         LogicSignalBlock pin = null;
         Vector3Int pinCell = default, face = default;
         bool input = false;
@@ -116,8 +122,10 @@ public partial class Player
             foreach (var port in gate.WorldPorts())
             {
                 if (port.face != axis) continue;
+                // The whole face square of the pin's cell selects that pin.
+                if (!HitsCellFace(targetRaycastHit.point, port.cell, port.face)) continue;
                 float distance = ((Vector3)port.cell + (Vector3)port.face * .5f - targetRaycastHit.point).sqrMagnitude;
-                if (distance > .35f * .35f || distance >= bestDistance) continue;
+                if (distance >= bestDistance) continue;
                 bestDistance = distance; pinCell = port.cell; face = port.face; input = port.port.Role == PortRole.Input;
             }
             if (bestDistance < float.PositiveInfinity) pin = gate;
@@ -127,13 +135,13 @@ public partial class Player
             pinCell = source.GridPosition;
             var forward = Vector3Int.RoundToInt(source.transform.forward);
             face = Vector3.Dot(targetRaycastHit.point - source.transform.position, forward) >= 0 ? forward : -forward;
-            if (face == axis && ((Vector3)pinCell + (Vector3)face * .5f - targetRaycastHit.point).sqrMagnitude <= .35f * .35f)
+            if (face == axis && HitsCellFace(targetRaycastHit.point, pinCell, face))
                 pin = source;
         }
         else if (targetBlock.TryGetComponent<StateViewerBlock>(out var viewer))
         {
             pinCell = viewer.GridPosition; face = axis; input = true;
-            if (((Vector3)pinCell + (Vector3)face * .5f - targetRaycastHit.point).sqrMagnitude <= .35f * .35f) pin = viewer;
+            if (HitsCellFace(targetRaycastHit.point, pinCell, face)) pin = viewer;
         }
         if (pin != null)
         {
@@ -145,6 +153,19 @@ public partial class Player
             return true;
         }
         endpoint = new WireEndpoint(LogicWirePathfinder.GetCellBeyondSurfaceHit(targetRaycastHit.point, axis));
+        return true;
+    }
+
+    /// <summary>True when a hit point lies on the full square face of a cell (with a small tolerance).</summary>
+    private static bool HitsCellFace(Vector3 hitPoint, Vector3Int cell, Vector3Int face)
+    {
+        Vector3 offset = hitPoint - ((Vector3)cell + (Vector3)face * .5f);
+        const float halfFace = .5f + .02f, depth = .1f;
+        for (int axis = 0; axis < 3; axis++)
+        {
+            float limit = face[axis] != 0 ? depth : halfFace;
+            if (Mathf.Abs(offset[axis]) > limit) return false;
+        }
         return true;
     }
 
@@ -295,7 +316,7 @@ public partial class Player
         Vector3 u = Vector3.Cross(normal, Vector3.up);
         if (u.sqrMagnitude < .1f) u = Vector3.right;
         u.Normalize(); Vector3 v = Vector3.Cross(normal, u);
-        const float size = .35f;
+        const float size = .49f; // outline the whole selectable face
         wireGuide.positionCount = 5;
         wireGuide.SetPositions(new[] {center + (u + v) * size, center + (-u + v) * size,
             center + (-u - v) * size, center + (u - v) * size, center + (u + v) * size});

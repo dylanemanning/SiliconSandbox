@@ -7,21 +7,28 @@ using UnityEngine;
 public readonly struct WireEndpoint
 {
     public readonly Vector3Int Cell, PinCell, Outward;
+    /// <summary>
+    /// For an existing wire: the face the player clicked. A new branch leaves the
+    /// wire through that face, so the junction forms on the side the player chose.
+    /// Zero when unrestricted.
+    /// </summary>
+    public readonly Vector3Int Approach;
     public readonly LogicWireBlock Wire;
     public readonly LogicSignalBlock Pin;
     public readonly bool IsInput;
     public bool IsPin => Pin != null;
 
-    public WireEndpoint(Vector3Int cell, LogicWireBlock wire = null)
+    public WireEndpoint(Vector3Int cell, LogicWireBlock wire = null, Vector3Int approach = default)
     {
         Cell = cell; Wire = wire; Pin = null; PinCell = default; Outward = default; IsInput = false;
+        Approach = wire != null ? approach : default;
     }
 
     public WireEndpoint(LogicSignalBlock pin, Vector3Int pinCell, Vector3Int outward, bool isInput,
         LogicWireBlock wire = null)
     {
         Pin = pin; PinCell = pinCell; Outward = outward; Cell = pinCell + outward;
-        IsInput = isInput; Wire = wire;
+        IsInput = isInput; Wire = wire; Approach = default;
     }
 }
 
@@ -85,7 +92,6 @@ public sealed class WireWorldSnapshot
         Physics.SyncTransforms();
         var states = new Dictionary<Block, BlockState>();
         var blocked = new HashSet<Vector3Int>();
-        var pinApproaches = new HashSet<Vector3Int>();
         foreach (var block in UnityEngine.Object.FindObjectsByType<Block>(FindObjectsSortMode.None))
         {
             if (!block.isActiveAndEnabled) continue;
@@ -95,12 +101,7 @@ public sealed class WireWorldSnapshot
             {
                 var signal = block.GetComponent<LogicSignalBlock>();
                 foreach (var cell in block.OccupiedCells(Vector3Int.RoundToInt(block.transform.position), block.transform.rotation))
-                {
                     if (Inside(cell, min, max)) blocked.Add(cell);
-                    if (signal is LogicWireBlock) continue;
-                    foreach (var adjacent in LogicSignalBlock.Neighbors(cell))
-                        if (Inside(adjacent, min, max) && signal.HasConnection(cell, adjacent - cell)) pinApproaches.Add(adjacent);
-                }
             }
             else
             {
@@ -120,14 +121,14 @@ public sealed class WireWorldSnapshot
             }
         }
         var occupied = new HashSet<Vector3Int>(blocked);
-        // The group's centered pins reserve one adjacent cell. Only a selected terminal
-        // or its explicitly selected wire may use that approach cell.
-        blocked.UnionWith(pinApproaches);
+        // Cells in front of unselected pins stay open: a route may pass in front of
+        // (and so block) a pin the player is not using, instead of detouring around it.
+        // A wire next to a pin may also turn in that cell, so pins impose no direction.
         var request = new WireRouteRequest
         {
             Blocked = blocked, Start = start.Cell, Target = end.Cell, Min = min, Max = max,
-            StartDirection = start.IsPin && start.Wire == null ? start.Outward : Vector3Int.zero,
-            TargetDirection = end.IsPin && end.Wire == null ? -end.Outward : Vector3Int.zero,
+            StartDirection = start.Wire != null && !start.IsPin ? start.Approach : Vector3Int.zero,
+            TargetDirection = end.Wire != null && !end.IsPin ? -end.Approach : Vector3Int.zero,
             PreferTarget = end.IsInput || !start.IsInput,
             MaxPathLength = 512
         };
@@ -193,7 +194,7 @@ public static class WireRouteCommit
         if (path.Count > 1 && manualAxis == Vector3Int.zero &&
             (snapshot.Request.StartDirection != Vector3Int.zero && path[1] - path[0] != snapshot.Request.StartDirection ||
              snapshot.Request.TargetDirection != Vector3Int.zero && path[path.Count - 1] - path[path.Count - 2] != snapshot.Request.TargetDirection))
-        { error = "Wire must enter pins along their axis."; return false; }
+        { error = "The wire must leave the existing wire through the selected face."; return false; }
         if (path.Count == 1 && start.Wire != null && end.Wire == start.Wire && !start.IsPin && !end.IsPin)
         { error = "Choose a different wire endpoint."; return false; }
         var created = new List<GameObject>();
@@ -222,6 +223,13 @@ public static class WireRouteCommit
                 if (i == path.Count - 1 && end.IsPin) mask |= LogicWireBlock.GetDirectionBit(-end.Outward);
                 // Manual open ends show the complete one-block piece, including quick clicks.
                 if (manualAxis != Vector3Int.zero && !saved.ContainsKey(wire)) mask |= LogicWireBlock.GetDirectionBit(manualAxis) | LogicWireBlock.GetDirectionBit(-manualAxis);
+                // A new single segment on a pin is a whole block, not a half arm: it runs
+                // straight through its cell, so it touches whatever it points at.
+                if (path.Count == 1 && !saved.ContainsKey(wire))
+                {
+                    if (start.IsPin) mask |= LogicWireBlock.GetDirectionBit(start.Outward);
+                    if (end.IsPin && end.Pin != start.Pin) mask |= LogicWireBlock.GetDirectionBit(end.Outward);
+                }
                 wire.SetEndpointMask(mask);
             }
             for (int i = 1; i < wires.Count; i++) WireTopology.Join(wires[i - 1], wires[i]);

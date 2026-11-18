@@ -87,14 +87,14 @@ public class WireRouteCommitTests
     }
 
     [Test]
-    public void UnselectedPinApproachCannotBeUsedAsAnOpenEndpoint()
+    public void CellInFrontOfAnUnselectedPinIsAnOrdinaryOpenEndpoint()
     {
+        // Wires may block pins the player is not using.
         Source(Origin, 90);
         var openAtPin = new WireEndpoint(Origin + Vector3Int.right);
         var other = new WireEndpoint(Origin + Vector3Int.right * 4);
-        Assert.That(WireWorldSnapshot.TryCapture(openAtPin, other, out var snapshot, out _), Is.False);
-        Assert.That(snapshot, Is.Null);
-        Assert.That(ActiveWires(), Is.Empty);
+        Assert.That(WireWorldSnapshot.TryCapture(openAtPin, other, out var snapshot, out var error), Is.True, error);
+        Assert.That(snapshot.Request.Blocked, Has.No.Member(openAtPin.Cell));
     }
 
     [Test]
@@ -104,8 +104,7 @@ public class WireRouteCommitTests
         var start = new WireEndpoint(source, Origin, Vector3Int.right, false);
         var end = new WireEndpoint(Origin + Vector3Int.right * 3);
         var snapshot = Capture(start, end);
-        Assert.That(snapshot.Request.Blocked, Does.Contain(start.Cell), "The pin cell remains reserved in the general obstacle snapshot.");
-        Assert.That(snapshot.Request.Blocked, Does.Contain(Origin + Vector3Int.left), "The other terminal remains protected.");
+        Assert.That(snapshot.Request.StartDirection, Is.EqualTo(Vector3Int.zero), "A wire may turn right outside a pin.");
         var result = WireRouteSolver.Find(snapshot.Request);
         Assert.That(result.Status, Is.EqualTo(WireRouteStatus.Success));
         Assert.That(WireRouteCommit.TryCommit(snapshot, result.Path, prefab, start, end, out var error), Is.True, error);
@@ -117,30 +116,31 @@ public class WireRouteCommitTests
     }
 
     [Test]
-    public void AutomaticRouteAvoidsUnselectedPinApproachInsteadOfSilentlyConnectingIt()
+    public void AutomaticRouteMayPassInFrontOfAnUnselectedPinInsteadOfDetouring()
     {
         Source(Origin + Vector3Int.back, 0);
         var start = new WireEndpoint(Origin + Vector3Int.left * 2);
         var end = new WireEndpoint(Origin + Vector3Int.right * 2);
         var snapshot = Capture(start, end);
-        Assert.That(snapshot.Request.Blocked, Does.Contain(Origin));
+        Assert.That(snapshot.Request.Blocked, Has.No.Member(Origin));
         var result = WireRouteSolver.Find(snapshot.Request);
         Assert.That(result.Status, Is.EqualTo(WireRouteStatus.Success));
-        CollectionAssert.DoesNotContain(result.Path, Origin);
+        Assert.That(result.Path, Has.Count.EqualTo(5), "The straight route is the shortest.");
+        Assert.That(result.Path, Does.Contain(Origin));
         Assert.That(WireRouteCommit.TryCommit(snapshot, result.Path, prefab, start, end, out var error), Is.True, error);
-        Assert.That(ActiveWireAt(Origin), Is.Null);
+        Assert.That(ActiveWireAt(Origin), Is.Not.Null);
     }
 
     [Test]
-    public void ManualRowCannotCrossAnUnselectedPinApproach()
+    public void ManualRowMayCrossInFrontOfAnUnselectedPin()
     {
         Source(Origin + Vector3Int.back, 0);
         var start = new WireEndpoint(Origin + Vector3Int.left * 2);
         var end = new WireEndpoint(Origin + Vector3Int.right * 2);
         var snapshot = Capture(start, end);
         var row = Enumerable.Range(-2, 5).Select(x => Origin + Vector3Int.right * x).ToList();
-        Assert.That(WireRouteCommit.TryCommit(snapshot, row, prefab, start, end, out _, Vector3Int.right), Is.False);
-        Assert.That(ActiveWires(), Is.Empty);
+        Assert.That(WireRouteCommit.TryCommit(snapshot, row, prefab, start, end, out var error, Vector3Int.right), Is.True, error);
+        Assert.That(ActiveWires(), Has.Count.EqualTo(5));
     }
 
     [Test]
@@ -180,16 +180,47 @@ public class WireRouteCommitTests
     }
 
     [Test]
-    public void SelectedPinAxisCannotBeEnteredSidewaysEvenWithAnOtherwiseValidPath()
+    public void WireTurnsInTheCellDirectlyOutsideAPin()
     {
         var source = Source(Origin, 90);
         var start = new WireEndpoint(source, Origin, Vector3Int.right, false);
-        var end = new WireEndpoint(Origin + Vector3Int.right * 2 + Vector3Int.up);
+        var end = new WireEndpoint(Origin + Vector3Int.right + Vector3Int.up * 2);
         var snapshot = Capture(start, end);
         var path = new[] { start.Cell, start.Cell + Vector3Int.up, end.Cell };
-        Assert.That(WireRouteCommit.TryCommit(snapshot, path, prefab, start, end, out var error), Is.False);
-        Assert.That(error, Does.Contain("axis"));
-        Assert.That(ActiveWires(), Is.Empty);
+        Assert.That(WireRouteCommit.TryCommit(snapshot, path, prefab, start, end, out var error), Is.True, error);
+        var elbow = ActiveWireAt(start.Cell);
+        Assert.That(elbow.EndpointMask, Is.EqualTo(Mask(Vector3Int.left, Vector3Int.up)), "Pin arm plus a 90 degree turn.");
+        Assert.That(elbow.ConnectsTo(source, Origin), Is.True);
+    }
+
+    [Test]
+    public void SingleSegmentOnAPinIsAWholeBlockThatReachesAFacingPin()
+    {
+        // Two facing pins one empty cell apart: one segment joins both.
+        var first = Source(Origin, 90);
+        var second = Source(Origin + Vector3Int.right * 2, 90);
+        var start = new WireEndpoint(first, Origin, Vector3Int.right, false);
+        var end = new WireEndpoint(start.Cell);
+        var snapshot = Capture(start, end);
+        Assert.That(WireRouteCommit.TryCommit(snapshot, new[] { start.Cell }, prefab, start, end, out var error), Is.True, error);
+        var segment = ActiveWireAt(start.Cell);
+        Assert.That(segment.EndpointMask, Is.EqualTo(Mask(Vector3Int.left, Vector3Int.right)));
+        Assert.That(segment.ConnectsTo(first, Origin), Is.True);
+        Assert.That(segment.ConnectsTo(second, Origin + Vector3Int.right * 2), Is.True);
+    }
+
+    [Test]
+    public void PlacedComponentJoinsAWireEndPointingStraightAtItsPin()
+    {
+        var wire = Wire(Origin, Mask(Vector3Int.left));
+        var side = Wire(Origin + Vector3Int.forward * 3, Mask(Vector3Int.forward));
+        var source = Source(Origin + Vector3Int.right, 90);
+        var other = Source(Origin + Vector3Int.forward * 3 + Vector3Int.right, 90);
+        Assert.That(WireTopology.ConnectFacingDeadEnds(source), Is.EqualTo(1));
+        Assert.That(wire.EndpointMask, Is.EqualTo(Mask(Vector3Int.left, Vector3Int.right)));
+        Assert.That(wire.ConnectsTo(source, Origin + Vector3Int.right), Is.True);
+        Assert.That(WireTopology.ConnectFacingDeadEnds(other), Is.Zero, "A wire end running sideways is not pointing at the pin.");
+        Assert.That(side.EndpointMask, Is.EqualTo(Mask(Vector3Int.forward)));
     }
 
     [Test]

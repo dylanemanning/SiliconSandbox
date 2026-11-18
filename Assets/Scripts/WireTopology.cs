@@ -39,6 +39,53 @@ public static class WireTopology
         return true;
     }
 
+    /// <summary>
+    /// Connects a newly placed component to wire ends that point straight at one of
+    /// its pins: a wire whose only arm leads away from the pin, in line with it,
+    /// gains the arm into the pin. Returns how many wires were connected.
+    /// </summary>
+    public static int ConnectFacingDeadEnds(LogicSignalBlock component)
+    {
+        if (component == null || component is LogicWireBlock) return 0;
+        var block = component.GetComponent<Block>();
+        Vector3Int anchor = component.GridPosition;
+        var cells = block != null
+            ? new List<Vector3Int>(block.OccupiedCells(anchor, component.transform.rotation))
+            : new List<Vector3Int> { anchor };
+        // The registry is filled in OnEnable; fall back to a scene search where it is not
+        // (EditMode tools and tests).
+        Dictionary<Vector3Int, LogicWireBlock> sceneWires = null;
+        LogicWireBlock WireAt(Vector3Int cell)
+        {
+            if (LogicSignalBlock.At(cell) is LogicWireBlock registered) return registered;
+            if (sceneWires == null)
+            {
+                sceneWires = new Dictionary<Vector3Int, LogicWireBlock>();
+                foreach (var candidate in Object.FindObjectsByType<LogicWireBlock>(FindObjectsSortMode.None))
+                    if (candidate.isActiveAndEnabled || !Application.isPlaying) sceneWires[candidate.GridPosition] = candidate;
+            }
+            sceneWires.TryGetValue(cell, out var found);
+            return found;
+        }
+
+        int connected = 0;
+        foreach (Vector3Int cell in cells)
+        foreach (Vector3Int neighborCell in LogicSignalBlock.Neighbors(cell))
+        {
+            Vector3Int face = neighborCell - cell;
+            if (!component.HasConnection(cell, face)) continue;
+            var wire = WireAt(neighborCell);
+            if (wire == null || wire.GridPosition != neighborCell) continue;
+            int intoPin = LogicWireBlock.GetDirectionBit(-face);
+            int awayFromPin = LogicWireBlock.GetDirectionBit(face);
+            if ((wire.EndpointMask & intoPin) != 0 || wire.EndpointMask != awayFromPin) continue;
+            wire.SetEndpointMask(wire.EndpointMask | intoPin);
+            connected++;
+        }
+        if (connected > 0) LogicSignalBlock.MarkCircuitChanged();
+        return connected;
+    }
+
     /// <summary>Trim touching neighbor arms before deleting that one wire.</summary>
     public static void Detach(LogicWireBlock wire)
     {

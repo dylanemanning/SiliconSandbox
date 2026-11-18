@@ -399,4 +399,43 @@ public class WireRoutingIntegrationTests : InputTestFixture
         var beforeLast = LogicSignalBlock.At(last.GridPosition + Vector3Int.left) as LogicWireBlock;
         Assert.That(last.ConnectsTo(beforeLast, beforeLast.GridPosition), Is.True);
     }
+
+    [Test]
+    public void WholePinFaceSelectsThePinIncludingItsRim()
+    {
+        var source = Surface(Origin); source.transform.rotation = Quaternion.Euler(0, 90, 0);
+        source.gameObject.AddComponent<LogicSignalSource>();
+        Physics.SyncTransforms();
+        foreach (var offset in new[] { Vector3.zero, new Vector3(0, .45f, .45f), new Vector3(0, -.47f, .3f) })
+        {
+            var origin = (Vector3)Origin + Vector3.right * 4 + offset;
+            Assert.That(source.GetComponent<Collider>().Raycast(new Ray(origin, Vector3.left), out var hit, 8), Is.True);
+            Set("targetBlock", source); Set("targetRaycastHit", hit);
+            var args = new object[2];
+            Assert.That((bool)typeof(Player).GetMethod("TrySelectWireEndpoint", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(player, args), Is.True);
+            var endpoint = (WireEndpoint)args[0];
+            Assert.That(endpoint.IsPin, Is.True, $"Offset {offset} on the pin face selects the pin.");
+            Assert.That(endpoint.Cell, Is.EqualTo(Origin + Vector3Int.right));
+        }
+    }
+
+    [Test]
+    public void ClickedWireFaceDecidesWhereTheJunctionLeaves()
+    {
+        var wire = Wire(Origin, LogicWireBlock.GetDirectionBit(Vector3Int.left) | LogicWireBlock.GetDirectionBit(Vector3Int.right));
+        Physics.SyncTransforms();
+        var core = wire.GetComponent<Collider>();
+        Assert.That(core.Raycast(new Ray((Vector3)Origin + Vector3.back * 4, Vector3.forward), out var hit, 8), Is.True);
+        Set("targetBlock", wire.GetComponent<Block>()); Set("targetRaycastHit", hit);
+        var args = new object[2];
+        Assert.That((bool)typeof(Player).GetMethod("TrySelectWireEndpoint", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(player, args), Is.True);
+        var endpoint = (WireEndpoint)args[0];
+        Assert.That(endpoint.Wire, Is.EqualTo(wire));
+        Assert.That(endpoint.Approach, Is.EqualTo(Vector3Int.back), "Looking at the south (-Z) side junctions on that side.");
+        var other = new WireEndpoint(Origin + Vector3Int.back * 3 + Vector3Int.right * 2);
+        Assert.That(WireWorldSnapshot.TryCapture(endpoint, other, out var snapshot, out var error), Is.True, error);
+        var result = WireRouteSolver.Find(snapshot.Request);
+        Assert.That(result.Status, Is.EqualTo(WireRouteStatus.Success));
+        Assert.That(result.Path[1] - result.Path[0], Is.EqualTo(Vector3Int.back));
+    }
 }
