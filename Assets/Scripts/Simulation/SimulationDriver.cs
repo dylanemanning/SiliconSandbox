@@ -180,6 +180,10 @@ public class SimulationDriver : MonoBehaviour
 
     private void Apply(Netlist netlist)
     {
+        // An LED lights when any of its inputs is on.
+        foreach ((int led, int driver) in netlist.ExtraOutputFeeds)
+            if (led < states.Length && driver < states.Length && states[driver] != 0) states[led] = 1;
+
         for (int node = 0; node < netlist.NodeCount; node++)
         {
             switch (netlist.NodeBlock(node))

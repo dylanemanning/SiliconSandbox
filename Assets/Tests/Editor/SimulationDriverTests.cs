@@ -143,6 +143,32 @@ public class SimulationDriverEngineTests : DriverFixture
         Assert.AreEqual(CircuitResult.Complete, Driver.LastResult);
     }
 
+    // An LED with two inputs lights when either one is on (an OR), not only the first.
+    [Test]
+    public void LedWithTwoInputsFollowsEitherInput()
+    {
+        LogicSignalSource left = Source(0, 0, 0, 0, 90f);
+        StateViewerBlock led = Led(1, 0, 0);
+        LogicSignalSource right = Source(2, 0, 0, 0, 90f);
+
+        Simulate();
+        Assert.AreEqual(0, led.CurrentState, "both off");
+        right.SetState(1);
+        Simulate();
+        Assert.AreEqual(1, led.CurrentState, "second input on");
+        right.SetState(0);
+        left.SetState(1);
+        Simulate();
+        Assert.AreEqual(1, led.CurrentState, "first input on");
+        right.SetState(1);
+        Simulate();
+        Assert.AreEqual(1, led.CurrentState, "both on");
+        left.SetState(0);
+        right.SetState(0);
+        Simulate();
+        Assert.AreEqual(0, led.CurrentState, "both off again");
+    }
+
     // TC-3.4.4: toggling the source and re-simulating toggles wires and LED.
     [Test]
     public void TC_3_4_4_TogglingTheSource_TogglesWiresAndLed()

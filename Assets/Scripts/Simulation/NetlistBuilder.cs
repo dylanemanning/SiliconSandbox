@@ -21,10 +21,10 @@
 //     outputs is a short circuit. Nothing is connected from it, and the driver
 //     draws it red. Its inputs read 0 meanwhile. Combine signals with an OR gate.
 //
-//   - One driver per input pin: if an input ends up fed from two places (an
-//     LED touching two separately driven networks, say), the first is kept and
-//     the rest are reported in Netlist.Warnings. The engine would otherwise
-//     reject the whole netlist.
+//   - One driver per input pin: if a gate input ends up fed from two places,
+//     the first is kept and the rest are reported in Netlist.Warnings. The
+//     engine would otherwise reject the whole netlist. An LED is the exception:
+//     its extra drivers go to Netlist.ExtraOutputFeeds and it shows their OR.
 //
 // Node order follows part order, and FromBlocks sorts parts by cell, so the
 // same world always produces the same netlist. That keeps bug reports and test
@@ -191,6 +191,12 @@ public static partial class NetlistBuilder
         {
             if (fedPins.TryGetValue((to, pin), out var first))
             {
+                // An LED with several inputs acts as an OR of them.
+                if (first.from != from && (GateType)nodes[to].Type == GateType.Output)
+                {
+                    if (!netlist.ExtraOutputFeeds.Contains((to, from))) netlist.ExtraOutputFeeds.Add((to, from));
+                    return;
+                }
                 // The same driver reaching the same pin twice (an LED touching a
                 // source directly and through the source's own wire, say) is one
                 // signal, not a conflict: nothing to add, nothing to report.

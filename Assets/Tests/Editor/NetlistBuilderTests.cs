@@ -290,17 +290,19 @@ public class NetlistBuilderTests
     // ---- Rules that resolve conflicts instead of failing ---------------------------
 
     // An LED between two separately driven networks would give its only pin two
-    // drivers, which the engine rejects outright. The first is kept and the
-    // conflict is reported.
+    // drivers, which the engine rejects outright. One is wired to the pin and the
+    // other is recorded as an extra feed, so the LED shows the OR of both.
     [Test]
-    public void LedFedByTwoDrivenNetworks_KeepsOneAndWarns()
+    public void LedFedByTwoDrivenNetworks_ShowsTheOrOfBothWithoutWarning()
     {
         Netlist netlist = Build(Source(0, 0, 0), Wire(1, 0, 0), Led(2, 0, 0), Wire(3, 0, 0), Source(4, 0, 0));
 
         Assert.AreEqual(2, netlist.Networks.Length);
-        Assert.AreEqual(1, netlist.Connections.Length, "only one driver reaches the LED's single pin");
-        Assert.AreEqual(1, netlist.Warnings.Count);
-        StringAssert.Contains("input 0", netlist.Warnings[0]);
+        Assert.AreEqual(1, netlist.Connections.Length, "only one driver reaches the LED's single engine pin");
+        Assert.AreEqual(1, netlist.ExtraOutputFeeds.Count, "the second driver is an extra LED feed");
+        Assert.AreNotEqual(netlist.Connections[0].FromId, netlist.ExtraOutputFeeds[0].driver);
+        Assert.AreEqual(netlist.Connections[0].ToId, netlist.ExtraOutputFeeds[0].led);
+        Assert.IsEmpty(netlist.Warnings);
     }
 
     // The same driver reaching one pin by two routes is one signal, not a

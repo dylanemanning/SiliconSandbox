@@ -145,6 +145,13 @@ public sealed class Netlist
     /// </summary>
     public List<string> Warnings = new List<string>();
 
+    /// <summary>
+    /// Extra drivers of LED (Output) nodes beyond the one the engine wires to the
+    /// LED's single input. An LED shows the OR of all of them, so it lights when any
+    /// of its inputs is on. LEDs drive nothing, so this is applied after evaluation.
+    /// </summary>
+    public List<(int led, int driver)> ExtraOutputFeeds = new List<(int, int)>();
+
     public int NodeCount => Nodes.Length;
 
     /// <summary>The block behind a node. Only valid when built from blocks.</summary>
