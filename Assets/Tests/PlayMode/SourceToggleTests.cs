@@ -159,6 +159,15 @@ public class SourceToggleTests : InputTestFixture
         var bounds = RectTransformUtility.CalculateRelativeRectTransformBounds(container, row);
         Assert.That(bounds.min.y, Is.GreaterThanOrEqualTo(container.rect.yMin - 1));
         Assert.That(bounds.max.y, Is.LessThanOrEqualTo(container.rect.yMax + 1));
+        foreach (RectTransform other in container)
+        {
+            if (!other.gameObject.activeInHierarchy) continue;
+            var otherBounds = RectTransformUtility.CalculateRelativeRectTransformBounds(container, other);
+            Assert.That(otherBounds.min.y, Is.GreaterThanOrEqualTo(container.rect.yMin - 1), other.name + " must fit the Controls page.");
+            Assert.That(otherBounds.max.y, Is.LessThanOrEqualTo(container.rect.yMax + 1), other.name + " must fit the Controls page.");
+        }
+        foreach (string name in new[] { "SprintButton", "InventorySelectButton", "InventoryQuickSelectButton" })
+            Assert.That(controls.GetComponentsInChildren<Button>(true).Count(b => b.name == name), Is.EqualTo(1), name);
 
         button.onClick.Invoke();
         yield return null;

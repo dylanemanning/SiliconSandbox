@@ -20,7 +20,9 @@ public class ControlsKeybindsMenu : MonoBehaviour
         ManualWire,
         DeleteWireRun,
         Interact,
-        Sprint
+        Sprint,
+        InventorySelect,
+        InventoryQuickSelect
     }
 
     private Button moveForwardButton;
@@ -37,6 +39,8 @@ public class ControlsKeybindsMenu : MonoBehaviour
     private TMP_Text bindingFeedback;
     private Button interactButton;
     private Button sprintButton;
+    private Button inventorySelectButton;
+    private Button inventoryQuickSelectButton;
     private Button saveButton;
     private Button exitButton;
     private MenuTraversal menuTraversal;
@@ -180,13 +184,22 @@ public class ControlsKeybindsMenu : MonoBehaviour
         if (sprintButton == null) sprintButton = CreateKeyRow("SprintRow", "Sprint", "SprintButton");
         manualWireButton = AddWireRow("ManualWireRow", "Manual wire (click or drag)", "ManualWireButton");
         deleteWireRunButton = AddWireRow("DeleteWireRunRow", "Delete wire run", "DeleteWireRunButton");
-        Button resetWireButton = AddWireRow("ResetWireBindingsRow", "Wire controls", "ResetWireBindingsButton");
+        inventorySelectButton = AddWireRow("InventorySelectRow", "Inventory select (double-click / drag)", "InventorySelectButton");
+        inventoryQuickSelectButton = AddWireRow("InventoryQuickSelectRow", "Inventory quick select", "InventoryQuickSelectButton");
+        Button resetWireButton = AddWireRow("ResetWireBindingsRow", "Wire and inventory controls", "ResetWireBindingsButton");
         foreach (Button bindingButton in new[] { moveForwardButton, moveBackwardButton, moveLeftButton,
             moveRightButton, placeButton, breakButton, pauseButton, jumpButton, downButton, interactButton,
             sprintButton, manualWireButton, deleteWireRunButton, resetWireButton })
             FitRowCaption(bindingButton);
         SetLabel(resetWireButton, "Restore defaults");
-        AddListener(resetWireButton, () => { KeybindSettings.ResetWireBindings(); FinishRebinding(); });
+        AddListener(resetWireButton, () =>
+        {
+            KeybindSettings.ResetWireBindings();
+            KeybindSettings.ResetInventoryBindings();
+            FinishRebinding();
+        });
+        AddListener(inventorySelectButton, () => BeginRebinding(BindingType.InventorySelect));
+        AddListener(inventoryQuickSelectButton, () => BeginRebinding(BindingType.InventoryQuickSelect));
         AddListener(manualWireButton, () => BeginRebinding(BindingType.ManualWire));
         AddListener(deleteWireRunButton, () => BeginRebinding(BindingType.DeleteWireRun));
         CreateBindingFeedback();
@@ -290,6 +303,8 @@ public class ControlsKeybindsMenu : MonoBehaviour
             : "Press a key or mouse button to assign this control.");
         if (bindingType == BindingType.ManualWire) SetLabel(manualWireButton, "Press a binding...");
         if (bindingType == BindingType.DeleteWireRun) SetLabel(deleteWireRunButton, "Press a binding...");
+        if (bindingType == BindingType.InventorySelect) SetLabel(inventorySelectButton, "Press a binding...");
+        if (bindingType == BindingType.InventoryQuickSelect) SetLabel(inventoryQuickSelectButton, "Press a binding...");
     }
 
     private void FinishRebinding()
@@ -314,17 +329,25 @@ public class ControlsKeybindsMenu : MonoBehaviour
         SetLabel(sprintButton, FormatKey(KeybindSettings.Sprint));
         SetLabel(manualWireButton, KeybindSettings.ManualWireBinding.ToString());
         SetLabel(deleteWireRunButton, KeybindSettings.DeleteWireRunBinding.ToString());
+        SetLabel(inventorySelectButton, KeybindSettings.InventorySelectBinding.ToString());
+        SetLabel(inventoryQuickSelectButton, KeybindSettings.InventoryQuickSelectBinding.ToString());
     }
 
-    private bool IsWireRebinding() => rebinding == BindingType.ManualWire || rebinding == BindingType.DeleteWireRun;
+    // Chord bindings: a key or mouse button with held modifiers.
+    private bool IsWireRebinding() => rebinding == BindingType.ManualWire || rebinding == BindingType.DeleteWireRun ||
+        rebinding == BindingType.InventorySelect || rebinding == BindingType.InventoryQuickSelect;
 
     private void CaptureWireBinding(WireMouseChord binding)
     {
         binding.Control = WireMouseChord.ControlHeld;
         binding.Shift = WireMouseChord.ShiftHeld;
         binding.Alt = WireMouseChord.AltHeld;
-        if (KeybindSettings.TrySetWireBinding(rebinding == BindingType.ManualWire, binding, out string error))
-            FinishRebinding();
+        bool inventory = rebinding == BindingType.InventorySelect || rebinding == BindingType.InventoryQuickSelect;
+        string error;
+        bool saved = inventory
+            ? KeybindSettings.TrySetInventoryBinding(rebinding == BindingType.InventoryQuickSelect, binding, out error)
+            : KeybindSettings.TrySetWireBinding(rebinding == BindingType.ManualWire, binding, out error);
+        if (saved) FinishRebinding();
         else ShowBindingFeedback(error);
     }
 

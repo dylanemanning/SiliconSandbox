@@ -76,22 +76,30 @@ public class HotbarManager : MonoBehaviour
         {
             SelectSlot(8);
         }
-        else if (slots != null && slots.Length > 0)
+        else
         {
-            float scroll = KeybindSettings.ReadHotbarScroll();
-
-            if (scroll > 0)
-            {
-                SelectSlot((selectedSlot - 1 + slots.Length) % slots.Length);
-            }
-            else if (scroll < 0)
-            {
-                SelectSlot((selectedSlot + 1) % slots.Length);
-            }
+            ScrollSelection(KeybindSettings.ReadHotbarScroll());
         }
     }
 
-    private void SelectSlot(int index)
+    /// <summary>Moves the selection one slot per scroll event: up selects the previous slot.</summary>
+    public void ScrollSelection(float scroll)
+    {
+        if (slots == null || slots.Length == 0 || scroll == 0) return;
+        SelectSlot(scroll > 0
+            ? (selectedSlot - 1 + slots.Length) % slots.Length
+            : (selectedSlot + 1) % slots.Length);
+    }
+
+    /// <summary>The leftmost slot without an item, or -1 when every slot is filled.</summary>
+    public int FirstEmptySlot()
+    {
+        for (int i = 0; i < SlotCount; i++)
+            if (GetSlot(i) != null && GetSlot(i).Item == null && GetSlot(i).BlockPrefab == null) return i;
+        return -1;
+    }
+
+    public void SelectSlot(int index)
     {
         if (slots == null || index < 0 || index >= slots.Length)
             return;

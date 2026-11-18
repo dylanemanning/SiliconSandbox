@@ -48,8 +48,9 @@ public class HotbarPresentationTests : InputTestFixture
         var inventoryRow = inventory.GetComponentInChildren<GridLayoutGroup>(true);
         Assert.That(hotbar.SlotCount, Is.EqualTo(9));
         Assert.That(Object.FindObjectsByType<HotbarSlot>(FindObjectsSortMode.None).Length, Is.EqualTo(9), "Remove legacy duplicate slot components.");
-        Assert.That(row.cellSize, Is.EqualTo(inventoryRow.cellSize));
-        Assert.That(row.spacing, Is.EqualTo(inventoryRow.spacing));
+        // The inventory grid is resized to fill 80% of the screen; both keep square cells with 10% gaps.
+        Assert.That(row.cellSize.x, Is.EqualTo(row.cellSize.y));
+        Assert.That(row.spacing.x, Is.EqualTo(row.cellSize.x * .1f).Within(.001f));
         Assert.That(row.constraintCount, Is.EqualTo(9));
         var panel = row.transform.parent.GetComponent<Image>();
         Assert.That(panel.color, Is.EqualTo(inventoryRow.transform.parent.GetComponent<Image>().color));

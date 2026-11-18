@@ -35,7 +35,9 @@ public class InventoryCatalogDisplayTests
             Assert.That(slots[i].Image.raycastTarget,Is.False);
         }
         var grid=inventory.GetComponentInChildren<GridLayoutGroup>();
-        Assert.That(grid.cellSize,Is.EqualTo(Vector2.one*80));Assert.That(grid.spacing,Is.EqualTo(Vector2.one*8));
+        // Cells scale with the 80%-of-screen panel but stay square with 10% gaps.
+        Assert.That(grid.cellSize.x,Is.EqualTo(grid.cellSize.y));Assert.That(grid.cellSize.x,Is.GreaterThanOrEqualTo(80));
+        Assert.That(grid.spacing.x,Is.EqualTo(grid.cellSize.x*.1f).Within(.001f));
         Assert.That(Object.FindObjectsByType<Camera>(FindObjectsSortMode.None).Length,Is.EqualTo(1),"Icons must not instantiate preview cameras in the game.");
         slots[0].SetItem(null);inventory.RefreshImages();
         Assert.That(slots[0].Item.Id,Is.EqualTo(inventory.Catalog.Items[0].Id));

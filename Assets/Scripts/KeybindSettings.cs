@@ -73,6 +73,49 @@ public static class KeybindSettings
     public static bool InteractPressedThisFrame() => InteractBinding.Key == Key.None
         ? WasMouseButtonPressedThisFrame(InteractBinding.MouseButton) : WasPressedThisFrame(InteractBinding.Key);
     public static bool CrouchHeld => IsPressed(FlyDown);
+
+    public const string InventorySelectPreference = "Keybind.InventorySelect";
+    public const string InventoryQuickSelectPreference = "Keybind.InventoryQuickSelect";
+    /// <summary>In the inventory: double-click puts an item in the selected hotbar slot; hold to drag it.</summary>
+    public static WireMouseChord InventorySelectBinding => LoadBinding(InventorySelectPreference, DefaultInventorySelect, IsValidInventoryBinding);
+    /// <summary>In the inventory: puts an item in the leftmost empty hotbar slot (slot 9 when full).</summary>
+    public static WireMouseChord InventoryQuickSelectBinding => LoadBinding(InventoryQuickSelectPreference, DefaultInventoryQuickSelect, IsValidInventoryBinding);
+    public static WireMouseChord DefaultInventorySelect => new WireMouseChord { MouseButton = 0 };
+    public static WireMouseChord DefaultInventoryQuickSelect => new WireMouseChord { MouseButton = 0, Shift = true };
+
+    private static bool IsValidInventoryBinding(WireMouseChord binding)
+    {
+        if (!Enum.IsDefined(typeof(Key), binding.Key) || IsModifier(binding.Key)) return false;
+        if (binding.Key == Key.None) return binding.MouseButton >= 0 && binding.MouseButton <= 2;
+        Key key = binding.Key;
+        // The inventory already uses E / Escape to close and 1-9 to assign.
+        return key != Key.Escape && key != Key.E && key != Pause && !(key >= Key.Digit1 && key <= Key.Digit9);
+    }
+
+    public static bool TrySetInventoryBinding(bool quickSelect, WireMouseChord binding, out string error)
+    {
+        if (!IsValidInventoryBinding(binding))
+        {
+            error = "That control is reserved in the inventory. Choose another key or mouse button.";
+            return false;
+        }
+        if (binding.Equals(quickSelect ? InventorySelectBinding : InventoryQuickSelectBinding))
+        {
+            error = "Select and Quick select need different bindings.";
+            return false;
+        }
+        PlayerPrefs.SetString(quickSelect ? InventoryQuickSelectPreference : InventorySelectPreference, JsonUtility.ToJson(binding));
+        PlayerPrefs.Save();
+        error = null;
+        return true;
+    }
+
+    public static void ResetInventoryBindings()
+    {
+        PlayerPrefs.DeleteKey(InventorySelectPreference);
+        PlayerPrefs.DeleteKey(InventoryQuickSelectPreference);
+        PlayerPrefs.Save();
+    }
     public static int PlaceMouseButton => PlayerPrefs.GetInt(PlaceMouseButtonKey, 1);
     public static int BreakMouseButton => PlayerPrefs.GetInt(BreakMouseButtonKey, 0);
     public static WireMouseChord ManualWireBinding => LoadWireBinding(ManualWirePreference, DefaultManualWire);

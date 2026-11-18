@@ -193,4 +193,117 @@ public class InventorySelectionTests : InputTestFixture
         Object.Destroy(target);
         LogAssert.NoUnexpectedReceived();
     }
+
+    private IEnumerator Click(UnityEngine.InputSystem.Controls.ButtonControl button)
+    {
+        // Input events apply on the next frame; LateUpdate then reacts before the following one.
+        Press(button); yield return null; yield return null;
+        Release(button); yield return null; yield return null;
+    }
+
+    private static Vector2 ScreenCenter(Component component)
+    {
+        var rect = (RectTransform)component.transform;
+        return rect.TransformPoint(rect.rect.center);
+    }
+
+    [UnityTest]
+    public IEnumerator InventoryCoversEightyPercentOfTheScreenAboveTheVisibleHotbar()
+    {
+        yield return LoadGameplay();
+        yield return null;
+        Canvas.ForceUpdateCanvases();
+        var corners = new Vector3[4];
+        inventory.PanelRect.GetWorldCorners(corners);
+        Assert.That((corners[2].x - corners[0].x) / Screen.width, Is.EqualTo(.8f).Within(.02f));
+        Assert.That((corners[2].y - corners[0].y) / Screen.height, Is.EqualTo(.8f).Within(.02f));
+        var hotbarCorners = new Vector3[4];
+        ((RectTransform)hotbar.GetSlot(0).transform).GetWorldCorners(hotbarCorners);
+        Assert.That(corners[0].y, Is.GreaterThanOrEqualTo(hotbarCorners[1].y), "The hotbar stays uncovered for drag and drop.");
+        Assert.That(hotbar.GetComponentInParent<Canvas>().sortingOrder,
+            Is.GreaterThan(inventory.GetComponentInParent<Canvas>().sortingOrder));
+        var grid = inventory.GetComponentInChildren<UnityEngine.UI.GridLayoutGroup>();
+        Assert.That(grid.cellSize.x, Is.EqualTo(grid.cellSize.y));
+        Assert.That(grid.spacing.x, Is.EqualTo(grid.cellSize.x * .1f).Within(.001f));
+        var gridCorners = new Vector3[4];
+        ((RectTransform)grid.transform).GetWorldCorners(gridCorners);
+        Assert.That(gridCorners[0].x, Is.GreaterThanOrEqualTo(corners[0].x));
+        Assert.That(gridCorners[2].x, Is.LessThanOrEqualTo(corners[2].x));
+        Assert.That(gridCorners[0].y, Is.GreaterThanOrEqualTo(corners[0].y));
+        Assert.That(gridCorners[2].y, Is.LessThanOrEqualTo(corners[2].y));
+        inventory.SetOpen(false);
+        Assert.That(hotbar.GetComponentInParent<Canvas>().sortingOrder, Is.EqualTo(10));
+    }
+
+    [UnityTest]
+    public IEnumerator ScrollSelectsAHotbarSlotAndDoubleClickFillsIt()
+    {
+        yield return LoadGameplay();
+        Assert.That(hotbar.SelectedSlotIndex, Is.Zero);
+        for (int i = 0; i < 4; i++)
+        {
+            Set(mouse.scroll, new Vector2(0, -120)); yield return null;
+            Set(mouse.scroll, Vector2.zero); yield return null;
+        }
+        Assert.That(hotbar.SelectedSlotIndex, Is.EqualTo(4), "Scrolling in the inventory moves the hotbar selection.");
+        Set(mouse.scroll, new Vector2(0, 120)); yield return null;
+        Set(mouse.scroll, Vector2.zero); yield return null;
+        Assert.That(hotbar.SelectedSlotIndex, Is.EqualTo(3));
+
+        yield return Hover(entries[7]);
+        yield return Click(mouse.leftButton);
+        Assert.That(hotbar.GetSlot(3).Item.Id, Is.Not.EqualTo("xnor"), "A single click does not assign.");
+        yield return Click(mouse.leftButton);
+        Assert.That(hotbar.GetSlot(3).Item.Id, Is.EqualTo("xnor"));
+        Assert.That(InventoryGrid.IsOpen, Is.True);
+        LogAssert.NoUnexpectedReceived();
+    }
+
+    [UnityTest]
+    public IEnumerator ShiftClickFillsTheFirstEmptySlotOrReplacesSlotNine()
+    {
+        yield return LoadGameplay();
+        hotbar.GetSlot(2).SetItem(null);
+        hotbar.GetSlot(5).SetItem(null);
+        yield return Hover(entries[7]);
+        Press(keyboard.leftShiftKey); yield return null;
+        yield return Click(mouse.leftButton);
+        Assert.That(hotbar.GetSlot(2).Item.Id, Is.EqualTo("xnor"));
+        Assert.That(hotbar.GetSlot(5).Item, Is.Null);
+        yield return Click(mouse.leftButton);
+        Assert.That(hotbar.GetSlot(5).Item.Id, Is.EqualTo("xnor"));
+        yield return Hover(entries[9]);
+        yield return Click(mouse.leftButton);
+        Assert.That(hotbar.GetSlot(8).Item.Id, Is.EqualTo("clock"), "A full hotbar replaces slot 9.");
+        Release(keyboard.leftShiftKey); yield return null;
+        LogAssert.NoUnexpectedReceived();
+    }
+
+    [UnityTest]
+    public IEnumerator HoldingSelectDragsAnItemOntoAnyHotbarSlot()
+    {
+        yield return LoadGameplay();
+        var before = hotbar.GetSlot(6).Item.Id;
+        yield return Hover(entries[7]);
+        Press(mouse.leftButton); yield return null;
+        yield return new WaitForSecondsRealtime(.3f);
+        yield return null;
+        Assert.That(inventory.IsDragging, Is.True);
+        Set(mouse.position, ScreenCenter(hotbar.GetSlot(6))); yield return null; yield return null;
+        Assert.That(inventory.HotbarSlotAt(ScreenCenter(hotbar.GetSlot(6))), Is.EqualTo(6));
+        Release(mouse.leftButton); yield return null; yield return null;
+        Assert.That(inventory.IsDragging, Is.False);
+        Assert.That(hotbar.GetSlot(6).Item.Id, Is.EqualTo("xnor"));
+        Assert.That(before, Is.Not.EqualTo("xnor"));
+
+        // Dropping away from the hotbar changes nothing.
+        yield return Hover(entries[9]);
+        Press(mouse.leftButton); yield return null;
+        yield return new WaitForSecondsRealtime(.3f);
+        yield return null;
+        Set(mouse.position, ScreenCenter(inventory.PanelRect)); yield return null; yield return null;
+        Release(mouse.leftButton); yield return null; yield return null;
+        Assert.That(Enumerable.Range(0, 9).Count(i => hotbar.GetSlot(i).Item?.Id == "clock"), Is.EqualTo(1));
+        LogAssert.NoUnexpectedReceived();
+    }
 }
