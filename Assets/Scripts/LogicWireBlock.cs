@@ -28,7 +28,18 @@ public class LogicWireBlock : LogicSignalBlock
     [Tooltip("Child objects for +X, -X, +Y, -Y, +Z, -Z branches.")]
     [SerializeField] private GameObject[] directionVisuals = new GameObject[6];
 
+    [Header("Hit shape")]
+    [Tooltip("Thickness of the wire's selectable shape. Only the visible wire is solid, " +
+             "so blocks behind a wall of wires can be targeted through its gaps.")]
+    [SerializeField, Range(.05f, 1f)] private float hitThickness = .3f;
+
     private readonly LineRenderer[] connectionLines = new LineRenderer[6];
+    private readonly BoxCollider[] armColliders = new BoxCollider[6];
+    private static readonly Vector3Int[] ArmDirections =
+    {
+        Vector3Int.right, Vector3Int.left, Vector3Int.up,
+        Vector3Int.down, new Vector3Int(0, 0, 1), new Vector3Int(0, 0, -1)
+    };
     private int signalState;
     private bool isError;
     private int connectionMask;
@@ -58,6 +69,7 @@ public class LogicWireBlock : LogicSignalBlock
         endpointMask = mask & 0x3f;
         hasCustomEndpointMask = true;
         ApplyEndpointVisuals(endpointMask);
+        UpdateHitShape();
         if (EndpointMask != previous) MarkCircuitChanged();
     }
 
@@ -116,6 +128,54 @@ public class LogicWireBlock : LogicSignalBlock
         ResolveRenderer();
         EnsureConnectionLines();
         ApplyVisualState();
+        UpdateHitShape();
+    }
+
+    /// <summary>
+    /// Shrinks the root collider to the wire's core and gives each visible arm its
+    /// own thin collider, so raycasts hit only the wire itself. The root collider
+    /// keeps a fixed size, so placement checks and world snapshots are unchanged.
+    /// </summary>
+    public void UpdateHitShape()
+    {
+        var core = GetComponent<BoxCollider>();
+        if (core == null) return;
+        Vector3 scale = transform.lossyScale;
+        Vector3 inverse = new Vector3(1f / Mathf.Max(.0001f, Mathf.Abs(scale.x)),
+            1f / Mathf.Max(.0001f, Mathf.Abs(scale.y)), 1f / Mathf.Max(.0001f, Mathf.Abs(scale.z)));
+        core.center = Vector3.zero;
+        core.size = Vector3.Scale(Vector3.one * hitThickness, inverse);
+
+        int mask = EndpointMask;
+        float armLength = .5f - hitThickness * .5f;
+        for (int index = 0; index < 6; index++)
+        {
+            bool active = (mask & (1 << index)) != 0;
+            if (armColliders[index] == null)
+            {
+                if (!active) continue;
+                var arm = new GameObject($"Wire hit arm {index}");
+                arm.layer = gameObject.layer;
+                arm.transform.SetParent(transform, false);
+                armColliders[index] = arm.AddComponent<BoxCollider>();
+            }
+            var collider = armColliders[index];
+            collider.gameObject.SetActive(active);
+            if (!active) continue;
+            // World-aligned arm from the core to the cell face.
+            Vector3 direction = ArmDirections[index];
+            collider.transform.position = transform.position + direction * (hitThickness * .5f + armLength * .5f);
+            collider.transform.rotation = Quaternion.identity;
+            Vector3 worldSize = new Vector3(
+                direction.x != 0 ? armLength : hitThickness,
+                direction.y != 0 ? armLength : hitThickness,
+                direction.z != 0 ? armLength : hitThickness);
+            Vector3 armScale = collider.transform.lossyScale;
+            collider.center = Vector3.zero;
+            collider.size = new Vector3(worldSize.x / Mathf.Max(.0001f, Mathf.Abs(armScale.x)),
+                worldSize.y / Mathf.Max(.0001f, Mathf.Abs(armScale.y)),
+                worldSize.z / Mathf.Max(.0001f, Mathf.Abs(armScale.z)));
+        }
     }
 
     protected override void Update()

@@ -202,6 +202,7 @@ public class ControlsKeybindsMenu : MonoBehaviour
         AddListener(inventoryQuickSelectButton, () => BeginRebinding(BindingType.InventoryQuickSelect));
         AddListener(manualWireButton, () => BeginRebinding(BindingType.ManualWire));
         AddListener(deleteWireRunButton, () => BeginRebinding(BindingType.DeleteWireRun));
+        CompactRows();
         CreateBindingFeedback();
         saveButton = FindButton("SaveButton");
         exitButton = FindButton("ExitButton");
@@ -239,6 +240,17 @@ public class ControlsKeybindsMenu : MonoBehaviour
             if (!label.transform.IsChildOf(button.transform)) label.text = "Interact";
         }
         return button;
+    }
+
+    // The row container has a fixed height; tighten its spacing so every row keeps a
+    // usable height after the runtime rows (Interact, Sprint, wire and inventory) are added.
+    private void CompactRows()
+    {
+        if (downButton == null) return;
+        var layout = downButton.transform.parent.parent.GetComponent<VerticalLayoutGroup>();
+        if (layout == null) return;
+        int rows = layout.transform.childCount;
+        if (rows > 13) layout.spacing = Mathf.Min(layout.spacing, 3f);
     }
 
     private Button CreateKeyRow(string rowName, string caption, string buttonName)

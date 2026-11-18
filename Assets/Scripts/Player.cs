@@ -314,7 +314,8 @@ public partial class Player : MonoBehaviour
         Ray ray = cameraSettings.camera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
         
         // Check if the ray hits a block within reach distance
-        if (Physics.Raycast(ray, out targetRaycastHit, reachDistance)) 
+        // Ignore triggers such as the player's own jump trigger at its feet.
+        if (Physics.Raycast(ray, out targetRaycastHit, reachDistance, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore)) 
         {
             targetBlock = targetRaycastHit.collider.GetComponentInParent<Block>(); // Try to get the Block component from the hit object
 
@@ -323,10 +324,21 @@ public partial class Player : MonoBehaviour
                 if (blockHighlighter != null)
                 {
                     blockHighlighter.SetActive(true);
-                    var collider = targetBlock.GetComponent<Collider>();
-                    blockHighlighter.transform.position = collider.bounds.center;
-                    blockHighlighter.transform.rotation = targetBlock.transform.rotation;
-                    blockHighlighter.transform.localScale = (Vector3)targetBlock.footprint * 1.02f;
+                    if (targetBlock.isGround)
+                    {
+                        // The floor is one large block: outline the grid cell under the crosshair.
+                        Vector3 normal = SnapToCardinalAxis(targetRaycastHit.normal);
+                        blockHighlighter.transform.position = Vector3Int.RoundToInt(targetRaycastHit.point - normal * .5f);
+                        blockHighlighter.transform.rotation = Quaternion.identity;
+                        blockHighlighter.transform.localScale = Vector3.one * 1.02f;
+                    }
+                    else
+                    {
+                        var collider = targetBlock.GetComponent<Collider>();
+                        blockHighlighter.transform.position = collider.bounds.center;
+                        blockHighlighter.transform.rotation = targetBlock.transform.rotation;
+                        blockHighlighter.transform.localScale = (Vector3)targetBlock.footprint * 1.02f;
+                    }
                 }
             }
             else if (blockHighlighter != null) blockHighlighter.SetActive(false);
@@ -414,6 +426,8 @@ public partial class Player : MonoBehaviour
                 currentScale.y * Mathf.Max(1, placedBlock.GetFootprintSize().y),
                 currentScale.z * Mathf.Max(1, placedBlock.GetFootprintSize().z));
         }
+        // A wire end already pointing at one of the new block's pins joins it.
+        WireTopology.ConnectFacingDeadEnds(placedBlockObject.GetComponent<LogicSignalBlock>());
         WorldSaveSystem.Instance?.MarkDirty();
     }
 

@@ -75,7 +75,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LogicWireBlock
   targetRenderer: {fileID: 0}
-  unpoweredMaterial: {fileID: 2100000, guid: 3858a1dce2b23404f96f5a685e80da8c, type: 2}
+  unpoweredMaterial: {fileID: 2100000, guid: 81678c458f3741efbe41b2903f4f4bdc, type: 2}
   poweredMaterial: {fileID: 2100000, guid: 24f092a81ff974c1baec89fbd1293cc0, type: 2}
   erroredMaterial: {fileID: 2100000, guid: 7f211796a0624aa46b7492a28c1dfc45, type: 2}
   directionVisuals: []
@@ -123,7 +123,7 @@ MonoBehaviour:
   - {fileID: 7462257871711052080}
   - {fileID: 287527956832682410}
   - {fileID: 8021249236383112228}
-  lowMaterial: {fileID: 2100000, guid: 3858a1dce2b23404f96f5a685e80da8c, type: 2}
+  lowMaterial: {fileID: 2100000, guid: 81678c458f3741efbe41b2903f4f4bdc, type: 2}
   highMaterial: {fileID: 2100000, guid: 24f092a81ff974c1baec89fbd1293cc0, type: 2}
 --- !u!1001 &548697685871219737
 PrefabInstance:
