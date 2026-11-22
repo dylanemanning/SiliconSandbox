@@ -126,8 +126,6 @@ public sealed class WireWorldSnapshot
         var request = new WireRouteRequest
         {
             Blocked = blocked, Start = start.Cell, Target = end.Cell, Min = min, Max = max,
-            StartDirection = start.IsPin && start.Wire == null ? start.Outward : Vector3Int.zero,
-            TargetDirection = end.IsPin && end.Wire == null ? -end.Outward : Vector3Int.zero,
             PreferTarget = end.IsInput || !start.IsInput,
             MaxPathLength = 512
         };
@@ -190,10 +188,6 @@ public static class WireRouteCommit
                 i > 0 && LogicWireBlock.GetDirectionBit(cell - path[i - 1]) == 0)
             { error = "The complete wire run is obstructed."; return false; }
         }
-        if (path.Count > 1 && manualAxis == Vector3Int.zero &&
-            (snapshot.Request.StartDirection != Vector3Int.zero && path[1] - path[0] != snapshot.Request.StartDirection ||
-             snapshot.Request.TargetDirection != Vector3Int.zero && path[path.Count - 1] - path[path.Count - 2] != snapshot.Request.TargetDirection))
-        { error = "Wire must enter pins along their axis."; return false; }
         if (path.Count == 1 && start.Wire != null && end.Wire == start.Wire && !start.IsPin && !end.IsPin)
         { error = "Choose a different wire endpoint."; return false; }
         var created = new List<GameObject>();

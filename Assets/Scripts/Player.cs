@@ -28,6 +28,12 @@ public partial class Player : MonoBehaviour
     private float lastSpacePressTime = 0f;
     private bool waitingForSecondSpacePress = false;
     private bool isFlying = false;
+    private bool useGravityBeforeFlight = true;
+    private bool spawnSafetyWarningLogged;
+    private readonly Collider[] spawnOverlapBuffer = new Collider[32];
+
+    private const int MaxSpawnSearchSteps = 32;
+    private const float SpawnSearchStep = 0.5f;
 
     Block targetBlock;
     Block breakingBlock;
@@ -41,8 +47,13 @@ public partial class Player : MonoBehaviour
             packagingWandController = gameObject.AddComponent<PackagingWandController>();
         rb = GetComponent<Rigidbody>();
         rb.freezeRotation = true; // Crucial for player controllers
+        useGravityBeforeFlight = rb.useGravity;
         spawnPosition = transform.position;
         spawnRotation = transform.rotation;
+        if (TryFindSafeSpawnPosition(spawnPosition, out Vector3 safePosition))
+        {
+            rb.position = safePosition;
+        }
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
     }
@@ -50,6 +61,7 @@ public partial class Player : MonoBehaviour
     private void OnDisable()
     {
         CancelWireRoute();
+        ResetFlightForDisable();
     }
 
     void Update()
@@ -58,6 +70,7 @@ public partial class Player : MonoBehaviour
         bool cancelled = ConsumeWireCancelThisFrame();
         if (PauseManager.IsPaused || InventoryGrid.IsOpen || InventoryGrid.ClosedThisFrame || PackagingWandController.IsConfirmationOpen)
         {
+            waitingForSecondSpacePress = false;
             CancelWireRoute();
             return;
         }
@@ -88,6 +101,7 @@ public partial class Player : MonoBehaviour
         {
             CancelWireRoute();
 
+            waitingForSecondSpacePress = false;
             if (blockHighlighter != null) blockHighlighter.SetActive(false);
             breakSeconds = 0f;
             breakingBlock = null;
@@ -114,14 +128,37 @@ public partial class Player : MonoBehaviour
         bool toggledSource = !cancelled && !wireConsumed && TryToggleSource();
         if (!cancelled && !wireConsumed && !toggledSource &&
             KeybindSettings.WasMouseButtonPressedThisFrame(KeybindSettings.PlaceMouseButton)) TryPlaceBlock();
+
+        if (KeybindSettings.WasPressedThisFrame(KeybindSettings.Jump))
+        {
+            if (waitingForSecondSpacePress && Time.unscaledTime - lastSpacePressTime <= doublePressTime)
+            {
+                ToggleFlight();
+                waitingForSecondSpacePress = false;
+            }
+            else
+            {
+                lastSpacePressTime = Time.unscaledTime;
+                waitingForSecondSpacePress = true;
+            }
+        }
     }
 
     void CheckFall()
     {
         if (transform.position.y >= fallThreshold) return;
 
-        Vector3 safePosition = respawnPoint ? respawnPoint.position : spawnPosition;
+        Vector3 requestedPosition = respawnPoint ? respawnPoint.position : spawnPosition;
         Quaternion safeRotation = respawnPoint ? respawnPoint.rotation : spawnRotation;
+        if (!TryFindSafeSpawnPosition(requestedPosition, out Vector3 safePosition))
+        {
+            if (!spawnSafetyWarningLogged)
+            {
+                Debug.LogError("No safe player respawn position was found near the spawn point.", this);
+                spawnSafetyWarningLogged = true;
+            }
+            return;
+        }
 
         rb.position = safePosition;
         rb.rotation = safeRotation;
@@ -133,6 +170,101 @@ public partial class Player : MonoBehaviour
         breakSeconds = 0;
     }
 
+    private bool TryFindSafeSpawnPosition(Vector3 requestedPosition, out Vector3 safePosition)
+    {
+        Physics.SyncTransforms();
+        for (int shell = 0; shell <= MaxSpawnSearchSteps; shell++)
+        {
+            float bestDistanceSquared = float.PositiveInfinity;
+            Vector3 bestPosition = requestedPosition;
+            for (int x = -shell; x <= shell; x++)
+            for (int y = -shell; y <= shell; y++)
+            for (int z = -shell; z <= shell; z++)
+            {
+                if (Mathf.Max(Mathf.Abs(x), Mathf.Abs(y), Mathf.Abs(z)) != shell) continue;
+
+                Vector3 candidate = requestedPosition + new Vector3(x, y, z) * SpawnSearchStep;
+                float distanceSquared = (candidate - requestedPosition).sqrMagnitude;
+                if (distanceSquared >= bestDistanceSquared || !IsSpawnPositionClear(candidate)) continue;
+
+                bestDistanceSquared = distanceSquared;
+                bestPosition = candidate;
+            }
+
+            float nextShellDistance = (shell + 1) * SpawnSearchStep;
+            if (!float.IsPositiveInfinity(bestDistanceSquared) &&
+                bestDistanceSquared < nextShellDistance * nextShellDistance)
+            {
+                safePosition = bestPosition;
+                spawnSafetyWarningLogged = false;
+                return true;
+            }
+        }
+
+        safePosition = requestedPosition;
+        return false;
+    }
+
+    private bool IsSpawnPositionClear(Vector3 candidatePosition)
+    {
+        CapsuleCollider capsule = GetComponent<CapsuleCollider>();
+        int overlapCount;
+        if (capsule != null)
+        {
+            Vector3 scale = transform.lossyScale;
+            int axisIndex = capsule.direction;
+            Vector3 axis = axisIndex == 0 ? transform.right
+                : axisIndex == 1 ? transform.up
+                : transform.forward;
+            float axisScale = Mathf.Abs(scale[axisIndex]);
+            float radiusScale = axisIndex == 0
+                ? Mathf.Max(Mathf.Abs(scale.y), Mathf.Abs(scale.z))
+                : axisIndex == 1
+                    ? Mathf.Max(Mathf.Abs(scale.x), Mathf.Abs(scale.z))
+                    : Mathf.Max(Mathf.Abs(scale.x), Mathf.Abs(scale.y));
+            float radius = Mathf.Max(0.01f, capsule.radius * radiusScale - 0.02f);
+            float height = Mathf.Max(capsule.height * axisScale, radius * 2f);
+            Vector3 centerOffset = transform.rotation * Vector3.Scale(capsule.center, scale);
+            Vector3 center = candidatePosition + centerOffset;
+            float halfSegment = Mathf.Max(0f, height * 0.5f - radius);
+            overlapCount = Physics.OverlapCapsuleNonAlloc(
+                center + axis * halfSegment,
+                center - axis * halfSegment,
+                radius,
+                spawnOverlapBuffer,
+                Physics.AllLayers,
+                QueryTriggerInteraction.Ignore);
+        }
+        else
+        {
+            Collider playerCollider = GetComponent<Collider>();
+            if (playerCollider == null) return true;
+
+            Bounds bounds = playerCollider.bounds;
+            Vector3 center = bounds.center + candidatePosition - transform.position;
+            Vector3 extents = Vector3.Max(Vector3.one * 0.01f, bounds.extents - Vector3.one * 0.02f);
+            overlapCount = Physics.OverlapBoxNonAlloc(
+                center,
+                extents,
+                spawnOverlapBuffer,
+                Quaternion.identity,
+                Physics.AllLayers,
+                QueryTriggerInteraction.Ignore);
+        }
+
+        if (overlapCount == spawnOverlapBuffer.Length) return false;
+
+        for (int index = 0; index < overlapCount; index++)
+        {
+            Collider other = spawnOverlapBuffer[index];
+            if (other == null || other.attachedRigidbody == rb ||
+                other.transform == transform || other.transform.IsChildOf(transform)) continue;
+            return false;
+        }
+
+        return true;
+    }
+
     void CheckRotation()
     {
         if (cameraSettings.camera == null) return;
@@ -141,8 +273,9 @@ public partial class Player : MonoBehaviour
         if (mouse == null) return;
 
         Vector2 mouseDelta = mouse.delta.ReadValue();
-        float mouseX = mouseDelta.x * Time.deltaTime * cameraSettings.sensitivityX;
-        float mouseY = mouseDelta.y * Time.deltaTime * cameraSettings.sensitivityY;
+        float sensitivity = AccessibilitySettings.MouseSensitivityMultiplier;
+        float mouseX = mouseDelta.x * Time.deltaTime * cameraSettings.sensitivityX * sensitivity;
+        float mouseY = mouseDelta.y * Time.deltaTime * cameraSettings.sensitivityY * sensitivity;
 
         yRotation += mouseX;
         xRotation -= mouseY;
@@ -337,13 +470,22 @@ public partial class Player : MonoBehaviour
         rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
         if(!isFlying)
         {
-            Physics.gravity = new Vector3(0f, 0f, 0f);
             isFlying = true;
+            rb.useGravity = false;
         } else
         {
-            Physics.gravity = new Vector3(0f, -9.81f, 0f);
             isFlying = false;
+            rb.useGravity = useGravityBeforeFlight;
         }
+    }
+
+    private void ResetFlightForDisable()
+    {
+        waitingForSecondSpacePress = false;
+        if (!isFlying) return;
+
+        isFlying = false;
+        if (rb != null) rb.useGravity = useGravityBeforeFlight;
     }
 
     private void OnTriggerStay(Collider other) => isGrounded = true;

@@ -11,6 +11,8 @@ Gray Dufilho
 
 Windows and macOS are both required for gameplay and development in Unity 6000.3.8f1. Changes must preserve both platforms. Circuit simulation uses the same C++ engine through platform-specific plugins: Windows x86_64 and universal macOS (Apple Silicon and Intel). See [native plugin build and verification instructions](native/SiliconPlugin/README.md).
 
+In gameplay, double-tap the Jump key to toggle flight. Use Jump to rise and the configured Fly Down key to descend.
+
 ## Documentation
 
 - [Explanation](doc/explanation.md): architecture, design decisions, and tradeoffs
