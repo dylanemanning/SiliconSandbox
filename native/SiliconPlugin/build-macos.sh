@@ -13,6 +13,9 @@ xcrun clang++ -std=c++17 -O2 -Wall -Wextra -fvisibility=hidden \
   -Wl,-install_name,@rpath/libSiliconPlugin.dylib \
   -Wl,-exported_symbol,_Silicon_EvaluateGate \
   -Wl,-exported_symbol,_Silicon_EvaluateCircuit \
+  -Wl,-exported_symbol,_Silicon_LoadCircuit \
+  -Wl,-exported_symbol,_Silicon_Tick \
+  -Wl,-exported_symbol,_Silicon_UnloadCircuit \
   "$script_dir/src/plugin.cpp" "$script_dir/src/gates.cpp" \
   "$script_dir/src/netlist.cpp" "$script_dir/src/simulator.cpp" \
   -o "$build_dir/libSiliconPlugin.dylib"

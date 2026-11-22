@@ -9,8 +9,10 @@
 //
 // Exports:
 //   Silicon_EvaluateGate     one gate (#7)
-//   Silicon_EvaluateCircuit  a whole netlist in one pass (#12, stateless demo
-//                            version; #10 splits it into load + tick)
+//   Silicon_EvaluateCircuit  a whole netlist in one zero-delay pass (#12)
+//   Silicon_LoadCircuit      parse a netlist and keep it for ticking (#10)
+//   Silicon_Tick             advance the loaded circuit by one unit-delay tick (#10)
+//   Silicon_UnloadCircuit    free the loaded circuit (#10)
 //
 // Rules for anything added to this file:
 //   - extern "C" only. C++ name mangling is compiler-specific; DllImport
@@ -21,8 +23,12 @@
 //     allowed to escape.
 //   - Memory crossing the boundary is allocated and owned by the caller (here,
 //     Unity's marshaler owns the inputs array).
-//   - Nothing is kept between calls. Each export builds what it needs on the
-//     stack and frees it before returning.
+//   - The only state kept between calls is the one loaded circuit (#10): its
+//     parsed graph and a scratch buffer, both owned by this file. The circuit's
+//     signal values are NOT kept here; they live in the caller's states array,
+//     so the caller can save, reset or inspect them without asking the DLL.
+//   - Main thread only. Unity calls these from the SimulationDriver on the main
+//     thread; nothing here is locked.
 //
 // Build the DLL from native/SiliconPlugin/:
 //     g++ -shared -O2 -static -s -o SiliconPlugin.dll src/plugin.cpp src/gates.cpp src/netlist.cpp src/simulator.cpp
@@ -42,6 +48,7 @@
 #include "simulator.h"
 
 #include <new>
+#include <vector>
 
 // Export decoration. MinGW and MSVC use __declspec; the GCC/Clang attribute is
 // here so a future macOS or Linux player build exports correctly without this
@@ -51,6 +58,30 @@
 #else
     #define SILICON_API __attribute__((visibility("default")))
 #endif
+
+namespace {
+
+// The circuit Silicon_LoadCircuit parsed, ticked by Silicon_Tick.
+//
+// One slot is enough: the game simulates one world at a time. Loading again
+// replaces it. Note the Unity editor keeps native plugins loaded between play
+// sessions, so this outlives a play session unless the SimulationDriver calls
+// Silicon_UnloadCircuit when it is destroyed.
+struct LoadedCircuit {
+    silicon::CircuitGraph graph;
+    std::vector<int> next;  // TickCircuit's scratch buffer, one int per node
+    bool loaded = false;
+
+    void Reset() {
+        loaded = false;
+        graph.Clear();
+        next.clear();
+    }
+};
+
+LoadedCircuit g_circuit;
+
+}  // namespace
 
 extern "C" {
 
@@ -141,6 +172,101 @@ SILICON_API int Silicon_EvaluateCircuit(const silicon::NetlistNode* nodes, int n
     } catch (...) {
         return silicon::SIM_ERR_INTERNAL;
     }
+}
+
+// Parse a netlist and keep it as the circuit Silicon_Tick advances (#10).
+//
+// Call this whenever the circuit's structure changes: a block placed, broken
+// or rotated. NOT when a source is toggled; a source's value is just written
+// into the states array before the next Silicon_Tick.
+//
+// Takes the same nodes and connections as Silicon_EvaluateCircuit. Replaces
+// whatever was loaded before. Does not touch any states array: the caller
+// decides what the new circuit starts at (all 0 is power-on; carrying values
+// over from the old circuit keeps latches holding across an edit).
+//
+// Returns:
+//    0  SIM_OK
+//    1  SIM_HAS_CYCLE — loaded; the circuit has a feedback loop. Informational
+//       only: loops are what latches and oscillators are made of, and the
+//       unit-delay tick handles them
+//   -10..-18  a NetlistStatus from the parser; nothing is loaded afterwards
+//   -18 (NETLIST_ERR_OUT_OF_MEMORY) or -22 (SIM_ERR_INTERNAL) on an exception;
+//       nothing is loaded afterwards
+//
+// Matching C# declaration (keep in sync — Assets/Scripts/LogicEngine/LogicEngine.cs):
+//
+//     [DllImport("SiliconPlugin", EntryPoint = "Silicon_LoadCircuit")]
+//     private static extern int Silicon_LoadCircuit(
+//         NetlistNode[] nodes, int nodeCount,
+//         NetlistConnection[] connections, int connectionCount);
+//
+SILICON_API int Silicon_LoadCircuit(const silicon::NetlistNode* nodes, int nodeCount,
+                                    const silicon::NetlistConnection* connections,
+                                    int connectionCount) {
+    try {
+        g_circuit.Reset();
+        const int parsed = silicon::ParseNetlist(nodes, nodeCount, connections, connectionCount,
+                                                 g_circuit.graph);
+        if (parsed != silicon::NETLIST_OK) {
+            g_circuit.Reset();
+            return parsed;
+        }
+        g_circuit.next.assign(g_circuit.graph.nodes.size(), 0);
+        g_circuit.loaded = true;
+        return g_circuit.graph.hasCycle ? silicon::SIM_HAS_CYCLE : silicon::SIM_OK;
+    } catch (const std::bad_alloc&) {
+        g_circuit.Reset();
+        return silicon::NETLIST_ERR_OUT_OF_MEMORY;
+    } catch (...) {
+        g_circuit.Reset();
+        return silicon::SIM_ERR_INTERNAL;
+    }
+}
+
+// Advance the loaded circuit by one tick (#10). See silicon::TickCircuit in
+// simulator.h for the unit-delay model.
+//
+//   states     caller-owned array of nodeCount ints, indexed like the nodes
+//              array given to Silicon_LoadCircuit. In: every node's value at
+//              this tick, with each SOURCE set to the player's current value.
+//              Out: every node's value at the next tick, 0 or 1.
+//   nodeCount  must equal the loaded circuit's node count
+//
+// Returns:
+//   >= 0  the number of nodes whose value changed; 0 means the circuit has
+//         settled and needs no more ticks until a source or the circuit changes
+//   -20   SIM_ERR_NULL_STATES (nodeCount > 0 and states is null)
+//   -21   SIM_ERR_GATE (a bug; states zeroed)
+//   -23   SIM_ERR_NOT_LOADED (states untouched)
+//   -24   SIM_ERR_NODE_COUNT (states untouched)
+//
+// Matching C# declaration (keep in sync — Assets/Scripts/LogicEngine/LogicEngine.cs):
+//
+//     [DllImport("SiliconPlugin", EntryPoint = "Silicon_Tick")]
+//     private static extern int Silicon_Tick(int[] states, int nodeCount);
+//
+SILICON_API int Silicon_Tick(int* states, int nodeCount) {
+    if (!g_circuit.loaded) {
+        return silicon::SIM_ERR_NOT_LOADED;
+    }
+    if (nodeCount != static_cast<int>(g_circuit.graph.nodes.size())) {
+        return silicon::SIM_ERR_NODE_COUNT;
+    }
+    // TickCircuit never throws or allocates, so there is nothing to catch.
+    return silicon::TickCircuit(g_circuit.graph, states, g_circuit.next.data());
+}
+
+// Free the loaded circuit. Safe to call when nothing is loaded. Afterwards
+// Silicon_Tick returns SIM_ERR_NOT_LOADED until the next Silicon_LoadCircuit.
+//
+// Matching C# declaration (keep in sync — Assets/Scripts/LogicEngine/LogicEngine.cs):
+//
+//     [DllImport("SiliconPlugin", EntryPoint = "Silicon_UnloadCircuit")]
+//     private static extern void Silicon_UnloadCircuit();
+//
+SILICON_API void Silicon_UnloadCircuit() {
+    g_circuit.Reset();
 }
 
 }  // extern "C"
