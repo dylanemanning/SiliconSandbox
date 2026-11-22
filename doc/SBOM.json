@@ -3,9 +3,9 @@
   "dataLicense": "CC0-1.0",
   "SPDXID": "SPDXRef-DOCUMENT",
   "name": "Silicon Sandbox - Unity and Windows Build SBOM",
-  "documentNamespace": "https://example.invalid/spdxdocs/silicon-sandbox-10024fe8-9f80-4cf0-9c59-0df8ea69aedf",
+  "documentNamespace": "https://example.invalid/spdxdocs/silicon-sandbox-6f6f3114-1312-4c4d-baed-ef5ec11918bb",
   "creationInfo": {
-    "created": "2026-11-11T19:28:35Z",
+    "created": "2026-11-22T15:06:21Z",
     "creators": [
       "Tool: generate_unity_sbom.py",
       "Tool: merge_sboms.py"
