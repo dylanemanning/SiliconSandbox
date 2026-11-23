@@ -28,6 +28,7 @@ public class PauseManager : MonoBehaviour
     private void Update()
     {
         if (InventoryGrid.ClosedThisFrame || Player.ConsumeWireCancelThisFrame()) return;
+        if (Player.IsTypingSignalLabel) return;
         if (KeybindSettings.WasPressedThisFrame(KeybindSettings.Pause))
         {
             TogglePause();

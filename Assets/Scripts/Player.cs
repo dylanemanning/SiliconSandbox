@@ -46,16 +46,32 @@ public partial class Player : MonoBehaviour
     private void OnDisable()
     {
         CancelWireRoute();
+        EndSignalLabelTyping(false);
     }
 
     void Update()
     {
+        if (labelInputConsumedFrame == Time.frameCount) return;
+        if (editingLabelPlayer == this && editingSignalLabel == null)
+            EndSignalLabelTyping(false);
+        if (IsTypingSignalLabel)
+        {
+            ProcessSignalLabelInput();
+            return;
+        }
+
         UpdateWireFeedback();
         bool cancelled = ConsumeWireCancelThisFrame();
         if (PauseManager.IsPaused || InventoryGrid.IsOpen || InventoryGrid.ClosedThisFrame)
         {
             CancelWireRoute();
             return;
+        }
+
+        if (KeybindSettings.WasPressedThisFrame(KeybindSettings.SignalVisibility))
+        {
+            bool visible = SignalLabelBlock.ToggleVisibility();
+            SetWireStatus(visible ? "Signal labels visible." : "Signal labels hidden.");
         }
 
         CheckFall();
@@ -75,7 +91,9 @@ public partial class Player : MonoBehaviour
         else if (breakHeld) TryBreakBlock();
         else { breakSeconds = 0; breakingBlock = null; }
 
-        bool toggledSource = !cancelled && !wireConsumed && TryToggleSource();
+        bool toggledSource = !cancelled && !wireConsumed && TryInteractSignalLabel();
+        if (!toggledSource)
+            toggledSource = !cancelled && !wireConsumed && TryToggleSource();
         if (!cancelled && !wireConsumed && !toggledSource &&
             KeybindSettings.WasMouseButtonPressedThisFrame(KeybindSettings.PlaceMouseButton)) TryPlaceBlock();
 
@@ -179,7 +197,8 @@ public partial class Player : MonoBehaviour
         Ray ray = cameraSettings.camera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
         
         // Check if the ray hits a block within reach distance
-        if (Physics.Raycast(ray, out targetRaycastHit, reachDistance)) 
+        if (Physics.Raycast(ray, out targetRaycastHit, reachDistance,
+            Physics.DefaultRaycastLayers, QueryTriggerInteraction.Collide))
         {
             targetBlock = targetRaycastHit.collider.GetComponentInParent<Block>(); // Try to get the Block component from the hit object
 
@@ -189,7 +208,10 @@ public partial class Player : MonoBehaviour
                 {
                     blockHighlighter.SetActive(true);
                     var collider = targetBlock.GetComponent<Collider>();
-                    blockHighlighter.transform.position = collider.bounds.center;
+                    if (collider == null) collider = targetBlock.GetComponentInChildren<Collider>();
+                    blockHighlighter.transform.position = collider != null
+                        ? collider.bounds.center
+                        : targetBlock.transform.position;
                     blockHighlighter.transform.rotation = targetBlock.transform.rotation;
                     blockHighlighter.transform.localScale = (Vector3)targetBlock.footprint * 1.02f;
                 }
@@ -235,10 +257,18 @@ public partial class Player : MonoBehaviour
     void TryPlaceBlock() 
     {
         Block selectedBlock = hotbar ? hotbar.SelectedBlock : null;
-        if (targetBlock == null || selectedBlock == null) return;
+        if (selectedBlock == null) return;
 
         Block prefabToPlace = selectedBlock;
         if (prefabToPlace == null) return;
+
+        if (prefabToPlace.GetComponent<SignalLabelBlock>() != null)
+        {
+            TryPlaceSignalLabel(prefabToPlace);
+            return;
+        }
+
+        if (targetBlock == null) return;
 
         if (prefabToPlace.GetComponent<LogicWireBlock>() != null)
         {

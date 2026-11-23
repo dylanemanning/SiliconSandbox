@@ -11,6 +11,7 @@ public class Block : MonoBehaviour
     public float placementGridSize = 1f;
     public Vector3Int footprintSize = Vector3Int.one;
     public bool isGround;
+    public bool occupiesGrid = true;
     // Root is the local (0,0,0) anchor cell; visuals/collider may span more cells.
     public Vector3Int footprint = Vector3Int.one;
 
@@ -108,6 +109,8 @@ public class Block : MonoBehaviour
 
     public void RegisterCells()
     {
+        if (!occupiesGrid) return;
+
         foreach (Vector3Int cell in GetOccupiedCellsAt(transform.position))
         {
             occupiedCells[cell] = this;
@@ -116,6 +119,8 @@ public class Block : MonoBehaviour
 
     public void UnregisterCells()
     {
+        if (!occupiesGrid) return;
+
         foreach (Vector3Int cell in GetOccupiedCellsAt(transform.position))
         {
             if (occupiedCells.TryGetValue(cell, out Block existing) && existing == this)

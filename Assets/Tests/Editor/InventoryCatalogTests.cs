@@ -12,9 +12,9 @@ public class InventoryCatalogTests
     public void CatalogContainsEveryComponentTypeWithUniqueIdsIconsAndPlaceablePrefabs()
     {
         Assert.That(Catalog,Is.Not.Null);
-        Assert.That(Catalog.Items.Count,Is.EqualTo(13));
-        Assert.That(Catalog.Items.Select(i=>i.Id).Distinct().Count(),Is.EqualTo(13));
-        Assert.That(Catalog.Items.Select(i=>i.Icon).Distinct().Count(),Is.EqualTo(13));
+        Assert.That(Catalog.Items.Count,Is.EqualTo(14));
+        Assert.That(Catalog.Items.Select(i=>i.Id).Distinct().Count(),Is.EqualTo(14));
+        Assert.That(Catalog.Items.Select(i=>i.Icon).Distinct().Count(),Is.EqualTo(14));
         foreach(var item in Catalog.Items)
         {
             Assert.That(item.DisplayName,Is.Not.Empty);
@@ -27,8 +27,12 @@ public class InventoryCatalogTests
         Assert.That(Catalog.Items.Count(i=>i.Prefab.GetComponent<LogicWireBlock>()!=null),Is.EqualTo(1));
         Assert.That(Catalog.Items.Count(i=>i.Prefab.GetComponent<LogicClockSource>()!=null),Is.EqualTo(1));
         Assert.That(Catalog.Items.Count(i=>i.Prefab.GetComponent<StateViewerBlock>()!=null),Is.EqualTo(1));
+        Assert.That(Catalog.Items.Count(i=>i.Prefab.GetComponent<SignalLabelBlock>()!=null),Is.EqualTo(1));
         Assert.That(Catalog.Items.Count(i=>i.Prefab.name=="Block"),Is.EqualTo(1));
         Assert.That(Catalog.Items.Count(i=>i.Id=="constant_signal"),Is.EqualTo(1));
+        var label = Catalog.Items.Single(i=>i.Id=="signal_label");
+        Assert.That(label.DisplayName,Is.EqualTo("Signal Label"));
+        Assert.That(label.Prefab.GetComponent<Block>().occupiesGrid,Is.False);
     }
 
     [Test]

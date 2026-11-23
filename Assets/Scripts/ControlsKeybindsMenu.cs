@@ -19,7 +19,8 @@ public class ControlsKeybindsMenu : MonoBehaviour
         FlyDown,
         ManualWire,
         DeleteWireRun,
-        Interact
+        Interact,
+        SignalVisibility
     }
 
     private Button moveForwardButton;
@@ -35,6 +36,7 @@ public class ControlsKeybindsMenu : MonoBehaviour
     private Button deleteWireRunButton;
     private TMP_Text bindingFeedback;
     private Button interactButton;
+    private Button signalVisibilityButton;
     private Button saveButton;
     private Button exitButton;
     private MenuTraversal menuTraversal;
@@ -142,6 +144,10 @@ public class ControlsKeybindsMenu : MonoBehaviour
                 KeybindSettings.SetKey("Keybind.Interact", key);
                 FinishRebinding();
                 break;
+            case BindingType.SignalVisibility:
+                KeybindSettings.SetKey("Keybind.SignalVisibility", key);
+                FinishRebinding();
+                break;
             case BindingType.FlyDown:
                 KeybindSettings.SetKey("Keybind.FlyDown", key);
                 FinishRebinding();
@@ -166,10 +172,11 @@ public class ControlsKeybindsMenu : MonoBehaviour
         if (interactButton == null) interactButton = CreateInteractRow();
         manualWireButton = AddWireRow("ManualWireRow", "Manual wire (click or drag)", "ManualWireButton");
         deleteWireRunButton = AddWireRow("DeleteWireRunRow", "Delete wire run", "DeleteWireRunButton");
+        signalVisibilityButton = AddWireRow("SignalVisibilityRow", "Toggle signal visibility", "SignalVisibilityButton");
         Button resetWireButton = AddWireRow("ResetWireBindingsRow", "Wire controls", "ResetWireBindingsButton");
         foreach (Button bindingButton in new[] { moveForwardButton, moveBackwardButton, moveLeftButton,
             moveRightButton, placeButton, breakButton, pauseButton, jumpButton, downButton, interactButton,
-            manualWireButton, deleteWireRunButton, resetWireButton })
+            manualWireButton, deleteWireRunButton, signalVisibilityButton, resetWireButton })
             FitRowCaption(bindingButton);
         SetLabel(resetWireButton, "Restore defaults");
         AddListener(resetWireButton, () => { KeybindSettings.ResetWireBindings(); FinishRebinding(); });
@@ -190,6 +197,7 @@ public class ControlsKeybindsMenu : MonoBehaviour
         AddListener(jumpButton, () => BeginRebinding(BindingType.Jump));
         AddListener(downButton, () => BeginRebinding(BindingType.FlyDown));
         AddListener(interactButton, () => BeginRebinding(BindingType.Interact));
+        AddListener(signalVisibilityButton, () => BeginRebinding(BindingType.SignalVisibility));
         AddListener(saveButton, SaveBindings);
         AddListener(exitButton, ExitControls);
     }
@@ -273,6 +281,7 @@ public class ControlsKeybindsMenu : MonoBehaviour
         SetLabel(jumpButton, FormatKey(KeybindSettings.Jump));
         SetLabel(downButton, FormatKey(KeybindSettings.FlyDown));
         SetLabel(interactButton, FormatKey(KeybindSettings.Interact));
+        SetLabel(signalVisibilityButton, FormatKey(KeybindSettings.SignalVisibility));
         SetLabel(manualWireButton, KeybindSettings.ManualWireBinding.ToString());
         SetLabel(deleteWireRunButton, KeybindSettings.DeleteWireRunBinding.ToString());
     }

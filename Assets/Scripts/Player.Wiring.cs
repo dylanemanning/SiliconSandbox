@@ -34,8 +34,14 @@ public partial class Player
     public static bool ConsumeWireCancelThisFrame()
     {
         if (wireCancelFrame == Time.frameCount) return true;
+        if (labelInputConsumedFrame == Time.frameCount) return true;
         if (!KeybindSettings.WasPressedThisFrame(Key.Escape)) return false;
         bool consumed = false;
+        if (IsTypingSignalLabel)
+        {
+            editingLabelPlayer.EndSignalLabelTyping(true);
+            consumed = true;
+        }
         foreach (var player in FindObjectsByType<Player>(FindObjectsSortMode.None))
         {
             if (!player.HasWireGesture) continue;
@@ -45,7 +51,12 @@ public partial class Player
         return consumed;
     }
 
-    private void OnApplicationFocus(bool focus) { if (!focus) CancelWireRoute(); }
+    private void OnApplicationFocus(bool focus)
+    {
+        if (focus) return;
+        CancelWireRoute();
+        EndSignalLabelTyping(false);
+    }
 
     private void OnDestroy()
     {

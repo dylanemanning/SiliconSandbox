@@ -6,7 +6,7 @@ using UnityEngine;
 
 public class WorldSaveSystem : MonoBehaviour
 {
-    public const int CurrentSaveVersion = 3;
+    public const int CurrentSaveVersion = 4;
 
     [Serializable]
     public class SavedBlock
@@ -19,6 +19,10 @@ public class WorldSaveSystem : MonoBehaviour
         public bool isGround;
         public bool hasWireEndpointMask;
         public int wireEndpointMask;
+        public string signalLabelText;
+        public bool hasSignalLabelAttachment;
+        public Vector3Int signalLabelAttachmentCell;
+        public Vector3Int signalLabelAttachmentFace;
     }
 
     // Read-only compatibility fields. New saves serialize SavedBlock instead,
@@ -158,6 +162,7 @@ public class WorldSaveSystem : MonoBehaviour
     private static SavedBlock CaptureBlock(Block block)
     {
         LogicWireBlock wire = block.GetComponent<LogicWireBlock>();
+        SignalLabelBlock label = block.GetComponent<SignalLabelBlock>();
         return new SavedBlock
         {
             prefabName = GetPrefabName(block.gameObject),
@@ -167,7 +172,11 @@ public class WorldSaveSystem : MonoBehaviour
             footprintSize = block.GetFootprintSize(),
             isGround = block.isGround,
             hasWireEndpointMask = wire != null,
-            wireEndpointMask = wire != null ? wire.EndpointMask : 0
+            wireEndpointMask = wire != null ? wire.EndpointMask : 0,
+            signalLabelText = label != null ? label.LabelText : null,
+            hasSignalLabelAttachment = label != null && label.HasAttachment,
+            signalLabelAttachmentCell = label != null ? label.AttachmentCell : default,
+            signalLabelAttachmentFace = label != null ? label.AttachmentFace : default
         };
     }
 
@@ -286,6 +295,16 @@ public class WorldSaveSystem : MonoBehaviour
 
             LogicWireBlock savedWire = block.GetComponent<LogicWireBlock>();
             if (savedWire != null) restoredWires.Add(savedWire, savedBlock);
+
+            SignalLabelBlock savedLabel = block.GetComponent<SignalLabelBlock>();
+            if (savedLabel != null)
+            {
+                savedLabel.RestoreState(
+                    savedBlock.signalLabelText,
+                    savedBlock.hasSignalLabelAttachment,
+                    savedBlock.signalLabelAttachmentCell,
+                    savedBlock.signalLabelAttachmentFace);
+            }
         }
 
         RestoreWireTopology(restoredWires, save.version);

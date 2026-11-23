@@ -16,6 +16,8 @@ public class WireBindingControlsTests : InputTestFixture
     private Mouse mouse;
     private string manual, deletion;
     private bool hadManual, hadDeletion;
+    private int signalVisibility;
+    private bool hadSignalVisibility;
 
     public override void Setup()
     {
@@ -26,6 +28,9 @@ public class WireBindingControlsTests : InputTestFixture
         hadDeletion = PlayerPrefs.HasKey(KeybindSettings.DeleteWireRunPreference);
         manual = PlayerPrefs.GetString(KeybindSettings.ManualWirePreference);
         deletion = PlayerPrefs.GetString(KeybindSettings.DeleteWireRunPreference);
+        hadSignalVisibility = PlayerPrefs.HasKey("Keybind.SignalVisibility");
+        signalVisibility = PlayerPrefs.GetInt("Keybind.SignalVisibility");
+        PlayerPrefs.DeleteKey("Keybind.SignalVisibility");
         KeybindSettings.ResetWireBindings();
     }
 
@@ -35,6 +40,8 @@ public class WireBindingControlsTests : InputTestFixture
         KeybindSettings.ResetWireBindings();
         if (hadManual) PlayerPrefs.SetString(KeybindSettings.ManualWirePreference, manual);
         if (hadDeletion) PlayerPrefs.SetString(KeybindSettings.DeleteWireRunPreference, deletion);
+        if (hadSignalVisibility) PlayerPrefs.SetInt("Keybind.SignalVisibility", signalVisibility);
+        else PlayerPrefs.DeleteKey("Keybind.SignalVisibility");
         PlayerPrefs.Save();
         yield return SceneManager.LoadSceneAsync("EmptyScene");
     }
@@ -73,6 +80,12 @@ public class WireBindingControlsTests : InputTestFixture
         Release(keyboard.leftCtrlKey);
         Assert.That(KeybindSettings.ManualWireBinding.Key, Is.EqualTo(Key.F10));
         Assert.That(KeybindSettings.ManualWireBinding.Control, Is.True, "Capture the primary key when modifier and key arrive together.");
+        Find("SignalVisibilityButton").onClick.Invoke();
+        yield return null;
+        Press(keyboard.f9Key);
+        yield return null;
+        Release(keyboard.f9Key);
+        Assert.That(KeybindSettings.SignalVisibility, Is.EqualTo(Key.F9));
         Find("DeleteWireRunButton").onClick.Invoke();
         yield return null;
         Press(keyboard.escapeKey);
@@ -82,7 +95,8 @@ public class WireBindingControlsTests : InputTestFixture
         Find("ResetWireBindingsButton").onClick.Invoke();
         Assert.That(KeybindSettings.ManualWireBinding.Equals(KeybindSettings.DefaultManualWire), Is.True);
         Canvas.ForceUpdateCanvases();
-        foreach (string name in new[] { "InteractButton", "ManualWireButton", "DeleteWireRunButton", "ResetWireBindingsButton" })
+        foreach (string name in new[] { "InteractButton", "ManualWireButton", "DeleteWireRunButton",
+            "SignalVisibilityButton", "ResetWireBindingsButton" })
         {
             var rect = (RectTransform)Find(name).transform;
             Assert.That(rect.rect.height, Is.GreaterThan(20), name + " must remain usable.");

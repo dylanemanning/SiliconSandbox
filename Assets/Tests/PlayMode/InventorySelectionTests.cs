@@ -80,8 +80,8 @@ public class InventorySelectionTests : InputTestFixture
                 Assert.That(hotbar.GetSlot(untouched).BlockPrefab, Is.EqualTo(original[untouched]));
         }
         Assert.That(hotbar.SelectedSlotIndex, Is.EqualTo(selected));
-        Assert.That(entries.Count(s=>s.Item!=null), Is.EqualTo(13));
-        Assert.That(inventory.Catalog.Items.Count, Is.EqualTo(13));
+        Assert.That(entries.Count(s=>s.Item!=null), Is.EqualTo(14));
+        Assert.That(inventory.Catalog.Items.Count, Is.EqualTo(14));
         yield return Hover(entries[9]);
         yield return Tap(Key.Digit9);
         Assert.That(hotbar.GetSlot(8).Item.Id, Is.EqualTo("clock"));

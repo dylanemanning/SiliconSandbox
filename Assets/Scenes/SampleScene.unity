@@ -849,6 +849,7 @@ MonoBehaviour:
   - {fileID: 1955800274510326494, guid: 5a4c782a9874cc446b66d236ebd4848b, type: 3}
   - {fileID: 1955800274510326494, guid: 344dfe2f338fde049ac04ad837838274, type: 3}
   - {fileID: 1955800274510326494, guid: 02f9be730bbc1a742aa17a328b3c1975, type: 3}
+  - {fileID: 100000000000000003, guid: 9f2631bf12f544de8b02101d5c09b76e, type: 3}
   wirePreviewMaterial: {fileID: 0}
   doublePressTime: 0.3
 --- !u!4 &519699314
@@ -2581,6 +2582,7 @@ MonoBehaviour:
   - {fileID: 4383146860704513453, guid: cda98205b888b9f40af417668a20e6e9, type: 3}
   - {fileID: 4383146860704513453, guid: b9c9e34181e11314fbe6cdd62aafb59e, type: 3}
   - {fileID: 4383146860704513453, guid: 00f1c5b33edc24543b4be80d9936dfc8, type: 3}
+  - {fileID: 100000000000000001, guid: 9f2631bf12f544de8b02101d5c09b76e, type: 3}
   worldRoot: {fileID: 0}
   autosaveDelay: 0.5
 --- !u!4 &1745302548

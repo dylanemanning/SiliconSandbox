@@ -34,7 +34,8 @@ public class HotbarManager : MonoBehaviour
 
     private void Update()
     {
-        if (PauseManager.IsPaused || InventoryGrid.IsOpen || InventoryGrid.ClosedThisFrame) return;
+        if (PauseManager.IsPaused || InventoryGrid.IsOpen || InventoryGrid.ClosedThisFrame ||
+            Player.IsTypingSignalLabel) return;
         if (Keyboard.current == null)
             return;
 

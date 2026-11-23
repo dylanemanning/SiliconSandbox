@@ -48,6 +48,8 @@ public class InventoryCatalog : ScriptableObject
             return items.FirstOrDefault(item => item?.Prefab != null && item.Prefab.GetComponent<LogicWireBlock>() != null);
         if (prefab.GetComponent<StateViewerBlock>() != null)
             return items.FirstOrDefault(item => item?.Prefab != null && item.Prefab.GetComponent<StateViewerBlock>() != null);
+        if (prefab.GetComponent<SignalLabelBlock>() != null)
+            return items.FirstOrDefault(item => item?.Prefab != null && item.Prefab.GetComponent<SignalLabelBlock>() != null);
         return null;
     }
 }

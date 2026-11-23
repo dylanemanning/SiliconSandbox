@@ -50,6 +50,7 @@ public static class KeybindSettings
     private const string FlyDownKey = "Keybind.FlyDown";
     private const string PauseKey = "Keybind.Pause";
     private const string InteractKey = "Keybind.Interact";
+    private const string SignalVisibilityKey = "Keybind.SignalVisibility";
     private const string PlaceMouseButtonKey = "Keybind.PlaceMouseButton";
     private const string BreakMouseButtonKey = "Keybind.BreakMouseButton";
 
@@ -61,6 +62,7 @@ public static class KeybindSettings
     public static Key FlyDown => GetKey(FlyDownKey, Key.LeftShift);
     public static Key Pause => GetKey(PauseKey, Key.Escape);
     public static Key Interact => GetKey(InteractKey, Key.F);
+    public static Key SignalVisibility => GetKey(SignalVisibilityKey, Key.Tab);
     public static int PlaceMouseButton => PlayerPrefs.GetInt(PlaceMouseButtonKey, 1);
     public static int BreakMouseButton => PlayerPrefs.GetInt(BreakMouseButtonKey, 0);
     public static WireMouseChord ManualWireBinding => LoadWireBinding(ManualWirePreference, DefaultManualWire);
@@ -107,7 +109,8 @@ public static class KeybindSettings
         {
             Key key = binding.Key;
             return key != MoveForward && key != MoveBackward && key != MoveLeft && key != MoveRight &&
-                key != Jump && key != FlyDown && key != Pause && key != Interact && key != Key.Escape && key != Key.E &&
+                key != Jump && key != FlyDown && key != Pause && key != Interact && key != SignalVisibility &&
+                key != Key.Escape && key != Key.E &&
                 key != Key.Enter && key != Key.NumpadEnter && !(key >= Key.Digit1 && key <= Key.Digit9);
         }
         if (binding.MouseButton < 0 || binding.MouseButton > 2) return false;

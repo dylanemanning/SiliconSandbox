@@ -65,3 +65,7 @@ MonoBehaviour:
     displayName: Building Block
     prefab: {fileID: 1955800274510326494, guid: c229e5dc942464245a58c793fa64e54a, type: 3}
     icon: {fileID: 21300000, guid: 21cf0578f1f6642e8bf40d858d1d49ab, type: 3}
+  - id: signal_label
+    displayName: Signal Label
+    prefab: {fileID: 100000000000000003, guid: 9f2631bf12f544de8b02101d5c09b76e, type: 3}
+    icon: {fileID: 21300000, guid: 93c420102a67424aab5869a0f1f230dc, type: 3}

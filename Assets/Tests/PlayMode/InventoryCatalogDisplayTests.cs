@@ -25,8 +25,8 @@ public class InventoryCatalogDisplayTests
         inventory.SetOpen(true);Canvas.ForceUpdateCanvases();
         var slots=inventory.GetComponentsInChildren<InventorySlotImage>(true);
         Assert.That(slots.Length,Is.EqualTo(36));
-        Assert.That(slots.Count(s=>s.Sprite!=null),Is.EqualTo(13));
-        Assert.That(slots.Count(s=>s.Item==null),Is.EqualTo(23));
+        Assert.That(slots.Count(s=>s.Sprite!=null),Is.EqualTo(14));
+        Assert.That(slots.Count(s=>s.Item==null),Is.EqualTo(22));
         for(int i=0;i<inventory.Catalog.Items.Count;i++)
         {
             Assert.That(slots[i].Sprite,Is.EqualTo(inventory.Catalog.Items[i].Icon));
@@ -40,7 +40,7 @@ public class InventoryCatalogDisplayTests
         slots[0].SetItem(null);inventory.RefreshImages();
         Assert.That(slots[0].Item.Id,Is.EqualTo(inventory.Catalog.Items[0].Id));
         inventory.SetOpen(false);inventory.SetOpen(true);
-        Assert.That(slots.Count(s=>s.Sprite!=null),Is.EqualTo(13));
+        Assert.That(slots.Count(s=>s.Sprite!=null),Is.EqualTo(14));
         LogAssert.NoUnexpectedReceived();
     }
 }
