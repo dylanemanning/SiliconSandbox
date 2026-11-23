@@ -9,6 +9,8 @@ public partial class Player
 
     private SignalLabelBlock editingSignalLabel;
     private Keyboard editingKeyboard;
+    private bool interactWasHeld;
+    private bool interactPressedThisFrame;
 
     public static bool IsTypingSignalLabel =>
         editingLabelPlayer != null && editingLabelPlayer.editingSignalLabel != null;
@@ -20,12 +22,28 @@ public partial class Player
         labelInputConsumedFrame = -1;
     }
 
+    private void UpdateSignalLabelInteractInput()
+    {
+        Keyboard keyboard = Keyboard.current;
+        bool interactHeld = keyboard != null && keyboard[KeybindSettings.Interact].isPressed;
+        interactPressedThisFrame = KeybindSettings.WasPressedThisFrame(KeybindSettings.Interact) ||
+            (interactHeld && !interactWasHeld);
+        interactWasHeld = interactHeld;
+    }
+
     private bool TryInteractSignalLabel()
     {
-        if (!KeybindSettings.WasPressedThisFrame(KeybindSettings.Interact) ||
-            targetBlock == null ||
-            !targetBlock.TryGetComponent<SignalLabelBlock>(out var label))
+        if (!interactPressedThisFrame ||
+            cameraSettings.camera == null)
             return false;
+
+        Ray ray = cameraSettings.camera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
+        if (!Physics.Raycast(ray, out RaycastHit hit, reachDistance,
+            Physics.DefaultRaycastLayers, QueryTriggerInteraction.Collide))
+            return false;
+
+        SignalLabelBlock label = hit.collider.GetComponentInParent<SignalLabelBlock>();
+        if (label == null) return false;
 
         BeginSignalLabelTyping(label);
         return true;

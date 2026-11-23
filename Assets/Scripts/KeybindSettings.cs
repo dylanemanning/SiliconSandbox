@@ -100,6 +100,24 @@ public static class KeybindSettings
         PlayerPrefs.Save();
     }
 
+    public static void ResetAllBindings()
+    {
+        PlayerPrefs.DeleteKey(ManualWirePreference);
+        PlayerPrefs.DeleteKey(DeleteWireRunPreference);
+        PlayerPrefs.DeleteKey(MoveForwardKey);
+        PlayerPrefs.DeleteKey(MoveBackwardKey);
+        PlayerPrefs.DeleteKey(MoveLeftKey);
+        PlayerPrefs.DeleteKey(MoveRightKey);
+        PlayerPrefs.DeleteKey(JumpKey);
+        PlayerPrefs.DeleteKey(FlyDownKey);
+        PlayerPrefs.DeleteKey(PauseKey);
+        PlayerPrefs.DeleteKey(InteractKey);
+        PlayerPrefs.DeleteKey(SignalVisibilityKey);
+        PlayerPrefs.DeleteKey(PlaceMouseButtonKey);
+        PlayerPrefs.DeleteKey(BreakMouseButtonKey);
+        PlayerPrefs.Save();
+    }
+
     public static bool IsWirePrimaryKey(Key key) => ManualWireBinding.Key == key || DeleteWireRunBinding.Key == key;
 
     private static bool IsValidWireBinding(WireMouseChord binding)
@@ -184,11 +202,6 @@ public static class KeybindSettings
         }
         SetMouseButton(settingKey, button);
         return true;
-    }
-
-    public static void Save()
-    {
-        PlayerPrefs.Save();
     }
 
     private static Key GetKey(string settingKey, Key defaultKey)

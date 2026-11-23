@@ -51,6 +51,7 @@ public partial class Player : MonoBehaviour
 
     void Update()
     {
+        UpdateSignalLabelInteractInput();
         if (labelInputConsumedFrame == Time.frameCount) return;
         if (editingLabelPlayer == this && editingSignalLabel == null)
             EndSignalLabelTyping(false);
@@ -79,6 +80,7 @@ public partial class Player : MonoBehaviour
         CheckMovement();
         CheckJump();
         CheckTargetBlock();
+        if (!cancelled && TryInteractSignalLabel()) return;
 
         bool wireConsumed = ProcessWireInput(out bool consumeBreak);
         bool breakHeld = KeybindSettings.IsMouseButtonPressed(KeybindSettings.BreakMouseButton);
@@ -91,9 +93,7 @@ public partial class Player : MonoBehaviour
         else if (breakHeld) TryBreakBlock();
         else { breakSeconds = 0; breakingBlock = null; }
 
-        bool toggledSource = !cancelled && !wireConsumed && TryInteractSignalLabel();
-        if (!toggledSource)
-            toggledSource = !cancelled && !wireConsumed && TryToggleSource();
+        bool toggledSource = !cancelled && !wireConsumed && TryToggleSource();
         if (!cancelled && !wireConsumed && !toggledSource &&
             KeybindSettings.WasMouseButtonPressedThisFrame(KeybindSettings.PlaceMouseButton)) TryPlaceBlock();
 

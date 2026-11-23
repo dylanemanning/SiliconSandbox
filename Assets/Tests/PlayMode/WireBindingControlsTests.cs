@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using NUnit.Framework;
@@ -16,8 +17,14 @@ public class WireBindingControlsTests : InputTestFixture
     private Mouse mouse;
     private string manual, deletion;
     private bool hadManual, hadDeletion;
-    private int signalVisibility;
-    private bool hadSignalVisibility;
+    private static readonly string[] IntegerBindingPreferences =
+    {
+        "Keybind.MoveForward", "Keybind.MoveBackward", "Keybind.MoveLeft", "Keybind.MoveRight",
+        "Keybind.Jump", "Keybind.FlyDown", "Keybind.Pause", "Keybind.Interact",
+        "Keybind.SignalVisibility", "Keybind.PlaceMouseButton", "Keybind.BreakMouseButton"
+    };
+    private readonly Dictionary<string, int> previousIntegerBindings = new Dictionary<string, int>();
+    private readonly HashSet<string> existingIntegerBindings = new HashSet<string>();
 
     public override void Setup()
     {
@@ -28,20 +35,30 @@ public class WireBindingControlsTests : InputTestFixture
         hadDeletion = PlayerPrefs.HasKey(KeybindSettings.DeleteWireRunPreference);
         manual = PlayerPrefs.GetString(KeybindSettings.ManualWirePreference);
         deletion = PlayerPrefs.GetString(KeybindSettings.DeleteWireRunPreference);
-        hadSignalVisibility = PlayerPrefs.HasKey("Keybind.SignalVisibility");
-        signalVisibility = PlayerPrefs.GetInt("Keybind.SignalVisibility");
-        PlayerPrefs.DeleteKey("Keybind.SignalVisibility");
-        KeybindSettings.ResetWireBindings();
+        previousIntegerBindings.Clear();
+        existingIntegerBindings.Clear();
+        foreach (string preference in IntegerBindingPreferences)
+        {
+            if (!PlayerPrefs.HasKey(preference)) continue;
+            existingIntegerBindings.Add(preference);
+            previousIntegerBindings[preference] = PlayerPrefs.GetInt(preference);
+        }
+        KeybindSettings.ResetAllBindings();
     }
 
     [UnityTearDown]
     public IEnumerator Cleanup()
     {
-        KeybindSettings.ResetWireBindings();
+        KeybindSettings.ResetAllBindings();
+        foreach (string preference in IntegerBindingPreferences)
+        {
+            if (existingIntegerBindings.Contains(preference))
+                PlayerPrefs.SetInt(preference, previousIntegerBindings[preference]);
+            else
+                PlayerPrefs.DeleteKey(preference);
+        }
         if (hadManual) PlayerPrefs.SetString(KeybindSettings.ManualWirePreference, manual);
         if (hadDeletion) PlayerPrefs.SetString(KeybindSettings.DeleteWireRunPreference, deletion);
-        if (hadSignalVisibility) PlayerPrefs.SetInt("Keybind.SignalVisibility", signalVisibility);
-        else PlayerPrefs.DeleteKey("Keybind.SignalVisibility");
         PlayerPrefs.Save();
         yield return SceneManager.LoadSceneAsync("EmptyScene");
     }
@@ -94,6 +111,25 @@ public class WireBindingControlsTests : InputTestFixture
         Assert.That(KeybindSettings.DeleteWireRunBinding.Equals(KeybindSettings.DefaultDeleteWireRun), Is.True);
         Find("ResetWireBindingsButton").onClick.Invoke();
         Assert.That(KeybindSettings.ManualWireBinding.Equals(KeybindSettings.DefaultManualWire), Is.True);
+        KeybindSettings.SetKey("Keybind.MoveForward", Key.UpArrow);
+        KeybindSettings.SetKey("Keybind.Interact", Key.G);
+        KeybindSettings.SetKey("Keybind.SignalVisibility", Key.F9);
+        KeybindSettings.SetMouseButton("Keybind.PlaceMouseButton", 2);
+        KeybindSettings.SetMouseButton("Keybind.BreakMouseButton", 1);
+        Assert.That(KeybindSettings.TrySetWireBinding(true, new WireMouseChord { Key = Key.F10 }, out _), Is.True);
+        Assert.That(KeybindSettings.TrySetWireBinding(false, new WireMouseChord { Key = Key.F11 }, out _), Is.True);
+        Button restoreDefaultsButton = Find("RestoreDefaultsButton");
+        Assert.That(restoreDefaultsButton.GetComponentInChildren<TMP_Text>().text, Is.EqualTo("Restore defaults"));
+        restoreDefaultsButton.onClick.Invoke();
+        Assert.That(KeybindSettings.MoveForward, Is.EqualTo(Key.W));
+        Assert.That(KeybindSettings.Interact, Is.EqualTo(Key.F));
+        Assert.That(KeybindSettings.SignalVisibility, Is.EqualTo(Key.Tab));
+        Assert.That(KeybindSettings.PlaceMouseButton, Is.EqualTo(1));
+        Assert.That(KeybindSettings.BreakMouseButton, Is.EqualTo(0));
+        Assert.That(KeybindSettings.ManualWireBinding.Equals(KeybindSettings.DefaultManualWire), Is.True);
+        Assert.That(KeybindSettings.DeleteWireRunBinding.Equals(KeybindSettings.DefaultDeleteWireRun), Is.True);
+        Assert.That(Find("InteractButton").GetComponentInChildren<TMP_Text>().text, Is.EqualTo("F"));
+        Assert.That(Find("SignalVisibilityButton").GetComponentInChildren<TMP_Text>().text, Is.EqualTo("TAB"));
         Canvas.ForceUpdateCanvases();
         foreach (string name in new[] { "InteractButton", "ManualWireButton", "DeleteWireRunButton",
             "SignalVisibilityButton", "ResetWireBindingsButton" })

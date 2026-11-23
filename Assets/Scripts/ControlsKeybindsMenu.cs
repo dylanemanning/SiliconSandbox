@@ -37,7 +37,7 @@ public class ControlsKeybindsMenu : MonoBehaviour
     private TMP_Text bindingFeedback;
     private Button interactButton;
     private Button signalVisibilityButton;
-    private Button saveButton;
+    private Button restoreDefaultsButton;
     private Button exitButton;
     private MenuTraversal menuTraversal;
     private BindingType? rebinding;
@@ -178,12 +178,12 @@ public class ControlsKeybindsMenu : MonoBehaviour
             moveRightButton, placeButton, breakButton, pauseButton, jumpButton, downButton, interactButton,
             manualWireButton, deleteWireRunButton, signalVisibilityButton, resetWireButton })
             FitRowCaption(bindingButton);
-        SetLabel(resetWireButton, "Restore defaults");
+        SetLabel(resetWireButton, "Restore wire defaults");
         AddListener(resetWireButton, () => { KeybindSettings.ResetWireBindings(); FinishRebinding(); });
         AddListener(manualWireButton, () => BeginRebinding(BindingType.ManualWire));
         AddListener(deleteWireRunButton, () => BeginRebinding(BindingType.DeleteWireRun));
         CreateBindingFeedback();
-        saveButton = FindButton("SaveButton");
+        restoreDefaultsButton = FindButton("RestoreDefaultsButton");
         exitButton = FindButton("ExitButton");
         menuTraversal = FindFirstObjectByType<MenuTraversal>();
 
@@ -198,7 +198,8 @@ public class ControlsKeybindsMenu : MonoBehaviour
         AddListener(downButton, () => BeginRebinding(BindingType.FlyDown));
         AddListener(interactButton, () => BeginRebinding(BindingType.Interact));
         AddListener(signalVisibilityButton, () => BeginRebinding(BindingType.SignalVisibility));
-        AddListener(saveButton, SaveBindings);
+        SetLabel(restoreDefaultsButton, "Restore defaults");
+        AddListener(restoreDefaultsButton, RestoreDefaults);
         AddListener(exitButton, ExitControls);
     }
 
@@ -236,9 +237,10 @@ public class ControlsKeybindsMenu : MonoBehaviour
         return null;
     }
 
-    private void SaveBindings()
+    private void RestoreDefaults()
     {
-        KeybindSettings.Save();
+        KeybindSettings.ResetAllBindings();
+        FinishRebinding();
     }
 
     private void ExitControls()

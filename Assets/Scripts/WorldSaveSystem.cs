@@ -7,6 +7,7 @@ using UnityEngine;
 public class WorldSaveSystem : MonoBehaviour
 {
     public const int CurrentSaveVersion = 4;
+    private const int ExplicitWireTopologySaveVersion = 3;
 
     [Serializable]
     public class SavedBlock
@@ -327,7 +328,7 @@ public class WorldSaveSystem : MonoBehaviour
             RestoreLegacyZeroMaskVisuals(restoredWires.Keys);
             return;
         }
-        if (version >= CurrentSaveVersion) return;
+        if (version >= ExplicitWireTopologySaveVersion) return;
 
         // Version 2 rendered EndpointMask | ConnectionMask. Only reciprocal
         // stored wire joins contributed extra visible arms; a unilateral stale

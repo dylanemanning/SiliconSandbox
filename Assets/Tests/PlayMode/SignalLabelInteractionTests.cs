@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 using UnityEngine;
@@ -10,8 +11,18 @@ public class SignalLabelInteractionTests : InputTestFixture
 {
     private Keyboard keyboard;
     private Mouse mouse;
-    private bool hadSignalVisibilityBinding;
-    private int previousSignalVisibilityBinding;
+    private bool hadManualWireBinding;
+    private bool hadDeleteWireBinding;
+    private string previousManualWireBinding;
+    private string previousDeleteWireBinding;
+    private static readonly string[] IntegerBindingPreferences =
+    {
+        "Keybind.MoveForward", "Keybind.MoveBackward", "Keybind.MoveLeft", "Keybind.MoveRight",
+        "Keybind.Jump", "Keybind.FlyDown", "Keybind.Pause", "Keybind.Interact",
+        "Keybind.SignalVisibility", "Keybind.PlaceMouseButton", "Keybind.BreakMouseButton"
+    };
+    private readonly Dictionary<string, int> previousIntegerBindings = new Dictionary<string, int>();
+    private readonly HashSet<string> existingIntegerBindings = new HashSet<string>();
     private bool previousSignalLabelVisibility;
 
     public override void Setup()
@@ -19,12 +30,22 @@ public class SignalLabelInteractionTests : InputTestFixture
         base.Setup();
         keyboard = InputSystem.AddDevice<Keyboard>();
         mouse = InputSystem.AddDevice<Mouse>();
-        PlayerPrefs.DeleteKey("Keybind.Interact");
-        PlayerPrefs.DeleteKey("Keybind.Pause");
-        hadSignalVisibilityBinding = PlayerPrefs.HasKey("Keybind.SignalVisibility");
-        previousSignalVisibilityBinding = PlayerPrefs.GetInt("Keybind.SignalVisibility");
-        PlayerPrefs.DeleteKey("Keybind.SignalVisibility");
+        hadManualWireBinding = PlayerPrefs.HasKey(KeybindSettings.ManualWirePreference);
+        hadDeleteWireBinding = PlayerPrefs.HasKey(KeybindSettings.DeleteWireRunPreference);
+        previousManualWireBinding = PlayerPrefs.GetString(KeybindSettings.ManualWirePreference);
+        previousDeleteWireBinding = PlayerPrefs.GetString(KeybindSettings.DeleteWireRunPreference);
+        previousIntegerBindings.Clear();
+        existingIntegerBindings.Clear();
+        foreach (string preference in IntegerBindingPreferences)
+        {
+            if (!PlayerPrefs.HasKey(preference)) continue;
+            existingIntegerBindings.Add(preference);
+            previousIntegerBindings[preference] = PlayerPrefs.GetInt(preference);
+        }
+        KeybindSettings.ResetAllBindings();
         previousSignalLabelVisibility = SignalLabelBlock.AreVisible;
+        if (!SignalLabelBlock.AreVisible)
+            SignalLabelBlock.ToggleVisibility();
     }
 
     [UnityTearDown]
@@ -36,18 +57,31 @@ public class SignalLabelInteractionTests : InputTestFixture
         yield return null;
         if (SignalLabelBlock.AreVisible != previousSignalLabelVisibility)
             SignalLabelBlock.ToggleVisibility();
-        if (hadSignalVisibilityBinding)
-            PlayerPrefs.SetInt("Keybind.SignalVisibility", previousSignalVisibilityBinding);
-        else
-            PlayerPrefs.DeleteKey("Keybind.SignalVisibility");
+        KeybindSettings.ResetAllBindings();
+        foreach (string preference in IntegerBindingPreferences)
+        {
+            if (existingIntegerBindings.Contains(preference))
+                PlayerPrefs.SetInt(preference, previousIntegerBindings[preference]);
+            else
+                PlayerPrefs.DeleteKey(preference);
+        }
+        if (hadManualWireBinding)
+            PlayerPrefs.SetString(KeybindSettings.ManualWirePreference, previousManualWireBinding);
+        if (hadDeleteWireBinding)
+            PlayerPrefs.SetString(KeybindSettings.DeleteWireRunPreference, previousDeleteWireBinding);
         PlayerPrefs.Save();
     }
 
     private IEnumerator LoadGameplay()
     {
+        Time.timeScale = 1f;
         WorldSaveSystem.PendingWorldName = "TC_SignalLabel_" + System.Guid.NewGuid().ToString("N");
         yield return SceneManager.LoadSceneAsync("SampleScene");
         yield return null;
+        yield return null;
+        if (PauseManager.IsPaused)
+            Object.FindFirstObjectByType<PauseManager>().ResumeGame();
+        InventoryGrid.Close();
         yield return null;
     }
 
@@ -58,6 +92,11 @@ public class SignalLabelInteractionTests : InputTestFixture
 
         var player = Object.FindFirstObjectByType<Player>();
         var inventory = Object.FindFirstObjectByType<InventoryGrid>();
+        player.GetComponent<Rigidbody>().useGravity = false;
+        player.GetComponent<Rigidbody>().linearVelocity = Vector3.zero;
+        Assert.That(player.isActiveAndEnabled, Is.True);
+        Assert.That(PauseManager.IsPaused, Is.False);
+        Assert.That(InventoryGrid.IsOpen, Is.False);
         var labelPrefab = inventory.Catalog.Items.Single(item => item.Id == "signal_label").Prefab;
         var camera = player.cameraSettings.camera;
         Set(mouse.delta, Vector2.zero);
@@ -67,10 +106,16 @@ public class SignalLabelInteractionTests : InputTestFixture
             ray.GetPoint(2f),
             Quaternion.LookRotation(-camera.transform.forward, Vector3.up))
             .GetComponent<SignalLabelBlock>();
+        Physics.SyncTransforms();
         yield return null;
+        Assert.That(Physics.Raycast(ray, out RaycastHit labelHit, player.reachDistance,
+            Physics.DefaultRaycastLayers, QueryTriggerInteraction.Collide), Is.True);
+        Assert.That(labelHit.collider.GetComponentInParent<SignalLabelBlock>(), Is.EqualTo(label));
 
         int selectedSlot = player.hotbar.SelectedSlotIndex;
+        Assert.That(KeybindSettings.Interact, Is.EqualTo(Key.F));
         Press(keyboard.fKey);
+        yield return null;
         yield return null;
         Release(keyboard.fKey);
         yield return null;

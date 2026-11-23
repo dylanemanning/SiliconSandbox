@@ -152,7 +152,6 @@ public class SourceToggleTests : InputTestFixture
         yield return Tap(Key.G);
         Assert.That(KeybindSettings.Interact, Is.EqualTo(Key.G));
         Assert.That(button.GetComponentInChildren<TMP_Text>().text, Is.EqualTo("G"));
-        ButtonNamed(controls, "SaveButton").onClick.Invoke();
         traversal.closeSettings();
         traversal.openSettings();
         controls.Initialize();
